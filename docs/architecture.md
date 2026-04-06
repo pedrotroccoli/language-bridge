@@ -1,5 +1,9 @@
 # Architecture
 
+## System Overview
+
+![System Architecture](system-architecture.png)
+
 ## Stack
 
 - Ruby on Rails (API-only)
