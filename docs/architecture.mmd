@@ -1,0 +1,50 @@
+erDiagram
+    Companies {
+        int id
+        string name
+        string slug
+    }
+    Projects {
+        int id
+        int company_id
+        string name
+        string slug
+    }
+    Locales {
+        int id
+        int project_id
+        string code
+    }
+    Namespaces {
+        int id
+        int project_id
+        string name
+    }
+    TranslationKeys {
+        int id
+        int project_id
+        int namespace_id
+        string key
+    }
+    Translations {
+        int id
+        int translation_key_id
+        int locale_id
+        string value
+        string status
+        datetime published_at
+    }
+    Users {
+        int id
+        int company_id
+        string email
+        string role
+    }
+    Companies ||--o{ Projects : "has many"
+    Companies ||--o{ Users : "has many"
+    Projects ||--o{ Locales : "has many"
+    Projects ||--o{ Namespaces : "has many"
+    Projects ||--o{ TranslationKeys : "has many"
+    Namespaces ||--o{ TranslationKeys : "has many"
+    TranslationKeys ||--o{ Translations : "has many"
+    Locales ||--o{ Translations : "has many"
