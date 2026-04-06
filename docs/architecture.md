@@ -40,7 +40,8 @@ POST /api/v1/projects/:project_slug/missing
 ## Setup
 
 ```bash
-bin/setup
+bundle install
+rails db:prepare
 rails db:seed
 rails server
 ```
