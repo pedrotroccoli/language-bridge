@@ -1,5 +1,7 @@
 # Architecture
 
+> **Status:** This document describes the target architecture. The Rails application and infrastructure are not yet implemented — see [GitHub milestones](https://github.com/pedrotroccoli/language-bridge/milestones) for progress.
+
 ## System Overview
 
 ![System Architecture](system-architecture.png)
