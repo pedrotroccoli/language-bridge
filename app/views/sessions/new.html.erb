@@ -1,16 +1,24 @@
-<% content_for :title, "Sign in" %>
+<% content_for :title, "Sign in · Language Bridge" %>
 
-<section class="auth">
-  <h1>Sign in to Language Bridge</h1>
+<section class="auth-card">
+  <header>
+    <h1>Welcome to Language Bridge</h1>
+    <p class="subtitle">Open-source translation management for your team.</p>
+  </header>
 
   <% if User.none? %>
     <p class="hint">No accounts yet — the first email to sign in becomes the admin.</p>
   <% end %>
 
   <%= form_with url: sign_in_path, method: :post, local: true do |form| %>
-    <%= form.label :email, "Email" %>
-    <%= form.email_field :email, required: true, autofocus: true %>
-
-    <%= form.submit "Send sign-in link" %>
+    <div class="field">
+      <%= form.label :email, "Email" %>
+      <%= form.email_field :email, required: true, autofocus: true, placeholder: "you@example.com" %>
+    </div>
+    <%= form.submit "Continue with email", class: "btn" %>
   <% end %>
+
+  <p class="legal">
+    By continuing you agree to receive a one-time sign-in link by email.
+  </p>
 </section>

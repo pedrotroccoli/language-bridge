@@ -1,12 +1,19 @@
-<% content_for :title, "Accept invitation" %>
+<% content_for :title, "Accept invitation · Language Bridge" %>
 
-<section class="auth">
-  <h1>You're invited to Language Bridge</h1>
-
-  <p><strong><%= @invitation.inviter.email %></strong> invited you to join as <strong><%= @invitation.role %></strong>.</p>
+<section class="auth-card">
+  <header>
+    <h1>You're invited</h1>
+    <p class="subtitle">
+      <strong><%= @invitation.inviter.email %></strong> invited you to join Language Bridge as
+      <strong><%= @invitation.role %></strong>.
+    </p>
+  </header>
 
   <%= form_with url: claim_invitation_path(token: @invitation.token), method: :post, local: true do |form| %>
-    <%= form.email_field :email, value: @invitation.email, readonly: true %>
-    <%= form.submit "Accept and sign in" %>
+    <div class="field">
+      <%= form.label :email, "Email" %>
+      <%= form.email_field :email, value: @invitation.email, readonly: true %>
+    </div>
+    <%= form.submit "Accept and sign in", class: "btn" %>
   <% end %>
 </section>
