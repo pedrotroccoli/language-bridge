@@ -33,4 +33,16 @@ class UserTest < ActiveSupport::TestCase
     user = User.create!(email: "default@example.com")
     assert_equal "translator", user.role
   end
+
+  test "only admin can administer projects" do
+    project = projects(:main_app)
+    assert     users(:admin).can_administer_project?(project)
+    assert_not users(:translator).can_administer_project?(project)
+    assert_not users(:viewer).can_administer_project?(project)
+  end
+
+  test "can_administer_project? works without a project arg" do
+    assert     users(:admin).can_administer_project?
+    assert_not users(:translator).can_administer_project?
+  end
 end

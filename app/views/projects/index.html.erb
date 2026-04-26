@@ -1,0 +1,66 @@
+<% content_for :title, "Projects" %>
+
+<section class="container stack" data-controller="search">
+  <% if @projects.any? %>
+    <header class="toolbar">
+      <h1 class="toolbar__title">Projects</h1>
+
+      <div class="toolbar__search searchbar">
+        <i class="iconoir-search searchbar__icon" aria-hidden="true"></i>
+        <input type="search"
+               placeholder="Search projects..."
+               aria-label="Search projects"
+               data-search-target="input"
+               data-action="input->search#filter">
+        <button type="button"
+                class="searchbar__clear"
+                data-search-target="clearBtn"
+                data-action="click->search#clear"
+                aria-label="Clear search"
+                hidden>
+          <i class="iconoir-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <% if current_user.admin? %>
+        <%= link_to new_project_path, class: "btn toolbar__action" do %>
+          <i class="iconoir-plus" aria-hidden="true"></i>
+          New project
+        <% end %>
+      <% end %>
+    </header>
+
+    <div class="project-grid">
+      <%= render partial: "project", collection: @projects, cached: ->(project) { [ project, current_user ] } %>
+    </div>
+
+    <div class="empty-state empty-state--search" data-search-target="empty" hidden>
+      <i class="iconoir-search empty-state__illustration" aria-hidden="true"></i>
+      <h2>No projects found</h2>
+      <p>Your search for <strong>"<span data-search-target="query"></span>"</strong> returned no results. Try again.</p>
+      <div class="empty-state__actions">
+        <button type="button" class="btn btn-secondary" data-action="search#clear">Clear search</button>
+        <% if current_user.admin? %>
+          <%= link_to new_project_path, class: "btn" do %>
+            <i class="iconoir-plus" aria-hidden="true"></i>
+            New project
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <%= image_tag "empty-projects.png", class: "empty-state__image", alt: "" %>
+      <h2>No projects yet</h2>
+      <p>Manage translations, locales, namespaces and keys for each project here.</p>
+      <% if current_user.admin? %>
+        <div class="empty-state__actions">
+          <%= link_to new_project_path, class: "btn" do %>
+            <i class="iconoir-plus" aria-hidden="true"></i>
+            Create your first project
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

@@ -32,16 +32,27 @@
       <% if signed_in? %>
         <nav>
           <ul>
+            <li>
+              <%= link_to projects_path, class: "nav-link" do %>
+                <i class="iconoir-folder" aria-hidden="true"></i>
+                <span>Projects</span>
+              <% end %>
+            </li>
             <% if current_user.admin? %>
-              <li><%= link_to "Invitations", invitations_path %></li>
+              <li>
+                <%= link_to invitations_path, class: "nav-link" do %>
+                  <i class="iconoir-mail" aria-hidden="true"></i>
+                  <span>Invitations</span>
+                <% end %>
+              </li>
             <% end %>
             <li>
               <%= button_to sign_out_path,
                     method: :delete,
-                    class: "icon-btn",
-                    title: "Sign out",
+                    class: "nav-btn",
                     "aria-label": "Sign out" do %>
                 <i class="iconoir-log-out" aria-hidden="true"></i>
+                <span>Sign out</span>
               <% end %>
             </li>
           </ul>
