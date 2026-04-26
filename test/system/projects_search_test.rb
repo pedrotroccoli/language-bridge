@@ -16,6 +16,19 @@ class ProjectsSearchTest < ApplicationSystemTestCase
     assert_no_selector "article.project-card:not([hidden])", text: "Marketing Site"
   end
 
+  test "search is case-insensitive" do
+    sign_in_as(users(:admin))
+    visit projects_path
+
+    find('input[data-search-target="input"]').fill_in with: "MAIN"
+    assert_selector "article.project-card:not([hidden])", count: 1
+    assert_text "Main App"
+
+    find('input[data-search-target="input"]').fill_in with: "marketing"
+    assert_selector "article.project-card:not([hidden])", count: 1
+    assert_text "Marketing Site"
+  end
+
   test "shows empty state when no matches and clears via button" do
     sign_in_as(users(:admin))
     visit projects_path
