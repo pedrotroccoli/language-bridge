@@ -1,31 +1,86 @@
 <% content_for :title, @project.name %>
 
 <section class="container stack">
-  <header style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <h1><%= @project.name %></h1>
+  <%= link_to projects_path, class: "back-link" do %>
+    <i class="iconoir-arrow-left" aria-hidden="true"></i>
+    Back to projects
+  <% end %>
+
+  <header class="page-header" data-controller="inline-edit">
+    <div class="page-header__meta">
+      <% if current_user.admin? %>
+        <div class="title-row" data-inline-edit-target="display">
+          <h1 data-action="dblclick->inline-edit#edit"><%= @project.name %></h1>
+          <button type="button"
+                  class="title-edit-btn"
+                  data-action="click->inline-edit#edit"
+                  aria-label="Edit name">
+            <i class="iconoir-edit-pencil" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <%= form_with model: @project,
+              html: {
+                hidden: true,
+                class: "title-edit-form",
+                data: { "inline-edit-target": "form", action: "keydown->inline-edit#keydown" }
+              } do |f| %>
+          <%= f.text_field :name, required: true, data: { "inline-edit-target": "input" } %>
+          <%= f.submit "Save", class: "btn" %>
+          <button type="button" class="btn btn-secondary" data-action="click->inline-edit#cancel">Cancel</button>
+        <% end %>
+      <% else %>
+        <h1><%= @project.name %></h1>
+      <% end %>
       <p class="muted"><code><%= @project.slug %></code></p>
     </div>
+
     <% if current_user.admin? %>
-      <div style="display: flex; gap: 0.5rem;">
-        <%= link_to "Edit", edit_project_path(@project), class: "btn", style: "width: auto;" %>
-        <%= button_to "Delete",
-              project_path(@project),
+      <div class="page-header__actions">
+        <%= button_to project_path(@project),
               method: :delete,
-              class: "btn btn-secondary",
-              style: "width: auto;",
-              data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } %>
+              class: "btn btn-secondary btn--danger",
+              data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } do %>
+          <i class="iconoir-trash" aria-hidden="true"></i>
+          Delete
+        <% end %>
       </div>
     <% end %>
   </header>
 
-  <dl class="data-list">
-    <div><dt>Locales</dt><dd><%= @project.locales_count %></dd></div>
-    <div><dt>Namespaces</dt><dd><%= @project.namespaces_count %></dd></div>
-    <div><dt>Translation keys</dt><dd><%= @project.translation_keys_count %></dd></div>
-  </dl>
+  <div class="stats-grid">
+    <article class="stat-card stat-card--locales">
+      <div class="stat-card__icon stat-card__icon--locales">
+        <i class="iconoir-globe" aria-hidden="true"></i>
+      </div>
+      <div class="stat-card__label">Locales</div>
+      <div class="stat-card__count"><%= @project.locales_count %></div>
+    </article>
 
-  <p class="muted">Namespaces, locales, and keys land here next.</p>
+    <article class="stat-card stat-card--namespaces">
+      <div class="stat-card__icon stat-card__icon--namespaces">
+        <i class="iconoir-folder" aria-hidden="true"></i>
+      </div>
+      <div class="stat-card__label">Namespaces</div>
+      <div class="stat-card__count"><%= @project.namespaces_count %></div>
+    </article>
 
-  <p><%= link_to "← Back to projects", projects_path %></p>
+    <article class="stat-card stat-card--keys">
+      <div class="stat-card__icon stat-card__icon--keys">
+        <i class="iconoir-translate" aria-hidden="true"></i>
+      </div>
+      <div class="stat-card__label">Translation keys</div>
+      <div class="stat-card__count"><%= @project.translation_keys_count %></div>
+    </article>
+
+    <article class="stat-card stat-card--updated">
+      <div class="stat-card__icon stat-card__icon--updated">
+        <i class="iconoir-clock" aria-hidden="true"></i>
+      </div>
+      <div class="stat-card__label">Updated</div>
+      <div class="stat-card__count" style="font-size: 0.95rem; font-weight: 500;"><%= time_ago_in_words(@project.updated_at) %> ago</div>
+    </article>
+  </div>
+
+  <p class="muted">Locales, namespaces and keys will be managed here soon.</p>
 </section>

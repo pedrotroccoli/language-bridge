@@ -1,21 +1,26 @@
-<% cache [ project, current_user.role ] do %>
-  <%= turbo_frame_tag dom_id(project) do %>
-    <tr>
-      <td><%= link_to project.name, project_path(project) %></td>
-      <td class="muted"><code><%= project.slug %></code></td>
-      <td><%= project.locales_count %></td>
-      <td><%= project.namespaces_count %></td>
-      <td><%= project.translation_keys_count %></td>
-      <td>
-        <% if current_user.admin? %>
-          <%= link_to "Edit", edit_project_path(project), class: "btn-link" %>
-          <%= button_to "Delete",
-                project_path(project),
-                method: :delete,
-                class: "btn-link",
-                data: { turbo_confirm: "Delete project \"#{project.name}\"? This cannot be undone." } %>
-        <% end %>
-      </td>
-    </tr>
-  <% end %>
+<% cache [ project, current_user ] do %>
+  <article id="<%= dom_id(project) %>"
+           class="project-card"
+           data-search-target="card"
+           data-searchable-text="<%= "#{project.name} #{project.slug}" %>">
+    <h2 class="project-card__title">
+      <%= link_to project.name, project_path(project) %>
+    </h2>
+    <p class="project-card__slug"><code><%= project.slug %></code></p>
+
+    <ul class="project-card__stats">
+      <li class="project-card__stat">
+        <i class="iconoir-globe" aria-hidden="true"></i>
+        <strong><%= project.locales_count %></strong> locales
+      </li>
+      <li class="project-card__stat">
+        <i class="iconoir-folder" aria-hidden="true"></i>
+        <strong><%= project.namespaces_count %></strong> namespaces
+      </li>
+      <li class="project-card__stat">
+        <i class="iconoir-translate" aria-hidden="true"></i>
+        <strong><%= project.translation_keys_count %></strong> keys
+      </li>
+    </ul>
+  </article>
 <% end %>
