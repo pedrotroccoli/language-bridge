@@ -15,6 +15,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     get project_path(projects(:main_app))
     assert_response :success
+    assert_select ".page-header__actions", count: 0
   end
 
   test "viewer can list and view projects" do
@@ -31,25 +32,24 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:translator))
 
     get new_project_path
-    assert_redirected_to root_path
-    assert_match(/Admins only/, flash[:alert])
+    assert_response :forbidden
 
     get edit_project_path(projects(:main_app))
-    assert_redirected_to root_path
+    assert_response :forbidden
 
     assert_no_difference "Project.count" do
       post projects_path, params: { project: { name: "Sneaky" } }
     end
-    assert_redirected_to root_path
+    assert_response :forbidden
 
     patch project_path(projects(:main_app)), params: { project: { name: "Hijacked" } }
-    assert_redirected_to root_path
+    assert_response :forbidden
     assert_equal "Main App", projects(:main_app).reload.name
 
     assert_no_difference "Project.count" do
       delete project_path(projects(:main_app))
     end
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "admin creates project with auto-generated slug" do

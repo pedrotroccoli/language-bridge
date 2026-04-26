@@ -1,6 +1,6 @@
 class ProjectsController < ApplicationController
-  before_action :require_admin, only: %i[ new create edit update destroy ]
-  before_action :set_project,   only: %i[ show edit update destroy ]
+  before_action :set_project,                    only: %i[ show edit update destroy ]
+  before_action :ensure_can_administer_project,  only: %i[ new create edit update destroy ]
 
   def index
     @projects = Project.alphabetically
@@ -48,5 +48,9 @@ class ProjectsController < ApplicationController
 
     def project_params
       params.expect(project: %i[ name ])
+    end
+
+    def ensure_can_administer_project
+      head :forbidden unless current_user&.can_administer_project?(@project)
     end
 end

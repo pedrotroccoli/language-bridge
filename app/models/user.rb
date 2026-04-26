@@ -13,4 +13,8 @@ class User < ApplicationRecord
   def admin?      = role == "admin"
   def translator? = role == "translator"
   def viewer?     = role == "viewer"
+
+  def can_administer_project?(_project = nil)
+    admin?
+  end
 end
