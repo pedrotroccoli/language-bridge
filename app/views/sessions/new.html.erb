@@ -1,0 +1,16 @@
+<% content_for :title, "Sign in" %>
+
+<section class="auth">
+  <h1>Sign in to Language Bridge</h1>
+
+  <% if User.none? %>
+    <p class="hint">No accounts yet — the first email to sign in becomes the admin.</p>
+  <% end %>
+
+  <%= form_with url: sign_in_path, method: :post, local: true do |form| %>
+    <%= form.label :email, "Email" %>
+    <%= form.email_field :email, required: true, autofocus: true %>
+
+    <%= form.submit "Send sign-in link" %>
+  <% end %>
+</section>
