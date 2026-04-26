@@ -1,0 +1,31 @@
+<% content_for :title, @project.name %>
+
+<section class="container stack">
+  <header style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1><%= @project.name %></h1>
+      <p class="muted"><code><%= @project.slug %></code></p>
+    </div>
+    <% if current_user.admin? %>
+      <div style="display: flex; gap: 0.5rem;">
+        <%= link_to "Edit", edit_project_path(@project), class: "btn", style: "width: auto;" %>
+        <%= button_to "Delete",
+              project_path(@project),
+              method: :delete,
+              class: "btn btn-secondary",
+              style: "width: auto;",
+              data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } %>
+      </div>
+    <% end %>
+  </header>
+
+  <dl class="data-list">
+    <div><dt>Locales</dt><dd><%= @project.locales_count %></dd></div>
+    <div><dt>Namespaces</dt><dd><%= @project.namespaces_count %></dd></div>
+    <div><dt>Translation keys</dt><dd><%= @project.translation_keys_count %></dd></div>
+  </dl>
+
+  <p class="muted">Namespaces, locales, and keys land here next.</p>
+
+  <p><%= link_to "← Back to projects", projects_path %></p>
+</section>

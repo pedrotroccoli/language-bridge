@@ -1,0 +1,10 @@
+<% content_for :title, "Edit #{@project.name}" %>
+
+<section class="auth-card">
+  <header>
+    <h1>Edit project</h1>
+    <p class="subtitle">Slug stays as <code><%= @project.slug %></code>.</p>
+  </header>
+
+  <%= render "form" %>
+</section>

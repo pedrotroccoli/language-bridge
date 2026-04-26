@@ -1,0 +1,30 @@
+<% content_for :title, "Projects" %>
+
+<section class="container stack">
+  <header style="display: flex; align-items: center; justify-content: space-between;">
+    <h1>Projects</h1>
+    <% if current_user.admin? %>
+      <%= link_to "New project", new_project_path, class: "btn", style: "width: auto;" %>
+    <% end %>
+  </header>
+
+  <% if @projects.any? %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Locales</th>
+          <th>Namespaces</th>
+          <th>Keys</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= render partial: "project", collection: @projects, cached: ->(project) { [ project, current_user.role ] } %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="muted">No projects yet.</p>
+  <% end %>
+</section>

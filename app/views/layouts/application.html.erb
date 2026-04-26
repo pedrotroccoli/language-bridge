@@ -32,6 +32,7 @@
       <% if signed_in? %>
         <nav>
           <ul>
+            <li><%= link_to "Projects", projects_path %></li>
             <% if current_user.admin? %>
               <li><%= link_to "Invitations", invitations_path %></li>
             <% end %>

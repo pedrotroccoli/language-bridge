@@ -1,0 +1,17 @@
+<%= form_with model: @project, local: true do |form| %>
+  <% if @project.errors.any? %>
+    <ul class="errors">
+      <% @project.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true, autofocus: true, placeholder: "My App" %>
+  </div>
+
+  <%= form.submit class: "btn" %>
+  <%= link_to "Cancel", (@project.persisted? ? project_path(@project) : projects_path), class: "btn btn-secondary" %>
+<% end %>
