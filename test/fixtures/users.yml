@@ -1,0 +1,11 @@
+admin:
+  email: admin@example.com
+  role: admin
+
+translator:
+  email: translator@example.com
+  role: translator
+
+viewer:
+  email: viewer@example.com
+  role: viewer

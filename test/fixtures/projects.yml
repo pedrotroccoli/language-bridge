@@ -1,0 +1,7 @@
+main_app:
+  name: Main App
+  slug: main-app
+
+marketing_site:
+  name: Marketing Site
+  slug: marketing-site
