@@ -1,0 +1,9 @@
+fresh:
+  user: admin
+  token: <%= SecureRandom.alphanumeric(36) %>
+  expires_at: <%= 10.minutes.from_now %>
+
+expired:
+  user: admin
+  token: <%= SecureRandom.alphanumeric(36) %>
+  expires_at: <%= 1.hour.ago %>

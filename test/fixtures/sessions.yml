@@ -1,0 +1,5 @@
+admin_session:
+  user: admin
+  token: <%= SecureRandom.alphanumeric(36) %>
+  user_agent: TestAgent
+  ip_address: 127.0.0.1

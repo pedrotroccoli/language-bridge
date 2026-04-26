@@ -1,0 +1,31 @@
+<% content_for :title, "Invite a teammate" %>
+
+<section class="auth-card">
+  <header>
+    <h1>Invite a teammate</h1>
+    <p class="subtitle">They'll get an email with a one-time accept link.</p>
+  </header>
+
+  <%= form_with model: @invitation, local: true do |form| %>
+    <% if @invitation.errors.any? %>
+      <ul class="errors">
+        <% @invitation.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <div class="field">
+      <%= form.label :email %>
+      <%= form.email_field :email, required: true, autofocus: true, placeholder: "teammate@example.com" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :role %>
+      <%= form.select :role, User::ROLES.map { |r| [r.titleize, r] } %>
+    </div>
+
+    <%= form.submit "Send invitation", class: "btn" %>
+    <%= link_to "Cancel", invitations_path, class: "btn btn-secondary" %>
+  <% end %>
+</section>

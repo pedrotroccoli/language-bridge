@@ -1,0 +1,13 @@
+pending:
+  email: invitee@example.com
+  role: translator
+  token: <%= SecureRandom.alphanumeric(36) %>
+  inviter: admin
+  expires_at: <%= 5.days.from_now %>
+
+expired:
+  email: stale@example.com
+  role: viewer
+  token: <%= SecureRandom.alphanumeric(36) %>
+  inviter: admin
+  expires_at: <%= 1.day.ago %>
