@@ -1,0 +1,9 @@
+You're invited to Language Bridge
+=================================
+
+<%= @invitation.inviter.email %> invited you to join as <%= @invitation.role %>.
+
+Accept the invitation:
+<%= @url %>
+
+This link expires on <%= @invitation.expires_at.strftime("%B %d, %Y") %>.

@@ -1,0 +1,24 @@
+<% content_for :title, "Invite a teammate" %>
+
+<section>
+  <h1>Invite a teammate</h1>
+
+  <%= form_with model: @invitation, local: true do |form| %>
+    <% if @invitation.errors.any? %>
+      <ul class="errors">
+        <% @invitation.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= form.label :email %>
+    <%= form.email_field :email, required: true, autofocus: true %>
+
+    <%= form.label :role %>
+    <%= form.select :role, User::ROLES.map { |r| [r.titleize, r] } %>
+
+    <%= form.submit "Send invitation" %>
+    <%= link_to "Cancel", invitations_path %>
+  <% end %>
+</section>

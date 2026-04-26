@@ -1,0 +1,34 @@
+<% content_for :title, "Invitations" %>
+
+<section>
+  <h1>Pending invitations</h1>
+
+  <p><%= link_to "Invite someone", new_invitation_path %></p>
+
+  <% if @invitations.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Invited</th>
+          <th>Expires</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @invitations.each do |invitation| %>
+          <tr>
+            <td><%= invitation.email %></td>
+            <td><%= invitation.role %></td>
+            <td><%= time_ago_in_words(invitation.created_at) %> ago</td>
+            <td><%= invitation.expires_at.strftime("%b %d, %Y") %></td>
+            <td><%= button_to "Revoke", invitation_path(invitation), method: :delete, data: { turbo_confirm: "Revoke invitation for #{invitation.email}?" } %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No pending invitations.</p>
+  <% end %>
+</section>
