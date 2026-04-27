@@ -1,6 +1,8 @@
 class Project < ApplicationRecord
   before_validation :generate_slug, on: :create
 
+  has_many :namespaces, dependent: :restrict_with_exception
+
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
 

@@ -1,0 +1,11 @@
+main_app_common:
+  project: main_app
+  name: common
+
+main_app_marketing:
+  project: main_app
+  name: marketing
+
+marketing_site_common:
+  project: marketing_site
+  name: common
