@@ -3,13 +3,13 @@ class ProjectsController < ApplicationController
   before_action :ensure_can_administer_project,  only: %i[ new create edit update destroy ]
 
   def index
-    @projects = Project.alphabetically
+    @projects = current_user.accessible_projects.alphabetically
     fresh_when etag: [ @projects, current_user ]
   end
 
   def show
     @namespaces = @project.namespaces.alphabetically
-    @new_namespace = @project.namespaces.build(name: params[:new_namespace])
+    @new_namespace = @project.namespaces.build(name: flash[:invalid_namespace_name])
   end
 
   def new
@@ -44,7 +44,7 @@ class ProjectsController < ApplicationController
 
   private
     def set_project
-      @project = Project.find_by!(slug: params[:id])
+      @project = current_user.accessible_projects.find_by!(slug: params[:id])
     end
 
     def project_params

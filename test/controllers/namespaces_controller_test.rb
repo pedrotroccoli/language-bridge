@@ -41,7 +41,7 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference "Namespace.count" do
       post project_namespaces_path(project), params: { namespace: { name: "" } }
     end
-    assert_redirected_to project_path(project, new_namespace: "")
+    assert_redirected_to project_path(project)
     assert_match(/blank/i, flash[:alert])
   end
 
@@ -52,8 +52,41 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference "Namespace.count" do
       post project_namespaces_path(project), params: { namespace: { name: "Has Space" } }
     end
-    assert_redirected_to project_path(project, new_namespace: "Has Space")
+    assert_redirected_to project_path(project)
     assert flash[:alert].present?
+    assert_equal "Has Space", flash[:invalid_namespace_name]
+  end
+
+  test "duplicate name caught by validation returns alert" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+    project.namespaces.create!(name: "racing")
+
+    assert_no_difference "Namespace.count" do
+      post project_namespaces_path(project), params: { namespace: { name: "racing" } }
+    end
+    assert flash[:alert].present?
+  end
+
+  test "rescues RecordNotUnique when validation is bypassed (true race)" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+    project.namespaces.create!(name: "raced")
+
+    uniqueness_validator = Namespace.validators_on(:name).find { |v| v.is_a?(ActiveRecord::Validations::UniquenessValidator) }
+    Namespace._validators[:name].delete(uniqueness_validator)
+    Namespace.skip_callback(:validate, :before, uniqueness_validator)
+
+    begin
+      assert_no_difference "Namespace.count" do
+        post project_namespaces_path(project), params: { namespace: { name: "raced" } }
+      end
+      assert_redirected_to project_path(project)
+      assert_match(/already been taken/i, flash[:alert])
+    ensure
+      Namespace._validators[:name] << uniqueness_validator
+      Namespace.set_callback(:validate, :before, uniqueness_validator)
+    end
   end
 
   test "admin updates namespace" do

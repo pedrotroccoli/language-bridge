@@ -35,7 +35,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
     t.integer "translation_keys_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["project_id", "name"], name: "index_namespaces_on_project_id_and_name", unique: true
-    t.index ["project_id"], name: "index_namespaces_on_project_id"
   end
 
   create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

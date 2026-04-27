@@ -7,32 +7,34 @@ class NamespacesController < ApplicationController
     @namespace = @project.namespaces.build(namespace_params)
 
     if @namespace.save
-      redirect_to project_path(@project), notice: "Namespace created."
+      redirect_to project_path(@project), notice: "Namespace created.", status: :see_other
     else
-      redirect_to project_path(@project, new_namespace: namespace_params[:name]),
-                  alert: @namespace.errors.full_messages.to_sentence,
-                  status: :see_other
+      redirect_with_invalid_namespace
     end
+  rescue ActiveRecord::RecordNotUnique
+    @namespace.errors.add(:name, "has already been taken")
+    redirect_with_invalid_namespace
   end
 
   def update
     if @namespace.update(namespace_params)
-      redirect_to project_path(@project), notice: "Namespace updated."
+      redirect_to project_path(@project), notice: "Namespace updated.", status: :see_other
     else
-      redirect_to project_path(@project),
-                  alert: @namespace.errors.full_messages.to_sentence,
-                  status: :see_other
+      redirect_with_namespace_alert
     end
+  rescue ActiveRecord::RecordNotUnique
+    @namespace.errors.add(:name, "has already been taken")
+    redirect_with_namespace_alert
   end
 
   def destroy
     @namespace.destroy!
-    redirect_to project_path(@project), notice: "Namespace deleted."
+    redirect_to project_path(@project), notice: "Namespace deleted.", status: :see_other
   end
 
   private
     def set_project
-      @project = Project.find_by!(slug: params[:project_id])
+      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
     end
 
     def set_namespace
@@ -45,5 +47,16 @@ class NamespacesController < ApplicationController
 
     def ensure_can_administer_project
       head :forbidden unless current_user&.can_administer_project?(@project)
+    end
+
+    def redirect_with_invalid_namespace
+      flash[:invalid_namespace_name] = namespace_params[:name]
+      redirect_with_namespace_alert
+    end
+
+    def redirect_with_namespace_alert
+      redirect_to project_path(@project),
+                  alert: @namespace.errors.full_messages.to_sentence,
+                  status: :see_other
     end
 end

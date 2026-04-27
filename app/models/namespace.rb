@@ -1,5 +1,6 @@
 class Namespace < ApplicationRecord
   NAME_FORMAT = /\A[a-z0-9][a-z0-9_\-\.]*\z/
+  private_constant :NAME_FORMAT
 
   belongs_to :project, counter_cache: true
 
