@@ -99,10 +99,13 @@
     </header>
 
     <% if current_user.admin? %>
-      <dialog class="modal" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop">
+      <dialog class="modal"
+              data-modal-target="dialog"
+              data-action="click->modal#closeOnBackdrop"
+              aria-labelledby="new-namespace-title">
         <div class="modal__inner">
           <header class="modal__header">
-            <h3 class="modal__title">New namespace</h3>
+            <h3 id="new-namespace-title" class="modal__title">New namespace</h3>
             <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
               <i class="iconoir-xmark" aria-hidden="true"></i>
             </button>
@@ -117,7 +120,7 @@
                     autocomplete: "off",
                     autocapitalize: "none",
                     spellcheck: "false",
-                    data: { action: "input->slug-input#sanitize keydown->slug-input#block" } %>
+                    data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
               <small class="muted">Lowercase letters, digits, <code>-</code>, <code>_</code>, <code>.</code> (no leading separator).</small>
             </div>
 

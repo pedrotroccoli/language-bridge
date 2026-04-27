@@ -5,11 +5,12 @@ export default class extends Controller {
   static values = { openOnConnect: Boolean }
 
   connect() {
-    if (this.openOnConnectValue) this.open()
+    if (this.openOnConnectValue && this.hasDialogTarget) this.open()
   }
 
   open(event) {
     event?.preventDefault()
+    if (!this.hasDialogTarget || this.dialogTarget.open) return
     this.dialogTarget.showModal()
     const firstInput = this.dialogTarget.querySelector("input, textarea, select")
     firstInput?.focus()
@@ -17,10 +18,10 @@ export default class extends Controller {
 
   close(event) {
     event?.preventDefault()
-    this.dialogTarget.close()
+    if (this.hasDialogTarget && this.dialogTarget.open) this.dialogTarget.close()
   }
 
   closeOnBackdrop(event) {
-    if (event.target === this.dialogTarget) this.dialogTarget.close()
+    if (this.hasDialogTarget && event.target === this.dialogTarget) this.dialogTarget.close()
   }
 }

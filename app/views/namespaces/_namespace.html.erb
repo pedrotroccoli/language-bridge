@@ -16,14 +16,14 @@
             local: true,
             data: { controller: "slug-input" } do |form| %>
         <div class="field-row">
-          <div class="field" style="flex: 1;">
+          <div class="field field--grow">
             <%= form.label :name, "Rename" %>
             <%= form.text_field :name, required: true,
                   pattern: "[a-z0-9][a-z0-9_\\-\\.]*",
                   autocomplete: "off",
                   autocapitalize: "none",
                   spellcheck: "false",
-                  data: { action: "input->slug-input#sanitize keydown->slug-input#block" } %>
+                  data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
           </div>
           <%= form.submit "Save", class: "btn" %>
         </div>

@@ -3,6 +3,17 @@ import { Controller } from "@hotwired/stimulus"
 const ALLOWED = /[a-z0-9_\-\.]/
 
 export default class extends Controller {
+  prevent(event) {
+    if (event.inputType !== "insertText") return
+    if (!event.data) return
+    for (const ch of event.data.toLowerCase()) {
+      if (!ALLOWED.test(ch)) {
+        event.preventDefault()
+        return
+      }
+    }
+  }
+
   sanitize(event) {
     const input = event.target
     const before = input.value
@@ -23,9 +34,5 @@ export default class extends Controller {
       input.value = cleaned
       input.setSelectionRange(newCaret, newCaret)
     }
-  }
-
-  block(event) {
-    if (event.key === " ") event.preventDefault()
   }
 }
