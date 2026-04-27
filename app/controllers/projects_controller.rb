@@ -8,7 +8,8 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    fresh_when etag: [ @project, current_user ]
+    @namespaces = @project.namespaces.alphabetically
+    @new_namespace = @project.namespaces.build(name: params[:new_namespace])
   end
 
   def new
