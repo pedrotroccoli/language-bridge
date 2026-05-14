@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_053621) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,6 +26,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_053621) do
     t.index ["email"], name: "index_invitations_on_email", unique: true, where: "(accepted_at IS NULL)"
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
     t.index ["token"], name: "index_invitations_on_token", unique: true
+  end
+
+  create_table "namespaces", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.uuid "project_id", null: false
+    t.integer "translation_keys_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "name"], name: "index_namespaces_on_project_id_and_name", unique: true
   end
 
   create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -69,6 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_053621) do
   end
 
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "namespaces", "projects"
   add_foreign_key "sessions", "users"
   add_foreign_key "sign_in_tokens", "users"
 end

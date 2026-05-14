@@ -17,4 +17,8 @@ class User < ApplicationRecord
   def can_administer_project?(_project = nil)
     admin?
   end
+
+  def accessible_projects
+    Project.all
+  end
 end

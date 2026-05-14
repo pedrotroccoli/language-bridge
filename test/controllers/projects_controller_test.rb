@@ -96,9 +96,10 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "admin destroys project" do
     sign_in_as(users(:admin))
+    project = Project.create!(name: "Disposable")
 
     assert_difference "Project.count", -1 do
-      delete project_path(projects(:main_app))
+      delete project_path(project)
     end
     assert_redirected_to projects_path
   end

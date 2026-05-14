@@ -82,5 +82,79 @@
     </article>
   </div>
 
-  <p class="muted">Locales, namespaces and keys will be managed here soon.</p>
+  <section class="namespaces-section"
+           data-controller="modal"
+           data-modal-open-on-connect-value="<%= @new_namespace.name.present? %>">
+    <header class="section-header section-header--split">
+      <h2 class="section-header__title">
+        <i class="iconoir-folder" aria-hidden="true"></i>
+        Namespaces
+      </h2>
+      <% if current_user.admin? %>
+        <button type="button" class="btn section-header__action" data-action="click->modal#open">
+          <i class="iconoir-plus" aria-hidden="true"></i>
+          New namespace
+        </button>
+      <% end %>
+    </header>
+
+    <% if current_user.admin? %>
+      <dialog class="modal"
+              data-modal-target="dialog"
+              data-action="click->modal#closeOnBackdrop"
+              aria-labelledby="new-namespace-title">
+        <div class="modal__inner">
+          <header class="modal__header">
+            <h3 id="new-namespace-title" class="modal__title">New namespace</h3>
+            <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
+              <i class="iconoir-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <%= form_with model: [ @project, @new_namespace ], local: true, data: { controller: "slug-input" }, html: { class: "modal__body stack" } do |form| %>
+            <div class="field">
+              <%= form.label :name, "Name" %>
+              <%= form.text_field :name, required: true,
+                    placeholder: "common, auth, marketing.cta",
+                    pattern: "[a-z0-9][a-z0-9_\\-\\.]*",
+                    autocomplete: "off",
+                    autocapitalize: "none",
+                    spellcheck: "false",
+                    data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
+              <small class="muted">Lowercase letters, digits, <code>-</code>, <code>_</code>, <code>.</code> (no leading separator).</small>
+            </div>
+
+            <footer class="modal__footer">
+              <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
+              <%= form.submit "Create", class: "btn" %>
+            </footer>
+          <% end %>
+        </div>
+      </dialog>
+    <% end %>
+
+    <% if @namespaces.any? %>
+      <ul class="namespace-list">
+        <% @namespaces.each do |namespace| %>
+          <li>
+            <%= render "namespaces/namespace", namespace: namespace, project: @project %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="empty-state">
+        <%= image_tag "empty-projects.png", class: "empty-state__image", alt: "" %>
+        <h2>No namespaces yet</h2>
+        <p>Namespaces group translation keys (e.g. <code>common</code>, <code>auth</code>, <code>marketing.cta</code>).</p>
+        <% if current_user.admin? %>
+          <div class="empty-state__actions">
+            <button type="button" class="btn" data-action="click->modal#open">
+              <i class="iconoir-plus" aria-hidden="true"></i>
+              Create first namespace
+            </button>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
 </section>
