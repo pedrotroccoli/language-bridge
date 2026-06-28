@@ -26,7 +26,12 @@ class TranslationKeysController < ApplicationController
   end
 
   def destroy
+    # The namespace survives, so any artifact that included this key must be
+    # rebuilt without it. Capture the affected locales before the cascade.
+    affected_locale_ids = @translation_key.translations.published.distinct.pluck(:locale_id)
     @translation_key.destroy!
+    affected_locale_ids.each { |locale_id| Translation::Artifact.rebuild(@namespace.id, locale_id) }
+
     redirect_to namespace_path, notice: "Key deleted.", status: :see_other
   end
 

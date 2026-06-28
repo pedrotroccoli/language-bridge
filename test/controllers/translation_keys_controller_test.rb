@@ -58,4 +58,20 @@ class TranslationKeysControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to project_namespace_path(@project, @namespace)
   end
+
+  test "destroying a published key rebuilds its artifact without the key" do
+    sign_in_as(users(:admin))
+    greeting = translations(:greeting_en) # key "greeting", value "Hello"
+    greeting.publish(by: users(:admin))
+    assert_equal({ "greeting" => "Hello" }, JSON.parse(artifact.file.download))
+
+    delete project_namespace_translation_key_path(@project, @namespace, greeting.translation_key)
+
+    assert_equal({}, JSON.parse(artifact.file.download))
+  end
+
+  private
+    def artifact
+      Translation::Artifact.find_by!(namespace: @namespace, locale: locales(:main_app_en))
+    end
 end

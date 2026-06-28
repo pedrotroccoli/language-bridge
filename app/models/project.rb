@@ -7,6 +7,7 @@ class Project < ApplicationRecord
   has_many :locales, dependent: :destroy
   has_many :translation_keys, dependent: :destroy
   has_many :translations, dependent: :destroy
+  has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true

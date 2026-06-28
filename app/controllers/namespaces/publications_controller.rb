@@ -8,7 +8,9 @@ class Namespaces::PublicationsController < ApplicationController
   def create
     drafts = Translation.drafts_in_namespace(@namespace)
     count = drafts.count
-    drafts.find_each { |translation| translation.publish(by: current_user) }
+    Translation::Artifact.batch do
+      drafts.find_each { |translation| translation.publish(by: current_user) }
+    end
 
     notice = count.zero? ? "Nothing to publish." : "Published #{count} #{"translation".pluralize(count)}."
     redirect_to project_namespace_path(@project, @namespace), notice: notice, status: :see_other

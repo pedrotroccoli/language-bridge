@@ -22,5 +22,17 @@ Rails.application.routes.draw do
     end
   end
 
+  # Public i18n delivery. Mounted under /cdn to avoid any collision with
+  # top-level app routes. namespace may contain dots, so the optional ".json"
+  # suffix (i18next loadPath convention) is stripped in the controller rather
+  # than parsed as a format.
+  get "cdn/:project_slug/:locale/:namespace" => "delivery#show",
+      as: :delivery,
+      format: false,
+      constraints: {
+        locale: /[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*/,
+        namespace: /[a-z0-9][a-z0-9_\-.]*/
+      }
+
   root "projects#index"
 end

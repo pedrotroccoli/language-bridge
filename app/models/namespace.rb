@@ -5,6 +5,7 @@ class Namespace < ApplicationRecord
   belongs_to :project, counter_cache: true
 
   has_many :translation_keys, dependent: :destroy
+  has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy
 
   validates :name, presence: true,
                    format: { with: NAME_FORMAT, message: "must be lowercase alnum with -, _, . (no leading separator)" },

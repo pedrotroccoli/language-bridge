@@ -30,6 +30,7 @@ class Translation < ApplicationRecord
 
   before_update :snapshot_version, if: -> { value_changed? }
   after_update :discard_publication, if: -> { saved_change_to_value? }
+  after_commit :rebuild_artifact_after_discard, on: :update
 
   def draft?
     value.present? && publication.nil?
@@ -48,6 +49,7 @@ class Translation < ApplicationRecord
       create_publication!(publisher: by)
       track_event("published", creator: by)
     end
+    Translation::Artifact.touch_for(self)
     publication
   end
 
@@ -59,6 +61,7 @@ class Translation < ApplicationRecord
       association(:publication).reset
       track_event("unpublished")
     end
+    Translation::Artifact.touch_for(self)
   end
 
   private
@@ -87,5 +90,16 @@ class Translation < ApplicationRecord
       publication.destroy!
       association(:publication).reset
       track_event("unpublished", metadata: { reason: "value_changed" })
+
+      # Defer the artifact rebuild to after_commit: it uploads a blob, which must
+      # not run inside the save transaction.
+      @publication_discarded = true
+    end
+
+    def rebuild_artifact_after_discard
+      return unless @publication_discarded
+
+      @publication_discarded = false
+      Translation::Artifact.touch_for(self)
     end
 end
