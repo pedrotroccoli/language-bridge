@@ -10,6 +10,8 @@ class ProjectsController < ApplicationController
   def show
     @namespaces = @project.namespaces.alphabetically
     @new_namespace = @project.namespaces.build(name: flash[:invalid_namespace_name])
+    @locales = @project.locales.alphabetically
+    @new_locale = @project.locales.build(code: flash[:invalid_locale_code])
   end
 
   def new

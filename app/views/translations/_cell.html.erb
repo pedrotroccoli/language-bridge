@@ -1,0 +1,40 @@
+<%= turbo_frame_tag dom_id(translation_key, "locale_#{locale.id}") do %>
+  <% published = translation&.publication.present? %>
+  <div class="translation-cell<%= " translation-cell--missing" if translation.nil? || translation.value.blank? %><%= " translation-cell--published" if published %>">
+    <% if current_user.can_edit_translations?(project) %>
+      <% if translation&.persisted? %>
+        <%= form_with model: [ project, translation ], method: :patch, data: { controller: "autosave" } do |form| %>
+          <%= form.text_area :value, rows: 2, placeholder: "—", autocomplete: "off",
+                "aria-label": "#{translation_key.key} in #{locale.code}",
+                data: { action: "change->autosave#save" } %>
+        <% end %>
+      <% else %>
+        <%= form_with url: project_translations_path(project), method: :post, data: { controller: "autosave" } do |form| %>
+          <%= form.hidden_field :translation_key_id, value: translation_key.id, name: "translation[translation_key_id]" %>
+          <%= form.hidden_field :locale_id, value: locale.id, name: "translation[locale_id]" %>
+          <%= form.text_area :value, name: "translation[value]", rows: 2, placeholder: "—", autocomplete: "off",
+                "aria-label": "#{translation_key.key} in #{locale.code}",
+                data: { action: "change->autosave#save" } %>
+        <% end %>
+      <% end %>
+
+      <% if translation&.persisted? && translation.value.present? %>
+        <div class="translation-cell__actions">
+          <% if published %>
+            <%= button_to project_translation_publication_path(project, translation),
+                  method: :delete, class: "btn-link" do %>Unpublish<% end %>
+          <% else %>
+            <span class="draft-badge">Draft</span>
+            <%= button_to project_translation_publication_path(project, translation),
+                  method: :post, class: "btn-link" do %>Publish<% end %>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <span class="translation-cell__value"><%= translation&.value.presence || "—" %></span>
+      <% if translation&.value.present? && !published %>
+        <span class="draft-badge">Draft</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

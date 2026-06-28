@@ -26,6 +26,7 @@
     --accent-fg: oklch(99% 0 0);
     --danger: oklch(55% 0.18 25);
     --success: oklch(50% 0.12 150);
+    --warning: oklch(70% 0.16 75);
     --footer-bg: oklch(20% 0 0);
     --footer-fg: oklch(96% 0 0);
     --radius: 0.25rem;
@@ -585,6 +586,8 @@
   .section-header { display: flex; align-items: center; gap: 0.5rem; }
   .section-header--split { justify-content: space-between; }
   .section-header__action { max-width: 15rem; }
+  .section-header__actions { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .section-header__actions form { margin: 0; }
   .section-header__title {
     margin: 0;
     font-size: 1.25rem;
@@ -682,4 +685,149 @@
     display: grid;
     gap: 0.75rem;
   }
+
+  /* Locales — mirror the namespace list/item visuals */
+  .locale-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .locale-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .locale-item__summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .locale-item__summary::-webkit-details-marker { display: none; }
+  .locale-item__summary:hover { background: var(--subtle); }
+  .locale-item__icon { color: var(--muted); font-size: 1.125rem; }
+  .locale-item__code { font-weight: 600; font-family: var(--font-mono, monospace); }
+  .locale-item__meta { color: var(--muted); font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem; }
+  .locale-item__chevron { color: var(--muted); transition: transform 0.15s ease; }
+  .locale-item[open] > .locale-item__summary { border-bottom: 1px solid var(--border); }
+  .locale-item[open] .locale-item__chevron { transform: rotate(180deg); }
+  .locale-item__body {
+    padding: 1rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  /* Translation editor grid */
+  .key-search { max-width: 24rem; }
+  .key-meta { font-size: 0.8125rem; margin: 0.25rem 0 0.5rem; }
+  .translation-grid-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    background: var(--bg);
+  }
+  .translation-grid {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 32rem;
+  }
+  .translation-grid thead th {
+    text-align: left;
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--subtle);
+    font-family: var(--font-heading);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .translation-grid__key-head { position: sticky; left: 0; z-index: 1; }
+  .locale-tag {
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    padding: 0.0625rem 0.375rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .translation-row + .translation-row { border-top: 1px solid var(--border); }
+  .translation-row__key {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg);
+    position: sticky;
+    left: 0;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .translation-cell-wrap {
+    padding: 0.5rem 0.625rem;
+    vertical-align: top;
+    min-width: 12rem;
+  }
+  .translation-cell { display: grid; gap: 0.375rem; }
+  .translation-cell textarea {
+    width: 100%;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    font-family: var(--font-body);
+    padding: 0.5rem 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+    resize: vertical;
+  }
+  .translation-cell textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  .translation-cell--missing textarea {
+    border-style: dashed;
+    background: oklch(97% 0 0);
+  }
+  .translation-cell__value { white-space: pre-wrap; }
+  .translation-cell__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+  }
+  .translation-cell__actions form { display: inline; }
+  .publish-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--success);
+  }
+  .draft-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: oklch(48% 0.12 75);
+    padding: 0.0625rem 0.375rem;
+    border: 1px solid color-mix(in oklch, var(--warning) 45%, var(--border));
+    border-radius: var(--radius);
+    background: color-mix(in oklch, var(--warning) 18%, var(--bg));
+  }
+  .publish-all-slot { display: inline-flex; }
+  .publish-all-slot button[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .icon-btn--danger:hover, .icon-btn--danger:focus-visible { color: var(--danger); }
 }

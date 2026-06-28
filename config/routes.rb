@@ -11,7 +11,17 @@ Rails.application.routes.draw do
   post "invitations/:token", to: "invitations#accept", as: :claim_invitation
 
   resources :projects, only: %i[ index new create show edit update destroy ] do
-    resources :namespaces, only: %i[ create update destroy ], constraints: { id: %r{[^/]+} }
+    resources :locales, only: %i[ create update destroy ]
+    resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
+      member do
+        post :publish_all
+        post :import
+      end
+      resources :translation_keys, only: %i[ create update destroy ]
+    end
+    resources :translations, only: %i[ create update ] do
+      resource :publication, only: %i[ create destroy ], module: :translations
+    end
   end
 
   root "projects#index"

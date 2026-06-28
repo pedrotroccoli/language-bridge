@@ -10,6 +10,11 @@
   </summary>
 
   <div class="namespace-item__body">
+    <%= link_to project_namespace_path(project, namespace), class: "btn" do %>
+      <i class="iconoir-translate" aria-hidden="true"></i>
+      Open translations
+    <% end %>
+
     <% if current_user.admin? %>
       <%= form_with model: [ project, namespace ],
             method: :patch,

@@ -1,0 +1,23 @@
+<% translations_by_locale = translation_key.translations.index_by(&:locale_id) %>
+<tr class="translation-row" id="<%= dom_id(translation_key) %>">
+  <th scope="row" class="translation-row__key">
+    <code><%= translation_key.key %></code>
+    <% if current_user.can_administer_project?(project) %>
+      <%= button_to project_namespace_translation_key_path(project, namespace, translation_key),
+            method: :delete,
+            class: "icon-btn icon-btn--danger",
+            "aria-label": "Delete key #{translation_key.key}",
+            data: { turbo_confirm: "Delete key \"#{translation_key.key}\" and all its translations?" } do %>
+        <i class="iconoir-trash" aria-hidden="true"></i>
+      <% end %>
+    <% end %>
+  </th>
+
+  <% locales.each do |locale| %>
+    <td class="translation-cell-wrap">
+      <%= render "translations/cell",
+            project: project, translation_key: translation_key, locale: locale,
+            translation: translations_by_locale[locale.id] %>
+    </td>
+  <% end %>
+</tr>
