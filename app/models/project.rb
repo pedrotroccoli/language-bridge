@@ -1,7 +1,11 @@
 class Project < ApplicationRecord
+  include Eventable
+
   before_validation :generate_slug, on: :create
 
   has_many :namespaces, dependent: :restrict_with_exception
+  has_many :locales, dependent: :destroy
+  has_many :translation_keys, dependent: :destroy
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
