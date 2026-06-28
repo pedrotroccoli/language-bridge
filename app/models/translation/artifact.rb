@@ -30,11 +30,11 @@ class Translation::Artifact < ApplicationRecord
     end
 
     def batch
-      Thread.current[:translation_artifact_batch] = Set.new
+      Current.artifact_rebuild_batch = Set.new
       yield
       batched.each { |namespace_id, locale_id| rebuild(namespace_id, locale_id) }
     ensure
-      Thread.current[:translation_artifact_batch] = nil
+      Current.artifact_rebuild_batch = nil
     end
 
     # Backfill: materialize every (namespace, locale) that currently has
@@ -63,7 +63,7 @@ class Translation::Artifact < ApplicationRecord
 
     private
       def batched
-        Thread.current[:translation_artifact_batch]
+        Current.artifact_rebuild_batch
       end
   end
 end
