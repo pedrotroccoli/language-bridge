@@ -1,232 +1,114 @@
 <% content_for :title, @project.name %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
 
-<section class="container stack">
-  <%= link_to projects_path, class: "back-link" do %>
-    <i class="iconoir-arrow-left" aria-hidden="true"></i>
-    Back to projects
-  <% end %>
+<%= render "projects/tabs", project: @project, active: :overview %>
 
-  <header class="page-header" data-controller="inline-edit">
-    <div class="page-header__meta">
-      <% if current_user.admin? %>
-        <div class="title-row" data-inline-edit-target="display">
-          <h1 data-action="dblclick->inline-edit#edit"><%= @project.name %></h1>
-          <button type="button"
-                  class="title-edit-btn"
-                  data-action="click->inline-edit#edit"
-                  aria-label="Edit name">
-            <i class="iconoir-edit-pencil" aria-hidden="true"></i>
-          </button>
+<div class="mx-auto w-full max-w-[1320px] px-6 py-7">
+  <h2 class="m-0 mb-[18px] text-[17px] font-semibold text-ink">Overview</h2>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-[30px]">
+    <% [
+         { label: "Locales", icon: "language", value: @project.locales_count },
+         { label: "Namespaces", icon: "folder", value: @project.namespaces_count },
+         { label: "Translation keys", icon: "translate", value: number_with_delimiter(@project.translation_keys_count) },
+         { label: "Last updated", icon: "schedule", value: "#{time_ago_in_words(@project.updated_at)} ago", small: true }
+       ].each do |s| %>
+      <div class="border border-line rounded-[9px] px-[18px] py-4">
+        <div class="flex items-center justify-between">
+          <div class="eyebrow"><%= s[:label] %></div>
+          <%= mi s[:icon], size: 18, css: "text-faint-2" %>
         </div>
-
-        <%= form_with model: @project,
-              html: {
-                hidden: true,
-                class: "title-edit-form",
-                data: { "inline-edit-target": "form", action: "keydown->inline-edit#keydown" }
-              } do |f| %>
-          <%= f.text_field :name, required: true, data: { "inline-edit-target": "input" } %>
-          <%= f.submit "Save", class: "btn" %>
-          <button type="button" class="btn btn-secondary" data-action="click->inline-edit#cancel">Cancel</button>
+        <% if s[:small] %>
+          <div class="text-[16px] font-semibold text-ink mt-3.5"><%= s[:value] %></div>
+        <% else %>
+          <div class="text-[27px] font-semibold -tracking-[0.02em] text-ink mt-3 tabular-nums"><%= s[:value] %></div>
         <% end %>
-      <% else %>
-        <h1><%= @project.name %></h1>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ----- Locales ----- %>
+  <section class="locales-section" data-controller="modal" data-modal-open-on-connect-value="<%= @new_locale.code.present? %>">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-baseline gap-[11px]">
+        <h3 class="m-0 text-[16px] font-semibold text-ink">Locales</h3>
+        <span class="font-mono text-[12px] text-faint"><%= format("%02d", @locales.size) %></span>
+      </div>
+      <% if current_user.admin? %>
+        <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New locale</button>
       <% end %>
-      <p class="muted"><code><%= @project.slug %></code></p>
     </div>
 
     <% if current_user.admin? %>
-      <div class="page-header__actions">
-        <%= button_to project_path(@project),
-              method: :delete,
-              class: "btn btn-secondary btn--danger",
-              data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } do %>
-          <i class="iconoir-trash" aria-hidden="true"></i>
-          Delete
-        <% end %>
-      </div>
-    <% end %>
-  </header>
-
-  <div class="stats-grid">
-    <article class="stat-card stat-card--locales">
-      <div class="stat-card__icon stat-card__icon--locales">
-        <i class="iconoir-globe" aria-hidden="true"></i>
-      </div>
-      <div class="stat-card__label">Locales</div>
-      <div class="stat-card__count"><%= @project.locales_count %></div>
-    </article>
-
-    <article class="stat-card stat-card--namespaces">
-      <div class="stat-card__icon stat-card__icon--namespaces">
-        <i class="iconoir-folder" aria-hidden="true"></i>
-      </div>
-      <div class="stat-card__label">Namespaces</div>
-      <div class="stat-card__count"><%= @project.namespaces_count %></div>
-    </article>
-
-    <article class="stat-card stat-card--keys">
-      <div class="stat-card__icon stat-card__icon--keys">
-        <i class="iconoir-translate" aria-hidden="true"></i>
-      </div>
-      <div class="stat-card__label">Translation keys</div>
-      <div class="stat-card__count"><%= @project.translation_keys_count %></div>
-    </article>
-
-    <article class="stat-card stat-card--updated">
-      <div class="stat-card__icon stat-card__icon--updated">
-        <i class="iconoir-clock" aria-hidden="true"></i>
-      </div>
-      <div class="stat-card__label">Updated</div>
-      <div class="stat-card__count" style="font-size: 0.95rem; font-weight: 500;"><%= time_ago_in_words(@project.updated_at) %> ago</div>
-    </article>
-  </div>
-
-  <section class="locales-section"
-           data-controller="modal"
-           data-modal-open-on-connect-value="<%= @new_locale.code.present? %>">
-    <header class="section-header section-header--split">
-      <h2 class="section-header__title">
-        <i class="iconoir-globe" aria-hidden="true"></i>
-        Locales
-      </h2>
-      <% if current_user.admin? %>
-        <button type="button" class="btn section-header__action" data-action="click->modal#open">
-          <i class="iconoir-plus" aria-hidden="true"></i>
-          New locale
-        </button>
-      <% end %>
-    </header>
-
-    <% if current_user.admin? %>
-      <dialog class="modal"
-              data-modal-target="dialog"
-              data-action="click->modal#closeOnBackdrop"
-              aria-labelledby="new-locale-title">
-        <div class="modal__inner">
-          <header class="modal__header">
-            <h3 id="new-locale-title" class="modal__title">New locale</h3>
-            <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
-              <i class="iconoir-xmark" aria-hidden="true"></i>
-            </button>
-          </header>
-
-          <%= form_with model: [ @project, @new_locale ], local: true, html: { class: "modal__body stack" } do |form| %>
-            <div class="field">
-              <%= form.label :code, "Code" %>
-              <%= form.text_field :code, required: true,
-                    placeholder: "en, pt-BR, es",
-                    pattern: "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*",
-                    autocomplete: "off",
-                    autocapitalize: "none",
-                    spellcheck: "false" %>
-              <small class="muted">IETF language tag, e.g. <code>en</code>, <code>pt-BR</code>, <code>es-419</code>.</small>
-            </div>
-
-            <footer class="modal__footer">
-              <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
-              <%= form.submit "Create", class: "btn" %>
-            </footer>
-          <% end %>
-        </div>
-      </dialog>
+      <%= render "locales/new_modal", project: @project %>
     <% end %>
 
     <% if @locales.any? %>
-      <ul class="locale-list">
+      <ul class="border border-line rounded-[9px] overflow-hidden">
         <% @locales.each do |locale| %>
-          <li><%= render "locales/locale", locale: locale, project: @project %></li>
+          <li><%= render "locales/locale", locale: locale, project: @project, coverage: @locale_coverage[locale.id], editor_namespace: @namespaces.first %></li>
         <% end %>
       </ul>
     <% else %>
-      <div class="empty-state">
-        <h2>No locales yet</h2>
-        <p>Add the languages this project translates into (e.g. <code>en</code>, <code>pt-BR</code>).</p>
+      <div class="empty-state border border-dashed border-line rounded-[12px] py-12 px-6 flex flex-col items-center text-center bg-surface-2">
+        <div class="w-[52px] h-[52px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-4"><%= mi "language", size: 26 %></div>
+        <h3 class="m-0 text-[16px] font-semibold text-ink">No locales yet</h3>
+        <p class="mt-2 mb-5 text-[13.5px] text-mut max-w-[340px] leading-relaxed">Add the languages this project translates into (e.g. <code class="font-mono">en</code>, <code class="font-mono">pt-BR</code>).</p>
         <% if current_user.admin? %>
-          <div class="empty-state__actions">
-            <button type="button" class="btn" data-action="click->modal#open">
-              <i class="iconoir-plus" aria-hidden="true"></i>
-              Add first locale
-            </button>
-          </div>
+          <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>Add first locale</button>
         <% end %>
       </div>
     <% end %>
   </section>
 
-  <section class="namespaces-section"
-           data-controller="modal"
-           data-modal-open-on-connect-value="<%= @new_namespace.name.present? %>">
-    <header class="section-header section-header--split">
-      <h2 class="section-header__title">
-        <i class="iconoir-folder" aria-hidden="true"></i>
-        Namespaces
-      </h2>
+  <%# ----- Namespaces ----- %>
+  <section class="mt-[30px]" data-controller="modal" data-modal-open-on-connect-value="<%= @new_namespace.name.present? %>">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-baseline gap-[11px]">
+        <h3 class="m-0 text-[16px] font-semibold text-ink">Namespaces</h3>
+        <span class="font-mono text-[12px] text-faint"><%= format("%02d", @namespaces.size) %></span>
+      </div>
       <% if current_user.admin? %>
-        <button type="button" class="btn section-header__action" data-action="click->modal#open">
-          <i class="iconoir-plus" aria-hidden="true"></i>
-          New namespace
-        </button>
+        <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New namespace</button>
       <% end %>
-    </header>
+    </div>
 
     <% if current_user.admin? %>
-      <dialog class="modal"
-              data-modal-target="dialog"
-              data-action="click->modal#closeOnBackdrop"
-              aria-labelledby="new-namespace-title">
-        <div class="modal__inner">
-          <header class="modal__header">
-            <h3 id="new-namespace-title" class="modal__title">New namespace</h3>
-            <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
-              <i class="iconoir-xmark" aria-hidden="true"></i>
-            </button>
-          </header>
-
-          <%= form_with model: [ @project, @new_namespace ], local: true, data: { controller: "slug-input" }, html: { class: "modal__body stack" } do |form| %>
-            <div class="field">
-              <%= form.label :name, "Name" %>
-              <%= form.text_field :name, required: true,
-                    placeholder: "common, auth, marketing.cta",
-                    pattern: "[a-z0-9][a-z0-9_\\-\\.]*",
-                    autocomplete: "off",
-                    autocapitalize: "none",
-                    spellcheck: "false",
-                    data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
-              <small class="muted">Lowercase letters, digits, <code>-</code>, <code>_</code>, <code>.</code> (no leading separator).</small>
-            </div>
-
-            <footer class="modal__footer">
-              <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
-              <%= form.submit "Create", class: "btn" %>
-            </footer>
-          <% end %>
+      <dialog class="modal w-[440px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="new-namespace-title">
+        <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line-2">
+          <h3 id="new-namespace-title" class="m-0 text-[16px] font-semibold text-ink">New namespace</h3>
+          <button type="button" class="text-mut-2 hover:text-ink" data-action="click->modal#close" aria-label="Close"><%= mi "close", size: 18 %></button>
         </div>
+        <%= form_with model: [ @project, @new_namespace ], local: true, data: { controller: "slug-input" }, html: { class: "p-[22px] flex flex-col gap-4" } do |form| %>
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :name, "Name", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.text_field :name, required: true, placeholder: "common, auth, marketing.cta",
+                  pattern: "[a-z0-9][a-z0-9_\\-\\.]*", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
+                  class: "font-mono text-[13px]", data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
+            <small class="text-[12px] text-mut-2">Lowercase letters, digits, <code class="font-mono">-</code>, <code class="font-mono">_</code>, <code class="font-mono">.</code> (no leading separator).</small>
+          </div>
+          <div class="flex justify-end gap-[9px] pt-1">
+            <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
+            <%= form.submit "Create", class: "btn" %>
+          </div>
+        <% end %>
       </dialog>
     <% end %>
 
     <% if @namespaces.any? %>
-      <ul class="namespace-list">
+      <ul class="border border-line rounded-[9px] overflow-hidden">
         <% @namespaces.each do |namespace| %>
-          <li>
-            <%= render "namespaces/namespace", namespace: namespace, project: @project %>
-          </li>
+          <li><%= render "namespaces/namespace", namespace: namespace, project: @project %></li>
         <% end %>
       </ul>
     <% else %>
-      <div class="empty-state">
-        <%= image_tag "empty-projects.png", class: "empty-state__image", alt: "" %>
-        <h2>No namespaces yet</h2>
-        <p>Namespaces group translation keys (e.g. <code>common</code>, <code>auth</code>, <code>marketing.cta</code>).</p>
+      <div class="empty-state border border-dashed border-line rounded-[12px] py-12 px-6 flex flex-col items-center text-center bg-surface-2">
+        <div class="w-[52px] h-[52px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-4"><%= mi "folder", size: 26 %></div>
+        <h3 class="m-0 text-[16px] font-semibold text-ink">No namespaces yet</h3>
+        <p class="mt-2 mb-5 text-[13.5px] text-mut max-w-[340px] leading-relaxed">Namespaces group translation keys (e.g. <code class="font-mono">common</code>, <code class="font-mono">auth</code>, <code class="font-mono">marketing.cta</code>).</p>
         <% if current_user.admin? %>
-          <div class="empty-state__actions">
-            <button type="button" class="btn" data-action="click->modal#open">
-              <i class="iconoir-plus" aria-hidden="true"></i>
-              Create first namespace
-            </button>
-          </div>
+          <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>Create first namespace</button>
         <% end %>
       </div>
     <% end %>
   </section>
-</section>
+</div>

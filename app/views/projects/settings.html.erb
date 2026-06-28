@@ -1,0 +1,121 @@
+<% content_for :title, "Settings · #{@project.name}" %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
+
+<%= render "projects/tabs", project: @project, active: :settings %>
+
+<div class="mx-auto w-full max-w-[1320px] px-6 py-7">
+  <div class="max-w-[920px]">
+  <h2 class="m-0 mb-[18px] text-[17px] font-semibold text-ink">Settings</h2>
+
+  <%# ---- General ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "tune", size: 19, css: "text-ink-3" %>General</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Project name and slug.</div>
+
+    <%= form_with model: @project, local: true do |form| %>
+      <% if @project.errors.any? %>
+        <ul class="mb-4 text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+          <% @project.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+        </ul>
+      <% end %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-[7px]">
+          <%= form.label :name, "Name", class: "text-[12.5px] font-medium text-ink-2" %>
+          <%= form.text_field :name, required: true, class: "text-[14px]" %>
+        </div>
+        <div class="flex flex-col gap-[7px]">
+          <label class="text-[12.5px] font-medium text-ink-2">Slug</label>
+          <div class="h-[42px] flex items-center px-[13px] border border-line rounded-[9px] font-mono text-[13px] text-ink-3 bg-surface-2"><%= @project.slug %></div>
+        </div>
+      </div>
+      <div class="flex justify-end mt-[18px]">
+        <%= form.submit "Save changes", class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ---- Locales ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "language", size: 19, css: "text-ink-3" %>Locales</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-4">Rename or remove the languages this project translates into. Add new ones from the project overview.</div>
+    <% if @locales.any? %>
+      <div class="border border-line rounded-[9px] overflow-hidden">
+        <% @locales.each do |locale| %>
+          <div class="flex items-center gap-2 px-4 py-[10px] border-b border-line-3 last:border-b-0">
+            <%= form_with model: [ @project, locale ], method: :patch, local: true, html: { class: "flex items-center gap-2 flex-1 min-w-0" } do |f| %>
+              <%= mi "language", size: 18, css: "text-faint" %>
+              <%= f.text_field :code, required: true, "aria-label": "Locale code",
+                    pattern: "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
+                    class: "font-mono text-[13px] max-w-[180px]" %>
+              <% if locale_name(locale.code) %><span class="text-[13px] text-ink-3 truncate min-w-0"><%= locale_name(locale.code) %></span><% end %>
+              <%= f.submit "Save", class: "btn-secondary ml-auto" %>
+            <% end %>
+            <%= button_to project_locale_path(@project, locale), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
+                  "aria-label": "Delete locale #{locale.code}",
+                  data: { turbo_confirm: "Delete locale \"#{locale.code}\"? All its translations will be removed." } do %>
+              <%= mi "delete", size: 16 %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-[13px] text-mut">No locales yet.</p>
+    <% end %>
+  </div>
+
+  <%# ---- Namespaces ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "folder", size: 19, css: "text-ink-3" %>Namespaces</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-4">Rename or remove namespaces. Add new ones from the project overview.</div>
+    <% if @namespaces.any? %>
+      <div class="border border-line rounded-[9px] overflow-hidden">
+        <% @namespaces.each do |namespace| %>
+          <div class="flex items-center gap-2 px-4 py-[10px] border-b border-line-3 last:border-b-0">
+            <%= form_with model: [ @project, namespace ], method: :patch, local: true, data: { controller: "slug-input" }, html: { class: "flex items-center gap-2 flex-1 min-w-0" } do |f| %>
+              <%= mi "folder", size: 18, css: "text-faint" %>
+              <%= f.text_field :name, required: true, "aria-label": "Namespace name",
+                    pattern: "[a-z0-9][a-z0-9_\\-\\.]*", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
+                    class: "font-mono text-[13px] max-w-[260px]", data: { action: "beforeinput->slug-input#prevent input->slug-input#sanitize" } %>
+              <%= f.submit "Save", class: "btn-secondary" %>
+            <% end %>
+            <%= button_to project_namespace_path(@project, namespace), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
+                  "aria-label": "Delete namespace #{namespace.name}",
+                  data: { turbo_confirm: "Delete namespace \"#{namespace.name}\"? This cannot be undone." } do %>
+              <%= mi "delete", size: 16 %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-[13px] text-mut">No namespaces yet.</p>
+    <% end %>
+  </div>
+
+  <%# ---- Delivery / CDN ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "cloud", size: 19, css: "text-ink-3" %>Public delivery</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-4">Published translations are served as JSON from the CDN endpoint (i18next <code class="font-mono">loadPath</code> convention).</div>
+    <div class="bg-[#0d0d0d] rounded-[9px] px-[18px] py-4 font-mono text-[12.5px] leading-[2] text-[#e4e4e4] overflow-x-auto">
+      <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/{locale}/{namespace}</div>
+      <% sample_locale = @project.locales.alphabetically.first&.code || "en" %>
+      <% sample_ns = @project.namespaces.alphabetically.first&.name || "common" %>
+      <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/<%= sample_locale %>/<%= sample_ns %></div>
+    </div>
+  </div>
+
+  <%# ---- Danger zone ---- %>
+  <div class="border border-danger-border rounded-[11px] px-[22px] py-5 bg-danger-soft">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-danger-ink"><%= mi "warning", size: 19 %>Danger zone</div>
+    <div class="flex items-center justify-between gap-6 mt-[10px] flex-wrap">
+      <div>
+        <div class="text-[13.5px] font-semibold text-ink">Delete this project</div>
+        <div class="text-[13px] text-ink-3 mt-[3px]">Permanently removes all keys, locales and translations. This cannot be undone.</div>
+      </div>
+      <%= button_to project_path(@project), method: :delete, class: "btn-secondary btn-danger flex-none",
+            data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } do %>
+        <%= mi "delete", size: 16 %>Delete project
+      <% end %>
+    </div>
+  </div>
+  </div>
+</div>
