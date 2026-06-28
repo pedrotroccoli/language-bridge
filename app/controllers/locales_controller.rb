@@ -9,12 +9,14 @@ class LocalesController < ApplicationController
   rescue_from ActiveRecord::RecordNotUnique, with: :code_already_taken
 
   def create
-    @locale = @project.locales.build(locale_params)
+    codes = Array(params.dig(:locale, :codes)).filter_map { |c| c.to_s.strip.presence }.uniq
 
-    if @locale.save
-      redirect_to project_path(@project), notice: "Locale created.", status: :see_other
+    if codes.any?
+      create_many(codes)
+    elsif params.dig(:locale, :code).present?
+      create_one
     else
-      redirect_with_invalid_locale
+      redirect_to project_path(@project), alert: "Pick at least one language.", status: :see_other
     end
   end
 
@@ -38,6 +40,37 @@ class LocalesController < ApplicationController
 
     def locale_params
       params.expect(locale: %i[ code ])
+    end
+
+    def create_one
+      @locale = @project.locales.build(locale_params)
+
+      if @locale.save
+        redirect_to project_path(@project), notice: "Locale created.", status: :see_other
+      else
+        redirect_with_invalid_locale
+      end
+    end
+
+    # Add several locales at once; duplicates/invalid codes are skipped.
+    def create_many(codes)
+      results = codes.map { |code| @project.locales.create(code: code) }
+      created = results.count(&:persisted?)
+      skipped = results.reject(&:persisted?).map(&:code)
+
+      if created.zero?
+        redirect_to project_path(@project),
+                    alert: "Couldn't add #{skipped.to_sentence} (already present or invalid).",
+                    status: :see_other
+      elsif skipped.any?
+        redirect_to project_path(@project),
+                    notice: "Added #{created} #{"locale".pluralize(created)} · skipped #{skipped.to_sentence}.",
+                    status: :see_other
+      else
+        redirect_to project_path(@project),
+                    notice: "Added #{created} #{"locale".pluralize(created)}.",
+                    status: :see_other
+      end
     end
 
     def code_already_taken

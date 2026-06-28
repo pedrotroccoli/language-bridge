@@ -1,39 +1,21 @@
-<details class="locale-item" id="<%= dom_id(locale) %>">
-  <summary class="locale-item__summary">
-    <i class="iconoir-globe locale-item__icon" aria-hidden="true"></i>
-    <span class="locale-item__code"><%= locale.code %></span>
-    <span class="locale-item__meta">
-      <i class="iconoir-translate" aria-hidden="true"></i>
-      <strong><%= locale.translations_count %></strong> translations
-    </span>
-    <i class="iconoir-nav-arrow-down locale-item__chevron" aria-hidden="true"></i>
-  </summary>
+<% target = local_assigns[:editor_namespace] ? project_namespace_path(project, editor_namespace, locales: [ locale.code ]) : nil %>
+<% row = "flex items-center justify-between px-[18px] py-[15px] border-b border-line-3 last:border-b-0" %>
 
-  <div class="locale-item__body">
-    <% if current_user.admin? %>
-      <%= form_with model: [ project, locale ], method: :patch, local: true do |form| %>
-        <div class="field-row">
-          <div class="field field--grow">
-            <%= form.label :code, "Rename" %>
-            <%= form.text_field :code, required: true,
-                  pattern: "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*",
-                  autocomplete: "off",
-                  autocapitalize: "none",
-                  spellcheck: "false" %>
-          </div>
-          <%= form.submit "Save", class: "btn" %>
-        </div>
-      <% end %>
+<% content = capture do %>
+  <span class="flex items-center gap-[11px] min-w-0">
+    <%= mi "language", size: 18, css: "text-faint" %>
+    <span class="font-mono text-[14px] font-semibold text-ink flex-none"><%= locale.code %></span>
+    <% if locale_name(locale.code) %><span class="text-[13.5px] text-ink-3 truncate"><%= locale_name(locale.code) %></span><% end %>
+  </span>
+  <span class="flex items-center gap-[18px]">
+    <span class="font-mono text-[12px] text-ink-3"><span class="text-ink font-semibold"><%= locale.translations_count %></span> translations</span>
+    <span class="font-mono text-[12px] text-accent font-semibold w-10 text-right"><%= coverage %>%</span>
+    <%= mi "chevron_right", size: 20, css: "text-faint-2" %>
+  </span>
+<% end %>
 
-      <%= button_to project_locale_path(project, locale),
-            method: :delete,
-            class: "btn btn-secondary btn--danger",
-            data: { turbo_confirm: "Delete locale \"#{locale.code}\"? All its translations will be removed." } do %>
-        <i class="iconoir-trash" aria-hidden="true"></i>
-        Delete locale
-      <% end %>
-    <% else %>
-      <p class="muted">Read-only view.</p>
-    <% end %>
-  </div>
-</details>
+<% if target %>
+  <%= link_to target, id: dom_id(locale), class: "#{row} no-underline hover:bg-surface-2 transition-colors" do %><%= content %><% end %>
+<% else %>
+  <div id="<%= dom_id(locale) %>" class="<%= row %>"><%= content %></div>
+<% end %>
