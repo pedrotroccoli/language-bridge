@@ -1,5 +1,6 @@
 class LocalesController < ApplicationController
-  before_action :set_project
+  include ProjectScoped
+
   before_action :set_locale,                    only: %i[ update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
 
@@ -33,20 +34,12 @@ class LocalesController < ApplicationController
   end
 
   private
-    def set_project
-      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
-    end
-
     def set_locale
       @locale = @project.locales.find(params[:id])
     end
 
     def locale_params
       params.expect(locale: %i[ code ])
-    end
-
-    def ensure_can_administer_project
-      head :forbidden unless current_user&.can_administer_project?(@project)
     end
 
     def redirect_with_invalid_locale

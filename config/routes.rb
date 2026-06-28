@@ -13,10 +13,8 @@ Rails.application.routes.draw do
   resources :projects, only: %i[ index new create show edit update destroy ] do
     resources :locales, only: %i[ create update destroy ]
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
-      member do
-        post :publish_all
-        post :import
-      end
+      resource :publication, only: :create, module: :namespaces
+      resource :import,      only: :create, module: :namespaces
       resources :translation_keys, only: %i[ create update destroy ]
     end
     resources :translations, only: %i[ create update ] do

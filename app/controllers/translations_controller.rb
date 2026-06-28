@@ -1,7 +1,7 @@
 class TranslationsController < ApplicationController
+  include ProjectScoped
   include TranslationCells
 
-  before_action :set_project
   before_action :ensure_can_edit_translations
 
   def create
@@ -9,9 +9,7 @@ class TranslationsController < ApplicationController
     translation_key = @project.translation_keys.find(attrs[:translation_key_id])
     locale = @project.locales.find(attrs[:locale_id])
 
-    @translation = Translation.find_or_initialize_by(translation_key: translation_key, locale: locale)
-    @translation.assign_attributes(value: attrs[:value], author: current_user)
-    @translation.save!
+    @translation = translation_key.set_translation(locale: locale, value: attrs[:value], author: current_user)
 
     respond_with_cell(@translation, "Translation saved.")
   end
@@ -24,24 +22,12 @@ class TranslationsController < ApplicationController
   end
 
   private
-    def set_project
-      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
-    end
-
-    def project_translations
-      Translation.joins(:translation_key).where(translation_keys: { project_id: @project.id })
-    end
-
     def create_params
       params.expect(translation: %i[ value translation_key_id locale_id ])
     end
 
     def update_params
       params.expect(translation: %i[ value ])
-    end
-
-    def ensure_can_edit_translations
-      head :forbidden unless current_user&.can_edit_translations?(@project)
     end
 
     # Replace just the cell's Turbo Frame so the update works regardless of the

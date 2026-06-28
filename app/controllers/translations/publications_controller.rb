@@ -1,33 +1,23 @@
 class Translations::PublicationsController < ApplicationController
+  include ProjectScoped
   include TranslationCells
 
-  before_action :set_project
   before_action :set_translation
   before_action :ensure_can_edit_translations
 
   def create
-    @translation.create_publication! unless @translation.publication
+    @translation.publish(by: current_user)
     respond_with_cell("Translation published.")
   end
 
   def destroy
-    @translation.publication&.destroy!
+    @translation.unpublish
     respond_with_cell("Translation unpublished.")
   end
 
   private
-    def set_project
-      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
-    end
-
     def set_translation
-      @translation = Translation.joins(:translation_key)
-                                .where(translation_keys: { project_id: @project.id })
-                                .find(params[:translation_id])
-    end
-
-    def ensure_can_edit_translations
-      head :forbidden unless current_user&.can_edit_translations?(@project)
+      @translation = project_translations.find(params[:translation_id])
     end
 
     def respond_with_cell(notice)

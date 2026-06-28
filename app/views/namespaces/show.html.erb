@@ -33,7 +33,7 @@
                 </button>
               </header>
 
-              <%= form_with url: import_project_namespace_path(@project, @namespace),
+              <%= form_with url: project_namespace_import_path(@project, @namespace),
                     method: :post, html: { class: "modal__body stack", enctype: "multipart/form-data" } do |form| %>
                 <div class="field">
                   <%= form.label :locale_id, "Locale" %>
@@ -125,12 +125,13 @@
   <% else %>
     <form class="searchbar key-search" role="search" method="get"
           action="<%= project_namespace_path(@project, @namespace) %>"
-          data-controller="search-form" data-turbo-frame="translation_keys">
+          data-controller="auto-submit" data-auto-submit-delay-value="300"
+          data-turbo-frame="translation_keys">
       <i class="iconoir-search searchbar__icon" aria-hidden="true"></i>
       <input type="search" name="q" value="<%= @query %>"
              placeholder="Search keys or values…" aria-label="Search keys or values"
              autocomplete="off" spellcheck="false"
-             data-action="input->search-form#submit">
+             data-action="input->auto-submit#submit">
     </form>
 
     <%= turbo_frame_tag "translation_keys" do %>

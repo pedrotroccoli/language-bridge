@@ -17,7 +17,7 @@ class TranslationEditorTest < ApplicationSystemTestCase
     visit project_namespace_path(@project, @namespace)
 
     within "##{cell_frame(@greeting, @en)}" do
-      input = find("input[type=text]")
+      input = find("textarea")
       input.fill_in with: "Hi there"
       input.send_keys :tab
       assert_button "Publish"

@@ -66,10 +66,4 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to project_path(project)
   end
-
-  private
-    def sign_in_as(user)
-      token = user.sign_in_tokens.create!
-      get sign_in_with_token_path(token: token.token)
-    end
 end

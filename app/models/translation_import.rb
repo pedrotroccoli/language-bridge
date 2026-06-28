@@ -3,7 +3,12 @@
 # stringified. Existing values are overwritten (Translation snapshots a Version
 # on change). Missing keys are created.
 class TranslationImport
-  Result = Struct.new(:keys_created, :translations_written, keyword_init: true)
+  Result = Struct.new(:keys_created, :translations_written, keyword_init: true) do
+    def summary(locale)
+      "Imported #{translations_written} #{"translation".pluralize(translations_written)} " \
+        "into #{locale.code} (#{keys_created} new #{"key".pluralize(keys_created)})."
+    end
+  end
 
   class Error < StandardError; end
 

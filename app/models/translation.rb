@@ -8,7 +8,7 @@ class Translation < ApplicationRecord
   has_one :publication, class_name: "Translation::Publication", dependent: :destroy
   has_one :review, class_name: "Translation::Review", dependent: :destroy
   has_one :approval, class_name: "Translation::Approval", dependent: :destroy
-  has_many :versions, class_name: "Translation::Version", dependent: :destroy
+  has_many :versions, class_name: "Translation::Version", dependent: :delete_all
 
   validates :translation_key_id, uniqueness: { scope: :locale_id }
 
@@ -16,7 +16,7 @@ class Translation < ApplicationRecord
   scope :unpublished, -> { where.missing(:publication) }
   scope :approved, -> { joins(:approval) }
   scope :under_review, -> { joins(:review) }
-  scope :missing, -> { where(value: nil) }
+  scope :untranslated, -> { where(value: nil) }
   scope :drafts, -> { where.not(value: [ nil, "" ]).where.missing(:publication) }
   scope :drafts_in_namespace, ->(namespace) {
     drafts.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
@@ -31,6 +31,28 @@ class Translation < ApplicationRecord
 
   def published?
     publication.present?
+  end
+
+  # Publishing/unpublishing is a state-record transition: create or destroy the
+  # Publication and record an event. Lives on the model so controllers stay thin.
+  def publish(by: Current.user)
+    return publication if published?
+
+    transaction do
+      create_publication!(publisher: by)
+      track_event("published")
+    end
+    publication
+  end
+
+  def unpublish
+    return unless published?
+
+    transaction do
+      publication.destroy!
+      association(:publication).reset
+      track_event("unpublished")
+    end
   end
 
   private

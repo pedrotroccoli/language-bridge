@@ -71,7 +71,7 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     namespace = namespaces(:main_app_common)
 
     assert_difference "Translation::Publication.count", 2 do
-      post publish_all_project_namespace_path(project, namespace)
+      post project_namespace_publication_path(project, namespace)
     end
     assert_redirected_to project_namespace_path(project, namespace)
     assert_match(/Published 2/, flash[:notice])
@@ -82,17 +82,17 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:translator))
     project = projects(:main_app)
     namespace = namespaces(:main_app_common)
-    post publish_all_project_namespace_path(project, namespace)
+    post project_namespace_publication_path(project, namespace)
 
     assert_no_difference "Translation::Publication.count" do
-      post publish_all_project_namespace_path(project, namespace)
+      post project_namespace_publication_path(project, namespace)
     end
     assert_match(/Nothing to publish/, flash[:notice])
   end
 
   test "viewer cannot publish_all" do
     sign_in_as(users(:viewer))
-    post publish_all_project_namespace_path(projects(:main_app), namespaces(:main_app_common))
+    post project_namespace_publication_path(projects(:main_app), namespaces(:main_app_common))
     assert_response :forbidden
   end
 
@@ -168,7 +168,7 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     greeting = translations(:greeting_en) # "Hello"
 
     assert_difference -> { namespace.translation_keys.count }, 3 do
-      post import_project_namespace_path(project, namespace),
+      post project_namespace_import_path(project, namespace),
            params: { locale_id: en.id, file: fixture_file_upload("sample_import.json", "application/json") }
     end
     assert_redirected_to project_namespace_path(project, namespace)
@@ -182,14 +182,14 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
 
   test "translator cannot import" do
     sign_in_as(users(:translator))
-    post import_project_namespace_path(projects(:main_app), namespaces(:main_app_common)),
+    post project_namespace_import_path(projects(:main_app), namespaces(:main_app_common)),
          params: { locale_id: locales(:main_app_en).id, file: fixture_file_upload("sample_import.json", "application/json") }
     assert_response :forbidden
   end
 
   test "import without locale shows alert" do
     sign_in_as(users(:admin))
-    post import_project_namespace_path(projects(:main_app), namespaces(:main_app_common)),
+    post project_namespace_import_path(projects(:main_app), namespaces(:main_app_common)),
          params: { file: fixture_file_upload("sample_import.json", "application/json") }
     assert_match(/Select a locale/, flash[:alert])
   end
@@ -350,10 +350,4 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "button", text: /New namespace/
     assert_select "dialog.modal"
   end
-
-  private
-    def sign_in_as(user)
-      token = user.sign_in_tokens.create!
-      get sign_in_with_token_path(token: token.token)
-    end
 end

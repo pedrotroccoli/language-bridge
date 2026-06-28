@@ -4,4 +4,9 @@ class Event < ApplicationRecord
     default: -> { Current.user }
 
   validates :action, presence: true
+
+  # Predicate access: event.action.published? instead of action == "published".
+  def action
+    self[:action]&.inquiry
+  end
 end

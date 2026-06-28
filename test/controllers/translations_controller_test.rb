@@ -82,10 +82,4 @@ class TranslationsControllerTest < ActionDispatch::IntegrationTest
     patch project_translation_path(@project, translation), params: { translation: { value: "Oi" } }
     assert_equal "Oi", translation.reload.value
   end
-
-  private
-    def sign_in_as(user)
-      token = user.sign_in_tokens.create!
-      get sign_in_with_token_path(token: token.token)
-    end
 end

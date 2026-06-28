@@ -1,6 +1,6 @@
 <%= tag.div id: "publish_all", class: "publish-all-slot" do %>
   <% if editable && keys_present %>
-    <%= button_to publish_all_project_namespace_path(project, namespace),
+    <%= button_to project_namespace_publication_path(project, namespace),
           class: "btn btn-secondary",
           disabled: draft_count.zero?,
           title: (draft_count.zero? ? "Nothing in draft" : nil),

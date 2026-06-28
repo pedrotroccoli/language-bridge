@@ -48,9 +48,9 @@ class TranslationTest < ActiveSupport::TestCase
     end
   end
 
-  test "missing scope returns translations with nil value" do
-    assert_includes Translation.missing, translations(:farewell_en_missing)
-    assert_not_includes Translation.missing, translations(:greeting_en)
+  test "untranslated scope returns translations with nil value" do
+    assert_includes Translation.untranslated, translations(:farewell_en_missing)
+    assert_not_includes Translation.untranslated, translations(:greeting_en)
   end
 
   test "snapshots prior value into a version on value change" do

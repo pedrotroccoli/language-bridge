@@ -1,5 +1,6 @@
 class TranslationKeysController < ApplicationController
-  before_action :set_project
+  include ProjectScoped
+
   before_action :set_namespace
   before_action :set_translation_key,           only: %i[ update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
@@ -34,10 +35,6 @@ class TranslationKeysController < ApplicationController
   end
 
   private
-    def set_project
-      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
-    end
-
     def set_namespace
       @namespace = @project.namespaces.find_by!(name: params[:namespace_id])
     end
@@ -48,10 +45,6 @@ class TranslationKeysController < ApplicationController
 
     def translation_key_params
       params.expect(translation_key: %i[ key ])
-    end
-
-    def ensure_can_administer_project
-      head :forbidden unless current_user&.can_administer_project?(@project)
     end
 
     def namespace_path
