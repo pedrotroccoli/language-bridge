@@ -45,6 +45,16 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
     end
   end
 
+  test "batch rebuilds touched pairs even when the block raises" do
+    assert_raises(RuntimeError) do
+      Translation::Artifact.batch do
+        @translation.publish(by: users(:admin))
+        raise "boom"
+      end
+    end
+    assert Translation::Artifact.exists?(namespace: @namespace, locale: @locale)
+  end
+
   test "destroying the namespace removes its artifacts" do
     @translation.publish(by: users(:admin))
     assert_difference -> { Translation::Artifact.count }, -1 do

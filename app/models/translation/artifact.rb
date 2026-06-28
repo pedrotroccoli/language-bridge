@@ -32,9 +32,12 @@ class Translation::Artifact < ApplicationRecord
     def batch
       Current.artifact_rebuild_batch = Set.new
       yield
-      batched.each { |namespace_id, locale_id| rebuild(namespace_id, locale_id) }
     ensure
+      # Rebuild in ensure so partially-applied work (e.g. a "publish all" that
+      # raises midway) still materializes the pairs already touched.
+      pairs = Current.artifact_rebuild_batch
       Current.artifact_rebuild_batch = nil
+      pairs&.each { |namespace_id, locale_id| rebuild(namespace_id, locale_id) }
     end
 
     # Backfill: materialize every (namespace, locale) that currently has
@@ -59,6 +62,10 @@ class Translation::Artifact < ApplicationRecord
         content_type: "application/json"
       )
       artifact
+    rescue ActiveRecord::RecordNotUnique
+      # A concurrent rebuild inserted the row first; retry so find_or_initialize
+      # takes the update path instead of a colliding insert.
+      retry
     end
 
     private
