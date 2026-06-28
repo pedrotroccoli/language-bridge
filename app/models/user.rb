@@ -18,6 +18,10 @@ class User < ApplicationRecord
     admin?
   end
 
+  def can_edit_translations?(_project = nil)
+    admin? || translator?
+  end
+
   def accessible_projects
     Project.all
   end

@@ -1,0 +1,17 @@
+greeting_en:
+  project: main_app
+  translation_key: main_app_common_greeting
+  locale: main_app_en
+  value: Hello
+
+greeting_pt:
+  project: main_app
+  translation_key: main_app_common_greeting
+  locale: main_app_pt_br
+  value: Olá
+
+farewell_en_missing:
+  project: main_app
+  translation_key: main_app_common_farewell
+  locale: main_app_en
+  value:

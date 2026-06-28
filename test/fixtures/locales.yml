@@ -1,0 +1,11 @@
+main_app_en:
+  project: main_app
+  code: en
+
+main_app_pt_br:
+  project: main_app
+  code: pt-BR
+
+marketing_site_en:
+  project: marketing_site
+  code: en

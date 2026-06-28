@@ -82,6 +82,78 @@
     </article>
   </div>
 
+  <section class="locales-section"
+           data-controller="modal"
+           data-modal-open-on-connect-value="<%= @new_locale.code.present? %>">
+    <header class="section-header section-header--split">
+      <h2 class="section-header__title">
+        <i class="iconoir-globe" aria-hidden="true"></i>
+        Locales
+      </h2>
+      <% if current_user.admin? %>
+        <button type="button" class="btn section-header__action" data-action="click->modal#open">
+          <i class="iconoir-plus" aria-hidden="true"></i>
+          New locale
+        </button>
+      <% end %>
+    </header>
+
+    <% if current_user.admin? %>
+      <dialog class="modal"
+              data-modal-target="dialog"
+              data-action="click->modal#closeOnBackdrop"
+              aria-labelledby="new-locale-title">
+        <div class="modal__inner">
+          <header class="modal__header">
+            <h3 id="new-locale-title" class="modal__title">New locale</h3>
+            <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
+              <i class="iconoir-xmark" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <%= form_with model: [ @project, @new_locale ], local: true, html: { class: "modal__body stack" } do |form| %>
+            <div class="field">
+              <%= form.label :code, "Code" %>
+              <%= form.text_field :code, required: true,
+                    placeholder: "en, pt-BR, es",
+                    pattern: "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*",
+                    autocomplete: "off",
+                    autocapitalize: "none",
+                    spellcheck: "false" %>
+              <small class="muted">IETF language tag, e.g. <code>en</code>, <code>pt-BR</code>, <code>es-419</code>.</small>
+            </div>
+
+            <footer class="modal__footer">
+              <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
+              <%= form.submit "Create", class: "btn" %>
+            </footer>
+          <% end %>
+        </div>
+      </dialog>
+    <% end %>
+
+    <% if @locales.any? %>
+      <ul class="locale-list">
+        <% @locales.each do |locale| %>
+          <li><%= render "locales/locale", locale: locale, project: @project %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="empty-state">
+        <h2>No locales yet</h2>
+        <p>Add the languages this project translates into (e.g. <code>en</code>, <code>pt-BR</code>).</p>
+        <% if current_user.admin? %>
+          <div class="empty-state__actions">
+            <button type="button" class="btn" data-action="click->modal#open">
+              <i class="iconoir-plus" aria-hidden="true"></i>
+              Add first locale
+            </button>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
   <section class="namespaces-section"
            data-controller="modal"
            data-modal-open-on-connect-value="<%= @new_namespace.name.present? %>">

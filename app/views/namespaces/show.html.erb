@@ -1,0 +1,174 @@
+<% content_for :title, "#{@namespace.name} · #{@project.name}" %>
+
+<section class="container stack"
+         data-controller="modal"
+         data-modal-open-on-connect-value="<%= flash[:invalid_translation_key].present? %>">
+  <%= link_to project_path(@project), class: "back-link" do %>
+    <i class="iconoir-arrow-left" aria-hidden="true"></i>
+    Back to <%= @project.name %>
+  <% end %>
+
+  <header class="section-header section-header--split">
+    <h1 class="section-header__title">
+      <i class="iconoir-folder" aria-hidden="true"></i>
+      <%= @namespace.name %>
+    </h1>
+    <div class="section-header__actions">
+      <% if current_user.can_administer_project?(@project) && @locales.any? %>
+        <span data-controller="modal">
+          <button type="button" class="btn btn-secondary" data-action="click->modal#open">
+            <i class="iconoir-import" aria-hidden="true"></i>
+            Import JSON
+          </button>
+
+          <dialog class="modal"
+                  data-modal-target="dialog"
+                  data-action="click->modal#closeOnBackdrop"
+                  aria-labelledby="import-title">
+            <div class="modal__inner">
+              <header class="modal__header">
+                <h3 id="import-title" class="modal__title">Import translations</h3>
+                <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
+                  <i class="iconoir-xmark" aria-hidden="true"></i>
+                </button>
+              </header>
+
+              <%= form_with url: project_namespace_import_path(@project, @namespace),
+                    method: :post, html: { class: "modal__body stack", enctype: "multipart/form-data" } do |form| %>
+                <div class="field">
+                  <%= form.label :locale_id, "Locale" %>
+                  <%= form.select :locale_id, @locales.map { |l| [ l.code, l.id ] },
+                        { prompt: "Select locale" }, required: true %>
+                </div>
+                <div class="field">
+                  <%= form.label :file, "JSON file" %>
+                  <%= form.file_field :file, accept: "application/json,.json", required: true %>
+                  <small class="muted">Nested objects flatten to dotted keys (<code>home.title</code>). Existing values are overwritten (history kept). Imported as drafts.</small>
+                </div>
+                <footer class="modal__footer">
+                  <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
+                  <%= form.submit "Import", class: "btn" %>
+                </footer>
+              <% end %>
+            </div>
+          </dialog>
+        </span>
+      <% end %>
+
+      <%= render "namespaces/publish_all",
+            project: @project, namespace: @namespace, draft_count: @draft_count,
+            editable: current_user.can_edit_translations?(@project), keys_present: @total_keys.positive? %>
+      <% if current_user.can_administer_project?(@project) && @locales.any? %>
+        <button type="button" class="btn section-header__action" data-action="click->modal#open">
+          <i class="iconoir-plus" aria-hidden="true"></i>
+          New key
+        </button>
+      <% end %>
+    </div>
+  </header>
+
+  <% if current_user.can_administer_project?(@project) %>
+    <dialog class="modal"
+            data-modal-target="dialog"
+            data-action="click->modal#closeOnBackdrop"
+            aria-labelledby="new-key-title">
+      <div class="modal__inner">
+        <header class="modal__header">
+          <h3 id="new-key-title" class="modal__title">New translation key</h3>
+          <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
+            <i class="iconoir-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <%= form_with model: [ @project, @namespace, @new_translation_key ], local: true, html: { class: "modal__body stack" } do |form| %>
+          <div class="field">
+            <%= form.label :key, "Key" %>
+            <%= form.text_field :key, required: true,
+                  value: flash[:invalid_translation_key],
+                  placeholder: "greeting, home.title, buttons.save",
+                  autocomplete: "off",
+                  autocapitalize: "none",
+                  spellcheck: "false" %>
+            <small class="muted">Unique within this namespace.</small>
+          </div>
+
+          <footer class="modal__footer">
+            <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
+            <%= form.submit "Create", class: "btn" %>
+          </footer>
+        <% end %>
+      </div>
+    </dialog>
+  <% end %>
+
+  <% if @locales.none? %>
+    <div class="empty-state">
+      <h2>No locales yet</h2>
+      <p>Add at least one locale to the project before translating.</p>
+      <div class="empty-state__actions">
+        <%= link_to "Manage locales", project_path(@project), class: "btn" %>
+      </div>
+    </div>
+  <% elsif @total_keys.zero? %>
+    <div class="empty-state">
+      <h2>No keys yet</h2>
+      <p>Translation keys are the strings you translate (e.g. <code>greeting</code>, <code>home.title</code>).</p>
+      <% if current_user.can_administer_project?(@project) %>
+        <div class="empty-state__actions">
+          <button type="button" class="btn" data-action="click->modal#open">
+            <i class="iconoir-plus" aria-hidden="true"></i>
+            Create first key
+          </button>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <form class="searchbar key-search" role="search" method="get"
+          action="<%= project_namespace_path(@project, @namespace) %>"
+          data-controller="auto-submit" data-auto-submit-delay-value="300"
+          data-turbo-frame="translation_keys">
+      <i class="iconoir-search searchbar__icon" aria-hidden="true"></i>
+      <input type="search" name="q" value="<%= @query %>"
+             placeholder="Search keys or values…" aria-label="Search keys or values"
+             autocomplete="off" spellcheck="false"
+             data-action="input->auto-submit#submit">
+    </form>
+
+    <%= turbo_frame_tag "translation_keys" do %>
+      <p class="muted key-meta">
+        <% if @query.present? %>
+          <%= @match_count %> <%= "key".pluralize(@match_count) %> match “<%= @query %>”<%= " · showing first #{@page_limit}" if @match_count > @page_limit %>
+        <% else %>
+          <%= @total_keys %> <%= "key".pluralize(@total_keys) %><%= " · showing first #{@page_limit}, search to narrow" if @total_keys > @page_limit %>
+        <% end %>
+      </p>
+
+      <% if @translation_keys.any? %>
+        <div class="translation-grid-wrap">
+          <table class="translation-grid">
+            <thead>
+              <tr>
+                <th class="translation-grid__key-head" scope="col">Key</th>
+                <% @locales.each do |locale| %>
+                  <th scope="col"><span class="locale-tag"><%= locale.code %></span></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% @translation_keys.each do |translation_key| %>
+                <%= render "translation_keys/translation_key",
+                      translation_key: translation_key, project: @project,
+                      namespace: @namespace, locales: @locales %>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          <h2>No keys match “<%= @query %>”</h2>
+          <p>Try a different search.</p>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+</section>

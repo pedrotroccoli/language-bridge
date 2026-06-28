@@ -116,10 +116,4 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Projects"
   end
-
-  private
-    def sign_in_as(user)
-      token = user.sign_in_tokens.create!
-      get sign_in_with_token_path(token: token.token)
-    end
 end

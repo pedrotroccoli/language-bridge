@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "events", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.uuid "creator_id"
+    t.uuid "eventable_id", null: false
+    t.string "eventable_type", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_events_on_created_at"
+    t.index ["creator_id", "created_at"], name: "index_events_on_creator_id_and_created_at"
+    t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
 
   create_table "invitations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "accepted_at"
@@ -26,6 +39,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
     t.index ["email"], name: "index_invitations_on_email", unique: true, where: "(accepted_at IS NULL)"
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
     t.index ["token"], name: "index_invitations_on_token", unique: true
+  end
+
+  create_table "locales", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "project_id", null: false
+    t.integer "translations_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "code"], name: "index_locales_on_project_id_and_code", unique: true
+    t.index ["project_id"], name: "index_locales_on_project_id"
   end
 
   create_table "namespaces", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -69,6 +92,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
     t.index ["user_id"], name: "index_sign_in_tokens_on_user_id"
   end
 
+  create_table "translation_approvals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "approver_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "translation_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_translation_approvals_on_approver_id"
+    t.index ["translation_id"], name: "index_translation_approvals_on_translation_id", unique: true
+  end
+
+  create_table "translation_keys", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.uuid "namespace_id", null: false
+    t.uuid "project_id", null: false
+    t.integer "translations_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["namespace_id"], name: "index_translation_keys_on_namespace_id"
+    t.index ["project_id", "namespace_id", "key"], name: "index_translation_keys_on_project_id_and_namespace_id_and_key", unique: true
+    t.index ["project_id"], name: "index_translation_keys_on_project_id"
+  end
+
+  create_table "translation_publications", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "publisher_id"
+    t.uuid "translation_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["publisher_id"], name: "index_translation_publications_on_publisher_id"
+    t.index ["translation_id"], name: "index_translation_publications_on_translation_id", unique: true
+  end
+
+  create_table "translation_reviews", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "requester_id", null: false
+    t.uuid "translation_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["requester_id"], name: "index_translation_reviews_on_requester_id"
+    t.index ["translation_id"], name: "index_translation_reviews_on_translation_id", unique: true
+  end
+
+  create_table "translation_versions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "author_id"
+    t.datetime "created_at", null: false
+    t.uuid "translation_id", null: false
+    t.datetime "updated_at", null: false
+    t.text "value"
+    t.index ["author_id"], name: "index_translation_versions_on_author_id"
+    t.index ["translation_id", "created_at"], name: "index_translation_versions_on_translation_id_and_created_at"
+    t.index ["translation_id"], name: "index_translation_versions_on_translation_id"
+  end
+
+  create_table "translations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "author_id"
+    t.datetime "created_at", null: false
+    t.uuid "locale_id", null: false
+    t.uuid "project_id", null: false
+    t.uuid "translation_key_id", null: false
+    t.datetime "updated_at", null: false
+    t.text "value"
+    t.index ["author_id"], name: "index_translations_on_author_id"
+    t.index ["locale_id"], name: "index_translations_on_locale_id"
+    t.index ["project_id"], name: "index_translations_on_project_id"
+    t.index ["translation_key_id", "locale_id"], name: "index_translations_on_translation_key_id_and_locale_id", unique: true
+  end
+
   create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -77,8 +164,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_060000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "locales", "projects"
   add_foreign_key "namespaces", "projects"
   add_foreign_key "sessions", "users"
   add_foreign_key "sign_in_tokens", "users"
+  add_foreign_key "translation_approvals", "translations"
+  add_foreign_key "translation_approvals", "users", column: "approver_id"
+  add_foreign_key "translation_keys", "namespaces"
+  add_foreign_key "translation_keys", "projects"
+  add_foreign_key "translation_publications", "translations"
+  add_foreign_key "translation_publications", "users", column: "publisher_id"
+  add_foreign_key "translation_reviews", "translations"
+  add_foreign_key "translation_reviews", "users", column: "requester_id"
+  add_foreign_key "translation_versions", "translations"
+  add_foreign_key "translation_versions", "users", column: "author_id"
+  add_foreign_key "translations", "locales"
+  add_foreign_key "translations", "projects"
+  add_foreign_key "translations", "translation_keys"
+  add_foreign_key "translations", "users", column: "author_id"
 end

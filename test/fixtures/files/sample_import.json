@@ -1,0 +1,8 @@
+{
+  "greeting": "Hi from import",
+  "home": {
+    "title": "Welcome",
+    "cta": "Get started"
+  },
+  "count": 3
+}

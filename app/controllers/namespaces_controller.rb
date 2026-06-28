@@ -1,7 +1,26 @@
 class NamespacesController < ApplicationController
-  before_action :set_project
-  before_action :set_namespace,                 only: %i[ update destroy ]
+  include ProjectScoped
+
+  KEY_PAGE_LIMIT = 100
+
+  before_action :set_namespace,                 only: %i[ show update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
+
+  rescue_from ActiveRecord::RecordNotUnique, with: :name_already_taken
+
+  def show
+    @locales = @project.locales.alphabetically
+    @query = params[:q].to_s.strip
+    @total_keys = @namespace.translation_keys.count
+
+    keys = @query.present? ? @namespace.translation_keys.search(@query) : @namespace.translation_keys.order(:key)
+
+    @match_count = keys.count
+    @page_limit = KEY_PAGE_LIMIT
+    @translation_keys = keys.includes(translations: :publication).limit(KEY_PAGE_LIMIT)
+    @draft_count = Translation.drafts_in_namespace(@namespace).count
+    @new_translation_key = @namespace.translation_keys.build
+  end
 
   def create
     @namespace = @project.namespaces.build(namespace_params)
@@ -11,9 +30,6 @@ class NamespacesController < ApplicationController
     else
       redirect_with_invalid_namespace
     end
-  rescue ActiveRecord::RecordNotUnique
-    @namespace.errors.add(:name, "has already been taken")
-    redirect_with_invalid_namespace
   end
 
   def update
@@ -22,9 +38,6 @@ class NamespacesController < ApplicationController
     else
       redirect_with_namespace_alert
     end
-  rescue ActiveRecord::RecordNotUnique
-    @namespace.errors.add(:name, "has already been taken")
-    redirect_with_namespace_alert
   end
 
   def destroy
@@ -33,10 +46,6 @@ class NamespacesController < ApplicationController
   end
 
   private
-    def set_project
-      @project = current_user.accessible_projects.find_by!(slug: params[:project_id])
-    end
-
     def set_namespace
       @namespace = @project.namespaces.find_by!(name: params[:id])
     end
@@ -45,8 +54,9 @@ class NamespacesController < ApplicationController
       params.expect(namespace: %i[ name ])
     end
 
-    def ensure_can_administer_project
-      head :forbidden unless current_user&.can_administer_project?(@project)
+    def name_already_taken
+      @namespace.errors.add(:name, "has already been taken")
+      action_name == "create" ? redirect_with_invalid_namespace : redirect_with_namespace_alert
     end
 
     def redirect_with_invalid_namespace
