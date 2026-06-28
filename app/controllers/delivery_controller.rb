@@ -23,7 +23,7 @@ class DeliveryController < ApplicationController
   private
     def serve_artifact(artifact)
       if stale?(etag: artifact.checksum, public: true)
-        expires_in 5.minutes, public: true
+        set_cache_headers
         render body: artifact.file.download, content_type: "application/json"
       end
     end
@@ -31,9 +31,16 @@ class DeliveryController < ApplicationController
     def serve_live(namespace, locale)
       bundle = TranslationBundle.new(namespace: namespace, locale: locale)
       if stale?(etag: bundle.etag, public: true)
-        expires_in 5.minutes, public: true
+        set_cache_headers
         render json: bundle.to_h
       end
+    end
+
+    # A CDN fronts this endpoint (see docs/cdn-setup.md): cache for an hour, but
+    # serve stale up to 5 minutes while revalidating so a publish propagates
+    # quickly without a thundering herd against the origin.
+    def set_cache_headers
+      expires_in 1.hour, public: true, "stale-while-revalidate": 5.minutes.to_i
     end
 
     # The route captures ".json" into :namespace (namespaces may contain dots),

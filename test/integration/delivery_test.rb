@@ -35,10 +35,13 @@ class DeliveryTest < ActionDispatch::IntegrationTest
     assert_equal({ "greeting" => "Hello" }, response.parsed_body)
   end
 
-  test "sets a public cache-control and an ETag" do
+  test "sets a CDN-friendly cache-control and an ETag" do
     get cdn_path("common")
     assert_response :success
-    assert_includes response.headers["Cache-Control"], "public"
+    cache_control = response.headers["Cache-Control"]
+    assert_includes cache_control, "public"
+    assert_includes cache_control, "max-age=3600"
+    assert_includes cache_control, "stale-while-revalidate=300"
     assert response.headers["ETag"].present?
   end
 
