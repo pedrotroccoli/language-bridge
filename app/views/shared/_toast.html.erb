@@ -1,0 +1,11 @@
+<% ok = kind.to_s == "notice" %>
+<div class="pointer-events-auto opacity-0 translate-y-1 transition duration-200 ease-out flex items-start gap-[10px] bg-surface border border-line rounded-[10px] shadow-[0_12px_32px_-12px_rgba(15,23,42,0.28)] px-[14px] py-[12px] text-[13px]"
+     role="<%= ok ? "status" : "alert" %>"
+     data-controller="flash"
+     data-action="mouseenter->flash#pause mouseleave->flash#resume">
+  <%= mi(ok ? "check_circle" : "error", size: 18, fill: 1, css: ok ? "text-ok" : "text-danger") %>
+  <span class="flex-1 text-ink leading-[1.5]"><%= message %></span>
+  <button type="button" class="text-mut-2 hover:text-ink shrink-0" data-action="click->flash#dismiss" aria-label="Dismiss">
+    <%= mi "close", size: 16 %>
+  </button>
+</div>

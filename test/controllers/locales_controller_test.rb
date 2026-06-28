@@ -34,6 +34,31 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
     assert project.locales.exists?(code: "fr")
   end
 
+  test "admin adds multiple locales at once" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    assert_difference "project.locales.count", 2 do
+      post project_locales_path(project), params: { locale: { codes: [ "fr", "de" ] } }
+    end
+    assert_redirected_to project_path(project)
+    assert_match(/Added 2 locales/, flash[:notice])
+    assert project.locales.exists?(code: "fr")
+    assert project.locales.exists?(code: "de")
+  end
+
+  test "bulk add skips duplicates and reports them" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+    existing = locales(:main_app_en).code
+
+    assert_difference "project.locales.count", 1 do
+      post project_locales_path(project), params: { locale: { codes: [ "it", existing ] } }
+    end
+    assert_redirected_to project_path(project)
+    assert_match(/skipped/, flash[:notice])
+  end
+
   test "admin sees alert on duplicate code" do
     sign_in_as(users(:admin))
     project = projects(:main_app)
@@ -59,11 +84,33 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
   test "admin destroys locale" do
     sign_in_as(users(:admin))
     project = projects(:main_app)
-    locale = project.locales.create!(code: "disposable")
+    locale = project.locales.create!(code: "zz")
 
     assert_difference "project.locales.count", -1 do
       delete project_locale_path(project, locale)
     end
     assert_redirected_to project_path(project)
+  end
+
+  test "rejects a malformed locale code" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    assert_no_difference "Locale.count" do
+      post project_locales_path(project), params: { locale: { code: "not a code!" } }
+    end
+    assert_redirected_to project_path(project)
+    assert flash[:alert].present?
+  end
+
+  test "bulk add skips malformed codes" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    assert_difference "project.locales.count", 1 do
+      post project_locales_path(project), params: { locale: { codes: [ "ja", "<script>" ] } }
+    end
+    assert project.locales.exists?(code: "ja")
+    assert_not project.locales.exists?(code: "<script>")
   end
 end

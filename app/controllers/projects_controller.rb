@@ -4,7 +4,8 @@ class ProjectsController < ApplicationController
 
   def index
     @projects = current_user.accessible_projects.alphabetically
-    fresh_when etag: [ @projects, current_user ]
+    @coverage = Project.coverage_map(@projects)
+    fresh_when etag: [ @projects, @coverage, current_user ]
   end
 
   def show
@@ -12,6 +13,7 @@ class ProjectsController < ApplicationController
     @new_namespace = @project.namespaces.build(name: flash[:invalid_namespace_name])
     @locales = @project.locales.alphabetically
     @new_locale = @project.locales.build(code: flash[:invalid_locale_code])
+    @locale_coverage = @project.locale_coverage
   end
 
   def new

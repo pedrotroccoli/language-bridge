@@ -1,174 +1,273 @@
 <% content_for :title, "#{@namespace.name} · #{@project.name}" %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
+<% editable = current_user.can_edit_translations?(@project) %>
+<% manageable = current_user.can_administer_project?(@project) %>
 
-<section class="container stack"
-         data-controller="modal"
-         data-modal-open-on-connect-value="<%= flash[:invalid_translation_key].present? %>">
-  <%= link_to project_path(@project), class: "back-link" do %>
-    <i class="iconoir-arrow-left" aria-hidden="true"></i>
-    Back to <%= @project.name %>
-  <% end %>
+<%= render "projects/tabs", project: @project, active: :editor, wide: true %>
 
-  <header class="section-header section-header--split">
-    <h1 class="section-header__title">
-      <i class="iconoir-folder" aria-hidden="true"></i>
-      <%= @namespace.name %>
-    </h1>
-    <div class="section-header__actions">
-      <% if current_user.can_administer_project?(@project) && @locales.any? %>
+<section class="flex-1 flex flex-col min-h-0" data-controller="modal" data-modal-open-on-connect-value="<%= flash[:invalid_translation_key].present? %>">
+  <%# ---- action toolbar ---- %>
+  <div class="flex items-center justify-between px-6 py-[14px] gap-3 flex-wrap">
+    <div class="flex items-baseline gap-[11px] min-w-0">
+      <h2 class="m-0 text-[19px] font-semibold -tracking-[0.02em] text-ink truncate"><%= @namespace.name %></h2>
+      <span class="font-mono text-[12px] text-faint whitespace-nowrap"><%= number_with_delimiter(@total_keys) %> keys</span>
+    </div>
+    <div class="flex items-center gap-[9px]">
+      <% if manageable && @locales.any? %>
         <span data-controller="modal">
-          <button type="button" class="btn btn-secondary" data-action="click->modal#open">
-            <i class="iconoir-import" aria-hidden="true"></i>
-            Import JSON
-          </button>
+          <button type="button" class="btn-secondary h-[34px]" data-action="click->modal#open"><%= mi "download", size: 17, css: "text-ink-3" %>Import JSON</button>
 
-          <dialog class="modal"
-                  data-modal-target="dialog"
-                  data-action="click->modal#closeOnBackdrop"
-                  aria-labelledby="import-title">
-            <div class="modal__inner">
-              <header class="modal__header">
-                <h3 id="import-title" class="modal__title">Import translations</h3>
-                <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
-                  <i class="iconoir-xmark" aria-hidden="true"></i>
-                </button>
-              </header>
-
-              <%= form_with url: project_namespace_import_path(@project, @namespace),
-                    method: :post, html: { class: "modal__body stack", enctype: "multipart/form-data" } do |form| %>
-                <div class="field">
-                  <%= form.label :locale_id, "Locale" %>
-                  <%= form.select :locale_id, @locales.map { |l| [ l.code, l.id ] },
-                        { prompt: "Select locale" }, required: true %>
-                </div>
-                <div class="field">
-                  <%= form.label :file, "JSON file" %>
-                  <%= form.file_field :file, accept: "application/json,.json", required: true %>
-                  <small class="muted">Nested objects flatten to dotted keys (<code>home.title</code>). Existing values are overwritten (history kept). Imported as drafts.</small>
-                </div>
-                <footer class="modal__footer">
-                  <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
-                  <%= form.submit "Import", class: "btn" %>
-                </footer>
-              <% end %>
+          <dialog class="modal w-[540px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="import-title">
+            <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line-2">
+              <h3 id="import-title" class="m-0 text-[16px] font-semibold text-ink">Import translations</h3>
+              <button type="button" class="text-mut-2 hover:text-ink" data-action="click->modal#close" aria-label="Close"><%= mi "close", size: 18 %></button>
             </div>
+            <%= form_with url: project_namespace_import_path(@project, @namespace), method: :post, html: { class: "p-[22px] flex flex-col gap-[18px]", enctype: "multipart/form-data" } do |form| %>
+              <div class="flex flex-col gap-[7px]">
+                <%= form.label :locale_id, "Locale", class: "text-[12.5px] font-medium text-ink-2" %>
+                <%= form.select :locale_id, @locales.map { |l| [ (locale_name(l.code) ? "#{l.code} · #{locale_name(l.code)}" : l.code), l.id ] }, { prompt: "Select locale" }, required: true, class: "text-[13px]" %>
+              </div>
+              <div class="flex flex-col gap-[7px]">
+                <%= form.label :file, "JSON file", class: "text-[12.5px] font-medium text-ink-2" %>
+                <%= form.file_field :file, accept: "application/json,.json", required: true, class: "text-[13px] file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-[12.5px]" %>
+                <small class="text-[12px] text-mut-2 leading-relaxed">Nested objects flatten to dotted keys (<code class="font-mono">home.title</code>). Existing values are overwritten (history kept). Imported as drafts.</small>
+              </div>
+              <div class="flex justify-end gap-[9px]">
+                <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
+                <%= form.submit "Import", class: "btn" %>
+              </div>
+            <% end %>
           </dialog>
         </span>
       <% end %>
 
-      <%= render "namespaces/publish_all",
-            project: @project, namespace: @namespace, draft_count: @draft_count,
-            editable: current_user.can_edit_translations?(@project), keys_present: @total_keys.positive? %>
-      <% if current_user.can_administer_project?(@project) && @locales.any? %>
-        <button type="button" class="btn section-header__action" data-action="click->modal#open">
-          <i class="iconoir-plus" aria-hidden="true"></i>
-          New key
-        </button>
+      <% if editable %>
+        <%= render "namespaces/publish_all", project: @project, namespace: @namespace, draft_count: @draft_count, editable: editable, keys_present: @total_keys.positive? %>
+      <% end %>
+
+      <% if manageable && @locales.any? %>
+        <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New key</button>
       <% end %>
     </div>
-  </header>
+  </div>
 
-  <% if current_user.can_administer_project?(@project) %>
-    <dialog class="modal"
-            data-modal-target="dialog"
-            data-action="click->modal#closeOnBackdrop"
-            aria-labelledby="new-key-title">
-      <div class="modal__inner">
-        <header class="modal__header">
-          <h3 id="new-key-title" class="modal__title">New translation key</h3>
-          <button type="button" class="icon-btn" data-action="click->modal#close" aria-label="Close">
-            <i class="iconoir-xmark" aria-hidden="true"></i>
-          </button>
-        </header>
+  <%# ---- draft banner ---- %>
+  <% if editable && @draft_count.positive? %>
+    <div class="flex items-center gap-[11px] px-6 py-[11px] bg-banner-bg border-y border-banner-border text-[13px] text-banner-ink">
+      <span class="w-[7px] h-[7px] rounded-full bg-warn flex-none"></span>
+      <span><b class="font-semibold"><%= @draft_count %> unpublished <%= "draft".pluralize(@draft_count) %></b> — saved, but not yet live in production. Publish to push them live.</span>
+    </div>
+  <% end %>
 
-        <%= form_with model: [ @project, @namespace, @new_translation_key ], local: true, html: { class: "modal__body stack" } do |form| %>
-          <div class="field">
-            <%= form.label :key, "Key" %>
-            <%= form.text_field :key, required: true,
-                  value: flash[:invalid_translation_key],
-                  placeholder: "greeting, home.title, buttons.save",
-                  autocomplete: "off",
-                  autocapitalize: "none",
-                  spellcheck: "false" %>
-            <small class="muted">Unique within this namespace.</small>
-          </div>
-
-          <footer class="modal__footer">
-            <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
-            <%= form.submit "Create", class: "btn" %>
-          </footer>
-        <% end %>
+  <%# ---- new key dialog ---- %>
+  <% if manageable %>
+    <dialog class="modal w-[460px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="new-key-title">
+      <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line-2">
+        <h3 id="new-key-title" class="m-0 text-[16px] font-semibold text-ink">New translation key</h3>
+        <button type="button" class="text-mut-2 hover:text-ink" data-action="click->modal#close" aria-label="Close"><%= mi "close", size: 18 %></button>
       </div>
+      <%= form_with model: [ @project, @namespace, @new_translation_key ], local: true, html: { class: "p-[22px] flex flex-col gap-4" } do |form| %>
+        <div class="flex flex-col gap-[7px]">
+          <%= form.label :key, "Key", class: "text-[12.5px] font-medium text-ink-2" %>
+          <%= form.text_field :key, required: true, value: flash[:invalid_translation_key],
+                placeholder: "greeting, home.title, buttons.save", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
+                class: "font-mono text-[13px]" %>
+          <small class="text-[12px] text-mut-2">Unique within this namespace.</small>
+        </div>
+        <div class="flex justify-end gap-[9px]">
+          <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
+          <%= form.submit "Create", class: "btn" %>
+        </div>
+      <% end %>
     </dialog>
   <% end %>
 
   <% if @locales.none? %>
-    <div class="empty-state">
-      <h2>No locales yet</h2>
-      <p>Add at least one locale to the project before translating.</p>
-      <div class="empty-state__actions">
-        <%= link_to "Manage locales", project_path(@project), class: "btn" %>
-      </div>
+    <div class="empty-state flex-1 border-t border-line-2 flex flex-col items-center justify-center text-center px-6">
+      <div class="w-[52px] h-[52px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint mb-4"><%= mi "language", size: 26 %></div>
+      <h3 class="m-0 text-[16px] font-semibold text-ink">No locales yet</h3>
+      <p class="mt-2 mb-5 text-[13.5px] text-mut max-w-[340px]">Add at least one locale to the project before translating.</p>
+      <%= link_to "Manage locales", project_path(@project), class: "btn" %>
     </div>
   <% elsif @total_keys.zero? %>
-    <div class="empty-state">
-      <h2>No keys yet</h2>
-      <p>Translation keys are the strings you translate (e.g. <code>greeting</code>, <code>home.title</code>).</p>
-      <% if current_user.can_administer_project?(@project) %>
-        <div class="empty-state__actions">
-          <button type="button" class="btn" data-action="click->modal#open">
-            <i class="iconoir-plus" aria-hidden="true"></i>
-            Create first key
-          </button>
-        </div>
-      <% end %>
+    <div class="flex-1 border-t border-line-2 flex items-center justify-center p-6">
+      <div class="empty-state border border-dashed border-line rounded-[12px] py-16 px-6 w-full max-w-[460px] flex flex-col items-center text-center bg-surface-2">
+        <div class="w-[52px] h-[52px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-4"><%= mi "translate", size: 26 %></div>
+        <h3 class="m-0 text-[16px] font-semibold text-ink">This namespace is empty</h3>
+        <p class="mt-2 mb-5 text-[13.5px] text-mut max-w-[340px] leading-relaxed">Add your first key or import a JSON file, and it'll appear here for every locale.</p>
+        <% if manageable %>
+          <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New key</button>
+        <% end %>
+      </div>
     </div>
   <% else %>
-    <form class="searchbar key-search" role="search" method="get"
-          action="<%= project_namespace_path(@project, @namespace) %>"
-          data-controller="auto-submit" data-auto-submit-delay-value="300"
-          data-turbo-frame="translation_keys">
-      <i class="iconoir-search searchbar__icon" aria-hidden="true"></i>
-      <input type="search" name="q" value="<%= @query %>"
-             placeholder="Search keys or values…" aria-label="Search keys or values"
-             autocomplete="off" spellcheck="false"
-             data-action="input->auto-submit#submit">
-    </form>
+    <%# ---- body: sidebar + table (fills remaining height) ---- %>
+    <div class="flex-1 flex items-stretch min-h-0 border-t border-line-2">
+      <aside data-controller="sidebar" data-sidebar-collapsed-value="false"
+             class="hidden md:flex w-[236px] md:w-[236px] flex-none border-r border-line-2 flex-col overflow-y-auto overflow-x-hidden transition-[width] duration-150">
+        <button type="button" data-sidebar-target="expand" data-action="sidebar#toggle"
+                class="hidden p-3 self-center text-mut-2 hover:text-ink" aria-label="Expand sidebar" title="Expand sidebar">
+          <%= mi "left_panel_open", size: 20 %>
+        </button>
 
-    <%= turbo_frame_tag "translation_keys" do %>
-      <p class="muted key-meta">
-        <% if @query.present? %>
-          <%= @match_count %> <%= "key".pluralize(@match_count) %> match “<%= @query %>”<%= " · showing first #{@page_limit}" if @match_count > @page_limit %>
-        <% else %>
-          <%= @total_keys %> <%= "key".pluralize(@total_keys) %><%= " · showing first #{@page_limit}, search to narrow" if @total_keys > @page_limit %>
-        <% end %>
-      </p>
+        <div data-sidebar-target="panel" class="p-[14px] flex flex-col gap-5">
+          <div class="flex items-center justify-between px-[6px]">
+            <span class="eyebrow">Workspace</span>
+            <button type="button" data-action="sidebar#toggle" class="text-mut-2 hover:text-ink -mr-1" aria-label="Collapse sidebar" title="Collapse sidebar">
+              <%= mi "left_panel_close", size: 18 %>
+            </button>
+          </div>
 
-      <% if @translation_keys.any? %>
-        <div class="translation-grid-wrap">
-          <table class="translation-grid">
-            <thead>
-              <tr>
-                <th class="translation-grid__key-head" scope="col">Key</th>
-                <% @locales.each do |locale| %>
-                  <th scope="col"><span class="locale-tag"><%= locale.code %></span></th>
-                <% end %>
-              </tr>
-            </thead>
-            <tbody>
-              <% @translation_keys.each do |translation_key| %>
-                <%= render "translation_keys/translation_key",
-                      translation_key: translation_key, project: @project,
-                      namespace: @namespace, locales: @locales %>
+          <div>
+            <div class="eyebrow px-2 mb-[10px]">Namespaces</div>
+            <% @namespaces.each do |ns| %>
+              <% current = ns.id == @namespace.id %>
+              <%= link_to project_namespace_path(@project, ns),
+                    class: "flex items-center justify-between px-2 py-2 rounded-[7px] text-[13px] no-underline #{current ? "bg-accent-soft border-l-[3px] border-accent text-ink font-semibold pl-[9px]" : "text-ink-2 hover:bg-surface-2"}" do %>
+                <span class="flex items-center gap-2 min-w-0">
+                  <%= mi "folder", size: 16, css: (current ? "text-accent" : "text-faint-2") %>
+                  <span class="truncate font-mono text-[12.5px]"><%= ns.name %></span>
+                </span>
+                <span class="font-mono text-[11px] flex-none ml-2 <%= current ? "text-accent" : "text-faint" %>"><%= ns.translation_keys_count %></span>
               <% end %>
-            </tbody>
-          </table>
+            <% end %>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between px-2 mb-[10px]">
+              <span class="eyebrow">Locales</span>
+              <% if @column_locales.size < @locales.size %>
+                <%= link_to "All", project_namespace_path(@project, @namespace, q: @query.presence), class: "font-mono text-[10px] text-accent no-underline hover:underline" %>
+              <% end %>
+            </div>
+            <% @locales.each do |locale| %>
+              <% active = @column_locales.size < @locales.size && @column_locales.include?(locale) %>
+              <%= link_to project_namespace_path(@project, @namespace, locales: [ locale.code ], q: @query.presence),
+                    class: "flex items-center justify-between gap-2 px-2 py-2 rounded-[7px] text-[13px] no-underline #{active ? "bg-accent-soft" : "hover:bg-surface-2"}" do %>
+                <span class="flex items-center gap-2 min-w-0 text-ink">
+                  <%= mi "language", size: 16, css: (active ? "text-accent" : "text-faint") %>
+                  <span class="font-mono text-[12.5px] flex-none"><%= locale.code %></span>
+                  <% if locale_name(locale.code) %><span class="text-[12px] text-ink-3 truncate"><%= locale_name(locale.code) %></span><% end %>
+                </span>
+                <span class="font-mono text-[11px] text-accent font-semibold flex-none"><%= @locale_coverage[locale.id] %>%</span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <div>
+            <div class="eyebrow px-2 mb-2">Stats</div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "check_circle", size: 16, fill: 1, css: "text-ok" %>translated</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:translated]) %></span></div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "do_not_disturb_on", size: 16, fill: 1, css: "text-faint" %>untranslated</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:missing]) %></span></div>
+          </div>
+
+          <div class="border-t border-line-3 pt-4">
+            <div class="eyebrow px-2 mb-2">Changes</div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="text-ink-2">changed 7 days</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:changed_7]) %></span></div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="text-ink-2">changed 30 days</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:changed_30]) %></span></div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="text-ink-2">pending changes</span><span class="font-mono text-accent font-semibold tabular-nums"><%= number_with_delimiter(@stats[:drafts]) %></span></div>
+          </div>
         </div>
-      <% else %>
-        <div class="empty-state">
-          <h2>No keys match “<%= @query %>”</h2>
-          <p>Try a different search.</p>
+      </aside>
+
+      <div class="flex-1 min-w-0 flex flex-col min-h-0">
+        <div data-controller="modal" class="contents">
+        <%# search row + locale-column filter %>
+        <div class="px-4 py-3 border-b border-line-2 flex-none">
+          <form class="flex items-center gap-3" role="search" method="get"
+                action="<%= project_namespace_path(@project, @namespace) %>"
+                data-controller="auto-submit locale-filter" data-auto-submit-delay-value="300"
+                data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys">
+            <div class="h-9 flex-1 flex items-center gap-[10px] px-[13px] border border-line rounded-[9px] focus-within:border-ink transition-colors">
+              <%= mi "search", size: 18, css: "text-mut-2" %>
+              <input type="search" name="q" value="<%= @query %>" placeholder="Search keys or values…" aria-label="Search keys or values"
+                     autocomplete="off" spellcheck="false"
+                     class="!border-0 !p-0 !shadow-none flex-1 bg-transparent text-[13px] focus:!ring-0"
+                     data-action="input->auto-submit#submit">
+            </div>
+
+            <% if @total_keys > @page_limit %>
+              <span class="font-mono text-[11.5px] text-mut-2 whitespace-nowrap hidden lg:inline">showing first <%= @page_limit %></span>
+            <% end %>
+
+            <details class="relative [&_summary::-webkit-details-marker]:hidden flex-none">
+              <summary class="list-none cursor-pointer h-9 flex items-center gap-[9px] px-[12px] border border-line rounded-[9px] text-[13px] text-ink-2 hover:border-ink whitespace-nowrap">
+                <%= mi "tune", size: 17, css: "text-mut-2" %>Locales
+                <span class="font-mono text-[11px] font-semibold text-accent bg-accent-soft rounded-[5px] px-[6px] py-px" data-locale-filter-target="count"><%= @column_locales.size %>/<%= @locales.size %></span>
+                <%= mi "expand_more", size: 18, css: "text-faint" %>
+              </summary>
+              <div class="absolute top-[calc(100%+6px)] right-0 w-[262px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 overflow-hidden">
+                <div class="px-[14px] py-[10px] border-b border-line-3 eyebrow">Show locales in table</div>
+                <div class="max-h-[280px] overflow-y-auto p-[5px]">
+                  <% @locales.each do |l| %>
+                    <label class="flex items-center gap-[11px] px-[9px] py-2 rounded-[7px] cursor-pointer hover:bg-surface-2">
+                      <input type="checkbox" name="locales[]" value="<%= l.code %>" <%= "checked" if @column_locales.include?(l) %>
+                             class="w-4 h-4 accent-accent flex-none"
+                             data-locale-filter-target="checkbox"
+                             data-action="change->auto-submit#submit change->locale-filter#updateCount">
+                      <span class="font-mono text-[12.5px] text-ink w-[58px] flex-none"><%= l.code %></span>
+                      <% if locale_name(l.code) %><span class="text-[12.5px] text-ink-3 truncate"><%= locale_name(l.code) %></span><% end %>
+                    </label>
+                  <% end %>
+                </div>
+                <div class="border-t border-line-3 p-[5px]">
+                  <button type="button" data-action="click->modal#open" class="w-full flex items-center gap-[8px] px-[10px] py-2 rounded-[7px] text-[13px] font-medium text-accent hover:bg-surface-2">
+                    <%= mi "add", size: 17 %>Add a new language
+                  </button>
+                </div>
+              </div>
+            </details>
+          </form>
         </div>
-      <% end %>
-    <% end %>
+        <%= render "locales/new_modal", project: @project %>
+        </div>
+
+        <div class="flex-1 overflow-auto min-h-0">
+          <%= turbo_frame_tag "translation_keys" do %>
+            <p class="key-meta font-mono text-[11.5px] text-ink-3 px-4 pt-[11px] pb-1">
+              <% if @query.present? %>
+                <%= @match_count %> <%= "key".pluralize(@match_count) %> match “<%= @query %>”<%= " · showing first #{@page_limit}" if @match_count > @page_limit %>
+              <% else %>
+                <%= @total_keys %> <%= "key".pluralize(@total_keys) %><%= " · showing first #{@page_limit}, search to narrow" if @total_keys > @page_limit %>
+              <% end %>
+            </p>
+            <% if @translation_keys.any? %>
+              <table class="translation-grid w-max min-w-full border-collapse">
+                <thead>
+                  <tr class="bg-surface-2 border-b border-line-2 font-mono text-[10.5px] tracking-[0.05em] uppercase text-faint">
+                    <th class="w-[300px] text-left font-normal px-[18px] py-[9px] sticky top-0 bg-surface-2 z-10">Key</th>
+                    <% @column_locales.each do |locale| %>
+                      <th class="w-[280px] text-left font-normal px-3 py-[9px] border-l border-line-2 sticky top-0 bg-surface-2 z-10">
+                        <span class="text-ink-2"><%= locale.code %></span><% if locale_name(locale.code) %><span class="ml-[6px] font-sans normal-case tracking-normal text-faint"><%= locale_name(locale.code) %></span><% end %>
+                      </th>
+                    <% end %>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @translation_keys.each do |translation_key| %>
+                    <%= render "translation_keys/translation_key", translation_key: translation_key, project: @project, namespace: @namespace, locales: @column_locales, editable: editable, manageable: manageable %>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <div class="empty-state py-16 px-6 flex flex-col items-center text-center">
+                <div class="w-[48px] h-[48px] border border-line rounded-[11px] flex items-center justify-center text-faint mb-4"><%= mi "search_off", size: 24 %></div>
+                <h3 class="m-0 text-[15px] font-semibold text-ink">No keys match “<%= @query %>”</h3>
+                <p class="mt-2 text-[13px] text-mut">Try a different search.</p>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# footer legend %>
+    <div class="flex items-center justify-between gap-3 flex-wrap px-6 py-[13px] border-t border-line-2 font-mono text-[11px] text-ink-3 flex-none">
+      <span><span class="text-ink"><%= @translation_keys.size %></span> of <%= number_with_delimiter(@total_keys) %> keys<% if @draft_count.positive? %> · <span class="text-warn-ink"><%= @draft_count %> <%= "draft".pluralize(@draft_count) %></span><% end %></span>
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-[6px]"><span class="dot dot-done"></span>published</span>
+        <span class="flex items-center gap-[6px]"><span class="dot dot-draft"></span>draft</span>
+        <span class="flex items-center gap-[6px]"><span class="dot dot-missing"></span>missing</span>
+      </div>
+    </div>
   <% end %>
 </section>

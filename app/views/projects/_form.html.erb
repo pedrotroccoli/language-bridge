@@ -1,17 +1,17 @@
-<%= form_with model: @project, local: true do |form| %>
+<%= form_with model: @project, local: true, html: { class: "border border-line rounded-[11px] p-[22px] flex flex-col gap-4" } do |form| %>
   <% if @project.errors.any? %>
-    <ul class="errors">
-      <% @project.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
+    <ul class="text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+      <% @project.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
     </ul>
   <% end %>
 
-  <div class="field">
-    <%= form.label :name %>
-    <%= form.text_field :name, required: true, autofocus: true, placeholder: "My App" %>
+  <div class="flex flex-col gap-[7px]">
+    <%= form.label :name, class: "text-[12.5px] font-medium text-ink-2" %>
+    <%= form.text_field :name, required: true, autofocus: true, placeholder: "My App", class: "text-[14px]" %>
   </div>
 
-  <%= form.submit class: "btn" %>
-  <%= link_to "Cancel", (@project.persisted? ? project_path(@project) : projects_path), class: "btn btn-secondary" %>
+  <div class="flex justify-end gap-[9px] pt-1">
+    <%= link_to "Cancel", (@project.persisted? ? project_path(@project) : projects_path), class: "btn-secondary" %>
+    <%= form.submit class: "btn" %>
+  </div>
 <% end %>

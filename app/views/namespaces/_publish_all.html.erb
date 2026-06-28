@@ -1,12 +1,12 @@
-<%= tag.div id: "publish_all", class: "publish-all-slot" do %>
+<%= tag.div id: "publish_all", class: "inline-flex" do %>
   <% if editable && keys_present %>
     <%= button_to project_namespace_publication_path(project, namespace),
-          class: "btn btn-secondary",
+          class: "btn h-[34px] px-[14px] text-[12.5px]",
+          form_class: "inline",
           disabled: draft_count.zero?,
           title: (draft_count.zero? ? "Nothing in draft" : nil),
           data: { turbo_confirm: "Publish all #{draft_count} draft #{"translation".pluralize(draft_count)} in #{namespace.name}?" } do %>
-      <i class="iconoir-cloud-upload" aria-hidden="true"></i>
-      Publish all<%= " (#{draft_count})" if draft_count.positive? %>
+      <%= mi "publish", size: 17 %>Publish all<%= " (#{draft_count})" if draft_count.positive? %>
     <% end %>
   <% end %>
 <% end %>

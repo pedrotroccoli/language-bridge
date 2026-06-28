@@ -17,60 +17,65 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/iconoir/css/iconoir.css">
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <header class="topbar">
-      <a href="/" class="brand">
-        <%= image_tag "logo.png", alt: "Language Bridge", class: "brand-logo" %>
-        <span>language bridge.</span>
-      </a>
-      <% if signed_in? %>
-        <nav>
-          <ul>
-            <li>
-              <%= link_to projects_path, class: "nav-link" do %>
-                <i class="iconoir-folder" aria-hidden="true"></i>
-                <span>Projects</span>
-              <% end %>
-            </li>
-            <% if current_user.admin? %>
-              <li>
-                <%= link_to invitations_path, class: "nav-link" do %>
-                  <i class="iconoir-mail" aria-hidden="true"></i>
-                  <span>Invitations</span>
-                <% end %>
-              </li>
-            <% end %>
-            <li>
-              <%= button_to sign_out_path,
-                    method: :delete,
-                    class: "nav-btn",
-                    "aria-label": "Sign out" do %>
-                <i class="iconoir-log-out" aria-hidden="true"></i>
-                <span>Sign out</span>
-              <% end %>
-            </li>
-          </ul>
-        </nav>
-      <% end %>
-    </header>
+  <body class="min-h-screen flex flex-col bg-surface text-ink">
+    <% if signed_in? %>
+      <header class="h-[58px] flex items-center justify-between px-[26px] border-b border-line-2 shrink-0">
+        <%= link_to root_path, class: "flex items-center gap-[11px] no-underline" do %>
+          <span class="w-[26px] h-[26px] rounded-[7px] bg-ink text-white font-mono text-[11px] font-semibold flex items-center justify-center">lb</span>
+          <span class="font-semibold text-[15px] -tracking-[0.01em] text-ink">language bridge<span class="text-accent">.</span></span>
+        <% end %>
 
-    <% flash.each do |kind, message| %>
-      <div class="flash <%= kind %>"><%= message %></div>
+        <nav class="flex items-center gap-[28px] text-[13px] text-ink-3">
+          <% projects_active = nav_active?("projects", "namespaces", "translation_keys", "translations", "locales") %>
+          <%= link_to projects_path, "aria-current": (projects_active ? "page" : nil), class: "flex items-center gap-[7px] no-underline transition-colors #{projects_active ? "text-ink font-semibold pb-[2px] border-b-2 border-accent" : "text-ink-3 hover:text-ink"}" do %>
+            <%= mi "folder_open", size: 18 %><span>Projects</span>
+          <% end %>
+
+          <% if current_user.admin? %>
+            <% pending_invites = Invitation.pending.count %>
+            <%= link_to invitations_path, "aria-current": (nav_active?("invitations") ? "page" : nil), class: "flex items-center gap-[7px] no-underline transition-colors #{nav_active?("invitations") ? "text-ink font-semibold pb-[2px] border-b-2 border-accent" : "text-ink-3 hover:text-ink"}" do %>
+              <%= mi "mail", size: 18 %><span>Invitations</span>
+              <% if pending_invites.positive? %>
+                <span class="font-mono text-[10px] bg-accent-soft text-accent rounded-full px-[7px] py-px font-semibold"><%= pending_invites %></span>
+              <% end %>
+            <% end %>
+          <% end %>
+
+          <details class="relative [&_summary::-webkit-details-marker]:hidden">
+            <summary class="list-none cursor-pointer w-[28px] h-[28px] rounded-full bg-line-3 text-ink-2 flex items-center justify-center text-[11px] font-semibold hover:bg-line"><%= initials_for(current_user.email) %></summary>
+            <div class="absolute top-[calc(100%+12px)] right-0 w-[232px] bg-surface border border-line rounded-[11px] shadow-[0_12px_32px_-10px_rgba(0,0,0,0.22)] z-50 overflow-hidden">
+              <div class="flex items-center gap-[11px] px-[14px] py-[13px] border-b border-line-3">
+                <div class="w-[34px] h-[34px] rounded-full bg-accent-soft text-accent flex items-center justify-center text-[13px] font-bold flex-none"><%= initials_for(current_user.email) %></div>
+                <div class="min-w-0">
+                  <div class="text-[13px] font-semibold text-ink capitalize"><%= current_user.role %></div>
+                  <div class="font-mono text-[11px] text-mut-2 truncate"><%= current_user.email %></div>
+                </div>
+              </div>
+              <div class="p-[5px]">
+                <%= button_to sign_out_path, method: :delete, class: "w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-[7px] text-[13px] text-ink hover:bg-surface-2" do %>
+                  <%= mi "logout", size: 18, css: "text-ink-3" %>Sign out
+                <% end %>
+              </div>
+            </div>
+          </details>
+        </nav>
+      </header>
     <% end %>
 
-    <main class="main">
+    <div id="flash" class="toast-region" aria-live="polite">
+      <% flash.each do |kind, message| %>
+        <%= render "shared/toast", kind: kind, message: message %>
+      <% end %>
+    </div>
+
+    <main class="<%= content_for(:main_class) || "mx-auto w-full max-w-[1320px] px-6 py-7" %> flex-1">
       <%= yield %>
     </main>
-
-    <footer class="footer">
-      <span class="brand-mark">language bridge</span>
-      <span>open-source translation management</span>
-    </footer>
   </body>
 </html>

@@ -14,4 +14,38 @@ class Namespace < ApplicationRecord
   scope :alphabetically, -> { order(name: :asc) }
 
   def to_param = name
+
+  # All translations under this namespace (across every key).
+  def translations
+    Translation.joins(:translation_key).where(translation_keys: { namespace_id: id })
+  end
+
+  def draft_count
+    Translation.drafts_in_namespace(self).count
+  end
+
+  # Editor sidebar aggregates in a single grouped query:
+  #   :stats    — translated/drafts/missing/total + changed_7/changed_30 counts
+  #   :coverage — locale_id => percent of keys translated for that locale
+  def editor_overview(locales, total_keys: translation_keys.count)
+    scoped = translations
+    filled_by_locale = scoped.where.not(value: [ nil, "" ]).group(:locale_id).count
+    filled_total = filled_by_locale.values.sum
+    slots = total_keys * locales.size
+
+    coverage = locales.each_with_object({}) do |locale, map|
+      map[locale.id] = total_keys.zero? ? 0 : ((filled_by_locale[locale.id].to_i.to_f / total_keys) * 100).round.clamp(0, 100)
+    end
+
+    stats = {
+      translated: scoped.published.count,
+      drafts: draft_count,
+      missing: [ slots - filled_total, 0 ].max,
+      total: slots,
+      changed_7: scoped.where("translations.updated_at >= ?", 7.days.ago).count,
+      changed_30: scoped.where("translations.updated_at >= ?", 30.days.ago).count
+    }
+
+    { stats:, coverage: }
+  end
 end

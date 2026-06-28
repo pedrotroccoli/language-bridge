@@ -9,8 +9,15 @@ class NamespacesController < ApplicationController
   rescue_from ActiveRecord::RecordNotUnique, with: :name_already_taken
 
   def show
+    @namespaces = @project.namespaces.alphabetically
     @locales = @project.locales.alphabetically
     @query = params[:q].to_s.strip
+
+    # Locale-column visibility: ?locales[]=en&locales[]=pt-BR. Empty = show all.
+    selected = Array(params[:locales]).map { |c| c.to_s.strip }.reject(&:blank?)
+    @column_locales = selected.any? ? @locales.select { |l| selected.include?(l.code) } : @locales
+    @column_locales = @locales if @column_locales.empty?
+
     @total_keys = @namespace.translation_keys.count
 
     keys = @query.present? ? @namespace.translation_keys.search(@query) : @namespace.translation_keys.order(:key)
@@ -18,7 +25,11 @@ class NamespacesController < ApplicationController
     @match_count = keys.count
     @page_limit = KEY_PAGE_LIMIT
     @translation_keys = keys.includes(translations: :publication).limit(KEY_PAGE_LIMIT)
-    @draft_count = Translation.drafts_in_namespace(@namespace).count
+
+    overview = @namespace.editor_overview(@locales, total_keys: @total_keys)
+    @stats = overview[:stats]
+    @locale_coverage = overview[:coverage]
+    @draft_count = @stats[:drafts]
     @new_translation_key = @namespace.translation_keys.build
   end
 

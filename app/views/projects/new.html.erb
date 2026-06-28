@@ -1,10 +1,8 @@
 <% content_for :title, "New project" %>
 
-<section class="auth-card">
-  <header>
-    <h1>New project</h1>
-    <p class="subtitle">Slug is generated from the name.</p>
-  </header>
+<div class="max-w-[460px] mx-auto mt-8">
+  <h1 class="m-0 text-[20px] font-semibold -tracking-[0.02em] text-ink">New project</h1>
+  <p class="mt-[6px] mb-6 text-[13.5px] text-mut">The slug is generated from the name — used in API routes, exports and the CLI.</p>
 
   <%= render "form" %>
-</section>
+</div>

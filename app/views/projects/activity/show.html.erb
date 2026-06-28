@@ -1,0 +1,34 @@
+<% content_for :title, "Activity · #{@project.name}" %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
+
+<%= render "projects/tabs", project: @project, active: :activity %>
+
+<div class="mx-auto w-full max-w-[1320px] px-6 py-7">
+  <div class="max-w-[920px]">
+  <h2 class="m-0 text-[17px] font-semibold text-ink">Activity</h2>
+  <p class="mt-[7px] mb-5 text-[13.5px] text-mut">Recent changes across <%= @project.name %>.</p>
+
+  <% if @events.any? %>
+    <div>
+      <% @events.each do |event| %>
+        <% s = event_summary(event) %>
+        <% who = event.creator&.email %>
+        <div class="flex items-start gap-[13px] py-[13px] border-b border-line-4">
+          <div class="w-[30px] h-[30px] rounded-full bg-line-3 text-ink-3 flex items-center justify-center font-semibold text-[12px] flex-none"><%= initials_for(who || "System") %></div>
+          <div class="flex-1 text-[13.5px] text-ink-2 leading-[1.55] min-w-0">
+            <span class="text-ink font-semibold"><%= who ? who.split("@").first : "System" %></span>
+            <%= s[:verb] %><% if s[:target].present? %> <span class="font-mono text-[12.5px] text-ink break-all"><%= s[:target] %></span><% end %><% if s[:meta].present? %><span class="font-mono text-[11.5px] text-mut-2"> · <%= s[:meta] %></span><% end %>
+          </div>
+          <span class="font-mono text-[11.5px] text-mut-2 whitespace-nowrap mt-px"><%= time_ago_in_words(event.created_at) %> ago</span>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="py-16 flex flex-col items-center text-center">
+      <div class="w-14 h-14 border-[1.5px] border-dashed border-faint-2 rounded-xl flex items-center justify-center text-faint mb-4"><%= mi "history", size: 26 %></div>
+      <h3 class="m-0 text-[16px] font-semibold text-ink">No activity yet</h3>
+      <p class="mt-2 text-[13.5px] text-mut max-w-[340px]">Edits, publishes and imports across this project will show up here.</p>
+    </div>
+  <% end %>
+  </div>
+</div>

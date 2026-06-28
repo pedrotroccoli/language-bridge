@@ -38,7 +38,7 @@ class Translations::PublicationsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "publish via turbo frame streams the cell with no Published label" do
+  test "publish via turbo frame streams the published cell with an Unpublish action" do
     sign_in_as(users(:translator))
     frame = "locale_#{@translation.locale_id}_translation_key_#{@translation.translation_key_id}"
 
@@ -50,7 +50,7 @@ class Translations::PublicationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action=replace][target=publish_all]"
     assert @translation.reload.publication.present?
     assert_includes response.body, "Unpublish"
-    assert_not_includes response.body, "Published"
+    assert_includes response.body, "Published"
   end
 
   test "translator unpublishes a translation" do
