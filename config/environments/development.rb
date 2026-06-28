@@ -46,7 +46,12 @@ Rails.application.configure do
       tls:            true
     }
   else
-    config.action_mailer.delivery_method = :test
+    # Catch all outgoing mail in Mailhog (see compose.yml). Web UI: http://localhost:8025
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("SMTP_HOST", "localhost"),
+      port:    ENV.fetch("SMTP_PORT", 1025).to_i
+    }
   end
 
   # Print deprecation notices to the Rails logger.
