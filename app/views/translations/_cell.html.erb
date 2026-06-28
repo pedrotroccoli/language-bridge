@@ -1,40 +1,58 @@
 <%= turbo_frame_tag dom_id(translation_key, "locale_#{locale.id}") do %>
   <% published = translation&.publication.present? %>
-  <div class="translation-cell<%= " translation-cell--missing" if translation.nil? || translation.value.blank? %>">
-    <% if current_user.can_edit_translations?(project) %>
-      <% if translation&.persisted? %>
-        <%= form_with model: [ project, translation ], method: :patch, data: { controller: "auto-submit" } do |form| %>
-          <%= form.text_area :value, rows: 2, placeholder: "—", autocomplete: "off",
-                "aria-label": "#{translation_key.key} in #{locale.code}",
-                data: { action: "change->auto-submit#submit" } %>
-        <% end %>
-      <% else %>
-        <%= form_with url: project_translations_path(project), method: :post, data: { controller: "auto-submit" } do |form| %>
-          <%= form.hidden_field :translation_key_id, value: translation_key.id, name: "translation[translation_key_id]" %>
-          <%= form.hidden_field :locale_id, value: locale.id, name: "translation[locale_id]" %>
-          <%= form.text_area :value, name: "translation[value]", rows: 2, placeholder: "—", autocomplete: "off",
-                "aria-label": "#{translation_key.key} in #{locale.code}",
-                data: { action: "change->auto-submit#submit" } %>
-        <% end %>
-      <% end %>
+  <% has_value = translation&.value.present? %>
+  <% draft = has_value && !published %>
+  <% missing = translation.nil? || translation.value.blank? %>
+  <% box = if draft
+             "border-draft-border bg-draft-bg"
+           elsif missing
+             "border-dashed !border-line-dashed bg-surface-2"
+           else
+             "border-line bg-surface"
+           end %>
 
-      <% if translation&.persisted? && translation.value.present? %>
-        <div class="translation-cell__actions">
-          <% if published %>
-            <%= button_to project_translation_publication_path(project, translation),
-                  method: :delete, class: "btn-link" do %>Unpublish<% end %>
-          <% else %>
-            <span class="draft-badge">Draft</span>
-            <%= button_to project_translation_publication_path(project, translation),
-                  method: :post, class: "btn-link" do %>Publish<% end %>
-          <% end %>
-        </div>
+  <% if current_user.can_edit_translations?(project) %>
+    <% if translation&.persisted? %>
+      <%= form_with model: [ project, translation ], method: :patch, data: { controller: "auto-submit" } do |form| %>
+        <%= form.text_area :value, rows: 2, placeholder: "—", autocomplete: "off",
+              id: "tv_#{translation_key.id}_#{locale.id}",
+              class: "w-full text-[13px] leading-[1.45] rounded-[7px] px-[11px] py-[9px] min-h-[40px] resize-y border #{box}",
+              "aria-label": "#{translation_key.key} in #{locale.code}",
+              data: { action: "change->auto-submit#submit" } %>
       <% end %>
     <% else %>
-      <span class="translation-cell__value"><%= translation&.value.presence || "—" %></span>
-      <% if translation&.value.present? && !published %>
-        <span class="draft-badge">Draft</span>
+      <%= form_with url: project_translations_path(project), method: :post, data: { controller: "auto-submit" } do |form| %>
+        <%= form.hidden_field :translation_key_id, value: translation_key.id, name: "translation[translation_key_id]", id: "tk_#{translation_key.id}_#{locale.id}" %>
+        <%= form.hidden_field :locale_id, value: locale.id, name: "translation[locale_id]", id: "tl_#{translation_key.id}_#{locale.id}" %>
+        <%= form.text_area :value, name: "translation[value]", rows: 2, placeholder: "—", autocomplete: "off",
+              id: "tv_#{translation_key.id}_#{locale.id}",
+              class: "w-full text-[13px] leading-[1.45] rounded-[7px] px-[11px] py-[9px] min-h-[40px] resize-y border #{box}",
+              "aria-label": "#{translation_key.key} in #{locale.code}",
+              data: { action: "change->auto-submit#submit" } %>
       <% end %>
     <% end %>
-  </div>
+
+    <div class="flex items-center justify-between mt-2 min-h-[18px]">
+      <% if published %>
+        <span class="flex items-center gap-[6px] text-[11px] text-ink-3"><span class="dot dot-done"></span>Published</span>
+        <%= button_to "Unpublish", project_translation_publication_path(project, translation), method: :delete, form_class: "inline", class: "text-[11px] text-mut-2 hover:text-ink" %>
+      <% elsif draft %>
+        <span class="flex items-center gap-[7px] text-[11px] text-warn-ink"><span class="uppercase font-mono text-[9px] font-semibold tracking-[0.05em] bg-warn-soft text-warn-ink px-[6px] py-[2px] rounded-[4px]">Draft</span>unpublished</span>
+        <%= button_to "Publish", project_translation_publication_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-accent font-medium hover:underline" %>
+      <% else %>
+        <span class="flex items-center gap-[6px] text-[11px] text-faint"><span class="dot dot-missing"></span>Missing</span>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="translation-cell__value text-[13px] leading-[1.45] rounded-[7px] px-[11px] py-[9px] min-h-[40px] border whitespace-pre-wrap <%= box %> <%= "text-faint" if missing %>"><%= translation&.value.presence || "—" %></div>
+    <div class="flex items-center mt-2 min-h-[18px]">
+      <% if published %>
+        <span class="flex items-center gap-[6px] text-[11px] text-ink-3"><span class="dot dot-done"></span>Published</span>
+      <% elsif draft %>
+        <span class="flex items-center gap-[7px] text-[11px] text-warn-ink"><span class="uppercase font-mono text-[9px] font-semibold tracking-[0.05em] bg-warn-soft text-warn-ink px-[6px] py-[2px] rounded-[4px]">Draft</span>unpublished</span>
+      <% else %>
+        <span class="flex items-center gap-[6px] text-[11px] text-faint"><span class="dot dot-missing"></span>Missing</span>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

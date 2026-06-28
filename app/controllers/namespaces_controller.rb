@@ -9,8 +9,15 @@ class NamespacesController < ApplicationController
   rescue_from ActiveRecord::RecordNotUnique, with: :name_already_taken
 
   def show
+    @namespaces = @project.namespaces.alphabetically
     @locales = @project.locales.alphabetically
     @query = params[:q].to_s.strip
+
+    # Locale-column visibility: ?locales[]=en&locales[]=pt-BR. Empty = show all.
+    selected = Array(params[:locales]).map { |c| c.to_s.strip }.reject(&:blank?)
+    @column_locales = selected.any? ? @locales.select { |l| selected.include?(l.code) } : @locales
+    @column_locales = @locales if @column_locales.empty?
+
     @total_keys = @namespace.translation_keys.count
 
     keys = @query.present? ? @namespace.translation_keys.search(@query) : @namespace.translation_keys.order(:key)
@@ -20,6 +27,8 @@ class NamespacesController < ApplicationController
     @translation_keys = keys.includes(translations: :publication).limit(KEY_PAGE_LIMIT)
     @draft_count = Translation.drafts_in_namespace(@namespace).count
     @new_translation_key = @namespace.translation_keys.build
+
+    load_editor_stats
   end
 
   def create
@@ -52,6 +61,28 @@ class NamespacesController < ApplicationController
 
     def namespace_params
       params.expect(namespace: %i[ name ])
+    end
+
+    # Sidebar coverage + the translated/draft/missing tallies for this namespace.
+    def load_editor_stats
+      scoped = Translation.joins(:translation_key)
+                          .where(translation_keys: { namespace_id: @namespace.id })
+
+      filled = scoped.where.not(value: [ nil, "" ]).group(:locale_id).count
+      @locale_coverage = @locales.each_with_object({}) do |locale, map|
+        map[locale.id] = @total_keys.zero? ? 0 : ((filled[locale.id].to_i.to_f / @total_keys) * 100).round.clamp(0, 100)
+      end
+
+      slots = @total_keys * @locales.size
+      filled_total = filled.values.sum
+      @stats = {
+        translated: scoped.published.count,
+        drafts: @draft_count,
+        missing: [ slots - filled_total, 0 ].max,
+        total: slots,
+        changed_7: scoped.where("translations.updated_at >= ?", 7.days.ago).count,
+        changed_30: scoped.where("translations.updated_at >= ?", 30.days.ago).count
+      }
     end
 
     def name_already_taken

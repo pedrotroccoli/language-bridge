@@ -1,20 +1,27 @@
 <% translations_by_locale = translation_key.translations.index_by(&:locale_id) %>
-<tr class="translation-row" id="<%= dom_id(translation_key) %>">
-  <th scope="row" class="translation-row__key">
-    <code><%= translation_key.key %></code>
-    <% if current_user.can_administer_project?(project) %>
-      <%= button_to project_namespace_translation_key_path(project, namespace, translation_key),
-            method: :delete,
-            class: "icon-btn icon-btn--danger",
-            "aria-label": "Delete key #{translation_key.key}",
-            data: { turbo_confirm: "Delete key \"#{translation_key.key}\" and all its translations?" } do %>
-        <i class="iconoir-trash" aria-hidden="true"></i>
+<% missing_any = locales.any? { |l| t = translations_by_locale[l.id]; t.nil? || t.value.blank? } %>
+<% draft_any = translations_by_locale.values.any? { |t| t.value.present? && t.publication.nil? } %>
+<% dot = draft_any ? "dot-draft" : (missing_any ? "dot-missing" : "dot-done") %>
+<tr class="translation-row border-b border-line-4 align-top hover:bg-surface-3" id="<%= dom_id(translation_key) %>">
+  <th scope="row" class="w-[300px] text-left font-normal align-top px-[18px] py-4">
+    <div class="flex items-start gap-[11px]">
+      <span class="dot <%= dot %> mt-[6px]"></span>
+      <code class="flex-1 min-w-0 font-mono text-[12.5px] text-ink break-all leading-[1.55]"><%= translation_key.key %></code>
+      <% if manageable %>
+        <%= button_to project_namespace_translation_key_path(project, namespace, translation_key),
+              method: :delete,
+              class: "text-faint-2 hover:text-danger flex-none mt-px",
+              form_class: "inline",
+              "aria-label": "Delete key #{translation_key.key}",
+              data: { turbo_confirm: "Delete key \"#{translation_key.key}\" and all its translations?" } do %>
+          <%= mi "delete", size: 17 %>
+        <% end %>
       <% end %>
-    <% end %>
+    </div>
   </th>
 
   <% locales.each do |locale| %>
-    <td class="translation-cell-wrap">
+    <td class="w-[280px] align-top px-3 py-[14px] border-l border-line-4">
       <%= render "translations/cell",
             project: project, translation_key: translation_key, locale: locale,
             translation: translations_by_locale[locale.id] %>
