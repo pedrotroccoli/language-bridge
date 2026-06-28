@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.uuid "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "events", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "action", null: false
@@ -101,6 +129,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
     t.index ["translation_id"], name: "index_translation_approvals_on_translation_id", unique: true
   end
 
+  create_table "translation_artifacts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "built_at", null: false
+    t.string "checksum", null: false
+    t.datetime "created_at", null: false
+    t.uuid "locale_id", null: false
+    t.uuid "namespace_id", null: false
+    t.uuid "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["locale_id"], name: "index_translation_artifacts_on_locale_id"
+    t.index ["namespace_id", "locale_id"], name: "index_translation_artifacts_on_namespace_id_and_locale_id", unique: true
+    t.index ["namespace_id"], name: "index_translation_artifacts_on_namespace_id"
+    t.index ["project_id"], name: "index_translation_artifacts_on_project_id"
+  end
+
   create_table "translation_keys", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "key", null: false
@@ -164,6 +206,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "locales", "projects"
@@ -172,6 +216,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
   add_foreign_key "sign_in_tokens", "users"
   add_foreign_key "translation_approvals", "translations"
   add_foreign_key "translation_approvals", "users", column: "approver_id"
+  add_foreign_key "translation_artifacts", "locales"
+  add_foreign_key "translation_artifacts", "namespaces"
+  add_foreign_key "translation_artifacts", "projects"
   add_foreign_key "translation_keys", "namespaces"
   add_foreign_key "translation_keys", "projects"
   add_foreign_key "translation_publications", "translations"

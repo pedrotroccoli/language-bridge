@@ -48,6 +48,7 @@ class Translation < ApplicationRecord
       create_publication!(publisher: by)
       track_event("published", creator: by)
     end
+    Translation::Artifact.touch_for(self)
     publication
   end
 
@@ -59,6 +60,7 @@ class Translation < ApplicationRecord
       association(:publication).reset
       track_event("unpublished")
     end
+    Translation::Artifact.touch_for(self)
   end
 
   private
@@ -87,5 +89,7 @@ class Translation < ApplicationRecord
       publication.destroy!
       association(:publication).reset
       track_event("unpublished", metadata: { reason: "value_changed" })
+
+      Translation::Artifact.touch_for(self)
     end
 end
