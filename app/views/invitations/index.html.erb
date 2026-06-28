@@ -1,41 +1,52 @@
 <% content_for :title, "Invitations" %>
 
-<section class="container stack">
-  <header style="display: flex; align-items: center; justify-content: space-between;">
-    <h1>Pending invitations</h1>
-    <%= link_to "Invite teammate", new_invitation_path, class: "btn", style: "width: auto;" %>
-  </header>
+<div class="flex items-baseline gap-3">
+  <h1 class="m-0 text-[20px] font-semibold -tracking-[0.02em] text-ink">Invitations</h1>
+  <span class="font-mono text-[12px] text-faint"><%= format("%02d", @invitations.size) %></span>
+</div>
+<p class="mt-[7px] text-[13.5px] text-mut">People you've invited to collaborate on your workspace.</p>
 
-  <% if @invitations.any? %>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Invited</th>
-          <th>Expires</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @invitations.each do |invitation| %>
-          <tr>
-            <td><%= invitation.email %></td>
-            <td><%= invitation.role %></td>
-            <td><%= time_ago_in_words(invitation.created_at) %> ago</td>
-            <td><%= invitation.expires_at.strftime("%b %d, %Y") %></td>
-            <td>
-              <%= button_to "Revoke",
-                    invitation_path(invitation),
-                    method: :delete,
-                    class: "btn-link",
-                    data: { turbo_confirm: "Revoke invitation for #{invitation.email}?" } %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <p class="muted">No pending invitations.</p>
-  <% end %>
-</section>
+<%= form_with model: @invitation, local: true, html: { class: "flex items-center gap-[10px] flex-wrap mt-5 px-4 py-[14px] border border-line rounded-[10px] bg-surface-2" } do |form| %>
+  <span class="text-[13px] font-medium text-ink-2" aria-hidden="true">Invite</span>
+  <%= form.label :email, "Email", class: "sr-only" %>
+  <%= form.email_field :email, required: true, placeholder: "teammate@company.com", class: "flex-1 min-w-[14rem] max-w-[420px] !bg-surface text-[13px]" %>
+  <%= form.label :role, "Role", class: "sr-only" %>
+  <%= form.select :role, User::ROLES.map { |r| [ r.titleize, r ] }, {}, class: "!bg-surface text-[13px] !w-auto" %>
+  <%= form.submit "Send invite", class: "btn" %>
+<% end %>
+
+<% if @invitation.errors.any? %>
+  <ul class="mt-3 text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+    <% @invitation.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+  </ul>
+<% end %>
+
+<% if @invitations.any? %>
+  <div class="flex flex-col gap-[10px] mt-5">
+    <% @invitations.each do |invitation| %>
+      <div class="flex items-center justify-between gap-4 flex-wrap border border-line rounded-[9px] px-[18px] py-[15px] hover:border-faint-2 transition-colors">
+        <div class="flex items-center gap-[13px] min-w-0">
+          <div class="w-[38px] h-[38px] rounded-full bg-line-3 text-ink-3 flex items-center justify-center font-semibold text-[15px] flex-none"><%= initials_for(invitation.email) %></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-[9px] flex-wrap">
+              <span class="text-[14.5px] font-semibold text-ink truncate"><%= invitation.email %></span>
+              <span class="font-mono text-[10px] text-ink-3 border border-line rounded-[4px] px-[7px] py-px"><%= invitation.role.titleize %></span>
+            </div>
+            <div class="font-mono text-[11.5px] text-mut-2 mt-1">invited <%= time_ago_in_words(invitation.created_at) %> ago · expires <%= invitation.expires_at.strftime("%b %d, %Y") %></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-[14px]">
+          <span class="text-[11.5px] font-semibold text-banner-ink bg-banner-bg border border-banner-border px-[10px] py-[3px] rounded-full">Pending</span>
+          <%= button_to invitation_path(invitation), method: :delete, class: "btn-secondary h-8 hover:!border-danger hover:!text-danger",
+                form_class: "inline", data: { turbo_confirm: "Revoke invitation for #{invitation.email}?" } do %>Revoke<% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="py-16 flex flex-col items-center text-center mt-2">
+    <div class="w-14 h-14 border-[1.5px] border-dashed border-faint-2 rounded-xl flex items-center justify-center text-faint mb-4"><%= mi "mail", size: 26 %></div>
+    <h2 class="m-0 text-[17px] font-semibold text-ink">No pending invitations</h2>
+    <p class="mt-2 text-[13.5px] text-mut max-w-[340px]">Invite a teammate above to give them access to this workspace.</p>
+  </div>
+<% end %>

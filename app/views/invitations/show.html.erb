@@ -1,19 +1,23 @@
 <% content_for :title, "Accept invitation · Language Bridge" %>
+<% content_for :main_class, "flex-1 w-full" %>
 
-<section class="auth-card">
-  <header>
-    <h1>You're invited</h1>
-    <p class="subtitle">
-      <strong><%= @invitation.inviter.email %></strong> invited you to join Language Bridge as
-      <strong><%= @invitation.role %></strong>.
-    </p>
-  </header>
-
-  <%= form_with url: claim_invitation_path(token: @invitation.token), method: :post, local: true do |form| %>
-    <div class="field">
-      <%= form.label :email, "Email" %>
-      <%= form.email_field :email, value: @invitation.email, readonly: true %>
+<section class="min-h-[100dvh] flex items-center justify-center px-6 py-12">
+  <div class="w-[320px]">
+    <div class="flex justify-center mb-[22px]">
+      <span class="w-9 h-9 rounded-[10px] bg-ink text-white font-mono text-[14px] font-semibold flex items-center justify-center">lb</span>
     </div>
-    <%= form.submit "Accept and sign in", class: "btn" %>
-  <% end %>
+    <h1 class="m-0 text-center text-[21px] font-semibold -tracking-[0.02em] text-ink">You're invited</h1>
+    <p class="mt-2 mb-7 text-center text-[13.5px] text-mut leading-relaxed">
+      <strong class="text-ink"><%= @invitation.inviter.email %></strong> invited you to join Language Bridge as
+      <strong class="text-ink"><%= @invitation.role.titleize %></strong>.
+    </p>
+
+    <%= form_with url: claim_invitation_path(token: @invitation.token), method: :post, local: true, class: "flex flex-col gap-4" do |form| %>
+      <div class="flex flex-col gap-[7px]">
+        <%= form.label :email, "Email", class: "text-[12.5px] font-medium text-ink-2" %>
+        <%= form.email_field :email, value: @invitation.email, readonly: true, class: "text-[14px] font-mono !bg-surface-2 text-ink-3" %>
+      </div>
+      <%= form.submit "Accept and sign in", class: "btn h-11 text-[14px] font-semibold w-full" %>
+    <% end %>
+  </div>
 </section>

@@ -7,6 +7,7 @@ class InvitationsController < ApplicationController
 
   def index
     @invitations = Invitation.pending.order(created_at: :desc)
+    @invitation = Invitation.new(role: "translator")
   end
 
   def new
