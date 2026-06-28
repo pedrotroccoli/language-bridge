@@ -39,6 +39,11 @@ class TranslationImport
         translation.save!
         written += 1
       end
+
+      @namespace.project.track_event("translations_imported", creator: @author, metadata: {
+        namespace: @namespace.name, locale: @locale.code,
+        keys_created: keys_created, translations_written: written
+      })
     end
 
     Result.new(keys_created: keys_created, translations_written: written)

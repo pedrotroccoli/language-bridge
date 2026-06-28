@@ -37,6 +37,16 @@ class TranslationImportTest < ActiveSupport::TestCase
     assert_equal 2, result.translations_written
   end
 
+  test "records a project event for the import" do
+    assert_difference -> { @namespace.project.events.where(action: "translations_imported").count }, 1 do
+      import({ greeting: "x", brand_new: "y" }.to_json)
+    end
+    event = @namespace.project.events.where(action: "translations_imported").last
+    assert_equal @author, event.creator
+    assert_equal "en", event.metadata["locale"]
+    assert_equal 1, event.metadata["keys_created"]
+  end
+
   test "raises on non-object json" do
     assert_raises(TranslationImport::Error) { import("[1,2,3]") }
   end

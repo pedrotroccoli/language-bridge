@@ -46,7 +46,7 @@ class Translation < ApplicationRecord
 
     transaction do
       create_publication!(publisher: by)
-      track_event("published")
+      track_event("published", creator: by)
     end
     publication
   end
@@ -79,11 +79,13 @@ class Translation < ApplicationRecord
     end
 
     # Editing the value invalidates any publication: the published content is
-    # now stale, so the translation returns to draft.
+    # now stale, so the translation returns to draft (and the transition is
+    # recorded, like an explicit unpublish).
     def discard_publication
       return if publication.nil?
 
       publication.destroy!
       association(:publication).reset
+      track_event("unpublished", metadata: { reason: "value_changed" })
     end
 end

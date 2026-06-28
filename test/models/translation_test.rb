@@ -103,6 +103,25 @@ class TranslationTest < ActiveSupport::TestCase
     assert_not translations(:farewell_en_missing).draft? # blank value
   end
 
+  test "publishing records an event crediting the publisher" do
+    translation = translations(:greeting_pt)
+    assert_difference -> { translation.events.where(action: "published").count }, 1 do
+      translation.publish(by: users(:admin))
+    end
+    assert_equal users(:admin), translation.events.where(action: "published").last.creator
+  end
+
+  test "editing a published value records an unpublished event" do
+    Current.session = sessions(:admin_session)
+    translation = translations(:greeting_en)
+    translation.publish(by: users(:admin))
+
+    assert_difference -> { translation.events.where(action: "unpublished").count }, 1 do
+      translation.update!(value: "Changed")
+    end
+    assert_equal "value_changed", translation.events.where(action: "unpublished").last.metadata["reason"]
+  end
+
   test "published and unpublished scopes" do
     published = translations(:greeting_en)
     Translation::Publication.create!(translation: published, publisher: users(:admin))

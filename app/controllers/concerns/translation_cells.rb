@@ -10,6 +10,7 @@ module TranslationCells
       [
         turbo_stream.replace(
           helpers.dom_id(translation.translation_key, "locale_#{translation.locale_id}"),
+          method: :morph,
           partial: "translations/cell",
           locals: {
             project: project,
@@ -20,6 +21,7 @@ module TranslationCells
         ),
         turbo_stream.replace(
           "publish_all",
+          method: :morph,
           partial: "namespaces/publish_all",
           locals: {
             project: project,
