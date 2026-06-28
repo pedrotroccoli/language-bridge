@@ -84,11 +84,33 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
   test "admin destroys locale" do
     sign_in_as(users(:admin))
     project = projects(:main_app)
-    locale = project.locales.create!(code: "disposable")
+    locale = project.locales.create!(code: "zz")
 
     assert_difference "project.locales.count", -1 do
       delete project_locale_path(project, locale)
     end
     assert_redirected_to project_path(project)
+  end
+
+  test "rejects a malformed locale code" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    assert_no_difference "Locale.count" do
+      post project_locales_path(project), params: { locale: { code: "not a code!" } }
+    end
+    assert_redirected_to project_path(project)
+    assert flash[:alert].present?
+  end
+
+  test "bulk add skips malformed codes" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    assert_difference "project.locales.count", 1 do
+      post project_locales_path(project), params: { locale: { codes: [ "ja", "<script>" ] } }
+    end
+    assert project.locales.exists?(code: "ja")
+    assert_not project.locales.exists?(code: "<script>")
   end
 end

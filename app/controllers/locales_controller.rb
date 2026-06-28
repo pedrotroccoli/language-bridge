@@ -53,8 +53,10 @@ class LocalesController < ApplicationController
     end
 
     # Add several locales at once; duplicates/invalid codes are skipped.
+    # Atomic: an unexpected failure rolls the whole batch back rather than
+    # leaving a partial set behind.
     def create_many(codes)
-      results = codes.map { |code| @project.locales.create(code: code) }
+      results = Project.transaction { codes.map { |code| @project.locales.create(code: code) } }
       created = results.count(&:persisted?)
       skipped = results.reject(&:persisted?).map(&:code)
 
@@ -74,6 +76,9 @@ class LocalesController < ApplicationController
     end
 
     def code_already_taken
+      # Bulk create never builds @locale; a race there just reports generically.
+      return redirect_to(project_path(@project), alert: "That locale already exists.", status: :see_other) if @locale.nil?
+
       @locale.errors.add(:code, "has already been taken")
       action_name == "create" ? redirect_with_invalid_locale : redirect_with_locale_alert
     end

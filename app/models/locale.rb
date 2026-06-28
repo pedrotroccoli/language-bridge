@@ -4,7 +4,13 @@ class Locale < ApplicationRecord
   has_many :translations, dependent: :destroy
   has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy
 
-  validates :code, presence: true, uniqueness: { scope: :project_id }
+  # IETF-ish language tag: 2–3 letter primary subtag, optional 2–8 alnum subtags.
+  # Mirrors the combobox client pattern so server and UI agree.
+  CODE_FORMAT = /\A[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z/
+
+  validates :code, presence: true,
+                   format: { with: CODE_FORMAT, message: "must be a valid locale tag (e.g. en, pt-BR)" },
+                   uniqueness: { scope: :project_id }
 
   scope :alphabetically, -> { order(code: :asc) }
 
