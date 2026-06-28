@@ -27,8 +27,18 @@ class Project < ApplicationRecord
   end
 
   # Activity feed: events on the project and its keys/translations, newest first.
+  # Polymorphic `includes(:eventable)` can't reach a Translation's key/locale,
+  # which event_summary needs — so preload those on the Translation subset to
+  # keep the feed at a fixed query count instead of N+1.
   def recent_events(limit: 50)
-    Event.for_project(self).recent.limit(limit)
+    events = Event.for_project(self).recent.limit(limit).to_a
+    translations = events.filter_map { |e| e.eventable if e.eventable_type == "Translation" }
+    if translations.any?
+      ActiveRecord::Associations::Preloader.new(
+        records: translations, associations: [ :translation_key, :locale ]
+      ).call
+    end
+    events
   end
 
   # Batched coverage for an index listing: id => translated percent.
