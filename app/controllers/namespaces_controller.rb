@@ -25,10 +25,12 @@ class NamespacesController < ApplicationController
     @match_count = keys.count
     @page_limit = KEY_PAGE_LIMIT
     @translation_keys = keys.includes(translations: :publication).limit(KEY_PAGE_LIMIT)
-    @draft_count = Translation.drafts_in_namespace(@namespace).count
-    @new_translation_key = @namespace.translation_keys.build
 
-    load_editor_stats
+    overview = @namespace.editor_overview(@locales, total_keys: @total_keys)
+    @stats = overview[:stats]
+    @locale_coverage = overview[:coverage]
+    @draft_count = @stats[:drafts]
+    @new_translation_key = @namespace.translation_keys.build
   end
 
   def create
@@ -61,28 +63,6 @@ class NamespacesController < ApplicationController
 
     def namespace_params
       params.expect(namespace: %i[ name ])
-    end
-
-    # Sidebar coverage + the translated/draft/missing tallies for this namespace.
-    def load_editor_stats
-      scoped = Translation.joins(:translation_key)
-                          .where(translation_keys: { namespace_id: @namespace.id })
-
-      filled = scoped.where.not(value: [ nil, "" ]).group(:locale_id).count
-      @locale_coverage = @locales.each_with_object({}) do |locale, map|
-        map[locale.id] = @total_keys.zero? ? 0 : ((filled[locale.id].to_i.to_f / @total_keys) * 100).round.clamp(0, 100)
-      end
-
-      slots = @total_keys * @locales.size
-      filled_total = filled.values.sum
-      @stats = {
-        translated: scoped.published.count,
-        drafts: @draft_count,
-        missing: [ slots - filled_total, 0 ].max,
-        total: slots,
-        changed_7: scoped.where("translations.updated_at >= ?", 7.days.ago).count,
-        changed_30: scoped.where("translations.updated_at >= ?", 30.days.ago).count
-      }
     end
 
     def name_already_taken
