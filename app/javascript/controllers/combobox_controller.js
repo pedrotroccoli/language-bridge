@@ -110,7 +110,10 @@ export default class extends Controller {
     const chip = document.createElement("span")
     chip.dataset.code = code
     chip.className = "chip"
-    chip.innerHTML = `<span>${label}</span>`
+
+    const text = document.createElement("span")
+    text.textContent = label
+    chip.appendChild(text)
 
     const remove = document.createElement("button")
     remove.type = "button"

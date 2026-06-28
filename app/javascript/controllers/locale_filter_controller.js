@@ -7,6 +7,7 @@ export default class extends Controller {
   static values = { total: Number }
 
   updateCount() {
+    if (!this.hasCountTarget) return
     const checked = this.checkboxTargets.filter((c) => c.checked).length
     this.countTarget.textContent = `${checked === 0 ? this.totalValue : checked}/${this.totalValue}`
   }
