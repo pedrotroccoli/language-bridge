@@ -11,9 +11,9 @@
     <% tabs = [
          { key: :overview, label: "Overview", icon: "dashboard", url: project_path(project) },
          { key: :editor,   label: "Editor",   icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : nil) },
-         { key: :activity, label: "Activity", icon: "history",   url: activity_project_path(project) }
+         { key: :activity, label: "Activity", icon: "history",   url: project_activity_path(project) }
        ] %>
-    <% tabs << { key: :settings, label: "Settings", icon: "settings", url: settings_project_path(project) } if current_user.admin? %>
+    <% tabs << { key: :settings, label: "Settings", icon: "settings", url: project_settings_path(project) } if current_user.admin? %>
 
     <% tabs.each do |tab| %>
       <% is_active = active == tab[:key] %>
