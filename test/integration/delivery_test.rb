@@ -45,11 +45,22 @@ class DeliveryTest < ActionDispatch::IntegrationTest
     assert response.headers["ETag"].present?
   end
 
-  test "returns 304 when the ETag matches" do
+  test "returns 304 with cache headers when the ETag matches" do
     get cdn_path("common")
     etag = response.headers["ETag"]
     get cdn_path("common"), headers: { "If-None-Match" => etag }
     assert_response :not_modified
+    assert_includes response.headers["Cache-Control"], "max-age=3600"
+  end
+
+  test "matches a namespace whose name literally ends in .json" do
+    dotted = @project.namespaces.create!(name: "config.json")
+    key = dotted.translation_keys.create!(project: @project, key: "title")
+    Translation.create!(translation_key: key, locale: @locale, value: "Hi").publish(by: users(:admin))
+
+    get cdn_path("config.json")
+    assert_response :success
+    assert_equal({ "title" => "Hi" }, response.parsed_body)
   end
 
   test "404 for an unknown project" do

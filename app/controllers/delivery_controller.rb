@@ -3,12 +3,14 @@
 # the i18next http-backend loadPath "/cdn/:project/:locale/:namespace.json".
 # HTTP caching (ETag + Cache-Control) lets the host decide when to re-fetch.
 class DeliveryController < ApplicationController
+  include ActiveStorage::Streaming
+
   allow_unauthenticated only: :show
 
   def show
     project = Project.find_by!(slug: params[:project_slug])
     locale = project.locales.find_by!(code: params[:locale])
-    namespace = project.namespaces.find_by!(name: namespace_name)
+    namespace = find_namespace!(project)
 
     artifact = Translation::Artifact.find_by(namespace: namespace, locale: locale)
     if artifact&.file&.attached?
@@ -21,19 +23,18 @@ class DeliveryController < ApplicationController
   end
 
   private
+    # Stream the stored blob chunk by chunk instead of loading it whole into
+    # memory. Cache headers are set before the freshness check so a 304 carries
+    # them too.
     def serve_artifact(artifact)
-      if stale?(etag: artifact.checksum, public: true)
-        set_cache_headers
-        render body: artifact.file.download, content_type: "application/json"
-      end
+      set_cache_headers
+      send_blob_stream(artifact.file, disposition: "inline") if stale?(etag: artifact.checksum)
     end
 
     def serve_live(namespace, locale)
       bundle = TranslationBundle.new(namespace: namespace, locale: locale)
-      if stale?(etag: bundle.etag, public: true)
-        set_cache_headers
-        render json: bundle.to_h
-      end
+      set_cache_headers
+      render json: bundle.to_h if stale?(etag: bundle.etag)
     end
 
     # A CDN fronts this endpoint (see docs/cdn-setup.md): cache for an hour, but
@@ -44,8 +45,11 @@ class DeliveryController < ApplicationController
     end
 
     # The route captures ".json" into :namespace (namespaces may contain dots),
-    # so strip a single trailing ".json" to support both loadPath styles.
-    def namespace_name
-      params[:namespace].delete_suffix(".json")
+    # so the optional loadPath suffix can't be a Rails format. Try the literal
+    # name first (a namespace really named "x.json"), then the stripped form.
+    def find_namespace!(project)
+      raw = params[:namespace]
+      project.namespaces.find_by(name: raw) ||
+        project.namespaces.find_by!(name: raw.delete_suffix(".json"))
     end
 end
