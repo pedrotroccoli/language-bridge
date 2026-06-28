@@ -6,6 +6,8 @@ class NamespacesController < ApplicationController
   before_action :set_namespace,                 only: %i[ show update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
 
+  rescue_from ActiveRecord::RecordNotUnique, with: :name_already_taken
+
   def show
     @locales = @project.locales.alphabetically
     @query = params[:q].to_s.strip
@@ -28,9 +30,6 @@ class NamespacesController < ApplicationController
     else
       redirect_with_invalid_namespace
     end
-  rescue ActiveRecord::RecordNotUnique
-    @namespace.errors.add(:name, "has already been taken")
-    redirect_with_invalid_namespace
   end
 
   def update
@@ -39,9 +38,6 @@ class NamespacesController < ApplicationController
     else
       redirect_with_namespace_alert
     end
-  rescue ActiveRecord::RecordNotUnique
-    @namespace.errors.add(:name, "has already been taken")
-    redirect_with_namespace_alert
   end
 
   def destroy
@@ -56,6 +52,11 @@ class NamespacesController < ApplicationController
 
     def namespace_params
       params.expect(namespace: %i[ name ])
+    end
+
+    def name_already_taken
+      @namespace.errors.add(:name, "has already been taken")
+      action_name == "create" ? redirect_with_invalid_namespace : redirect_with_namespace_alert
     end
 
     def redirect_with_invalid_namespace

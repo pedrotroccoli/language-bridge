@@ -5,6 +5,8 @@ class TranslationKeysController < ApplicationController
   before_action :set_translation_key,           only: %i[ update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
 
+  rescue_from ActiveRecord::RecordNotUnique, with: :key_already_taken
+
   def create
     @translation_key = @namespace.translation_keys.build(translation_key_params.merge(project: @project))
 
@@ -13,9 +15,6 @@ class TranslationKeysController < ApplicationController
     else
       redirect_with_alert(@translation_key)
     end
-  rescue ActiveRecord::RecordNotUnique
-    @translation_key.errors.add(:key, "has already been taken")
-    redirect_with_alert(@translation_key)
   end
 
   def update
@@ -24,9 +23,6 @@ class TranslationKeysController < ApplicationController
     else
       redirect_with_alert(@translation_key)
     end
-  rescue ActiveRecord::RecordNotUnique
-    @translation_key.errors.add(:key, "has already been taken")
-    redirect_with_alert(@translation_key)
   end
 
   def destroy
@@ -45,6 +41,11 @@ class TranslationKeysController < ApplicationController
 
     def translation_key_params
       params.expect(translation_key: %i[ key ])
+    end
+
+    def key_already_taken
+      @translation_key.errors.add(:key, "has already been taken")
+      redirect_with_alert(@translation_key)
     end
 
     def namespace_path
