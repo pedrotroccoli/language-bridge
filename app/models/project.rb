@@ -6,6 +6,7 @@ class Project < ApplicationRecord
   has_many :namespaces, dependent: :restrict_with_exception
   has_many :locales, dependent: :destroy
   has_many :translation_keys, dependent: :destroy
+  has_many :translations, dependent: :destroy
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true

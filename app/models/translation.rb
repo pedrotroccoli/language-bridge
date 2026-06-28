@@ -1,6 +1,7 @@
 class Translation < ApplicationRecord
   include Eventable
 
+  belongs_to :project
   belongs_to :translation_key, counter_cache: true
   belongs_to :locale, counter_cache: true
   belongs_to :author, class_name: "User", optional: true
@@ -11,6 +12,11 @@ class Translation < ApplicationRecord
   has_many :versions, class_name: "Translation::Version", dependent: :delete_all
 
   validates :translation_key_id, uniqueness: { scope: :locale_id }
+  validate :key_and_locale_share_project
+
+  # project is denormalized for direct tenant scoping (compass bucket pattern);
+  # it is derived from the key and never set by hand.
+  before_validation :assign_project, on: :create
 
   scope :published, -> { joins(:publication) }
   scope :unpublished, -> { where.missing(:publication) }
@@ -56,6 +62,18 @@ class Translation < ApplicationRecord
   end
 
   private
+    def assign_project
+      self.project ||= translation_key&.project
+    end
+
+    def key_and_locale_share_project
+      return if translation_key.nil? || locale.nil?
+
+      if translation_key.project_id != locale.project_id
+        errors.add(:locale, "must belong to the same project as the key")
+      end
+    end
+
     def snapshot_version
       versions.create!(value: value_was, author_id: author_id_was)
     end

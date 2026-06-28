@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_27_120008) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_120009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -146,11 +146,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_120008) do
     t.uuid "author_id"
     t.datetime "created_at", null: false
     t.uuid "locale_id", null: false
+    t.uuid "project_id", null: false
     t.uuid "translation_key_id", null: false
     t.datetime "updated_at", null: false
     t.text "value"
     t.index ["author_id"], name: "index_translations_on_author_id"
     t.index ["locale_id"], name: "index_translations_on_locale_id"
+    t.index ["project_id"], name: "index_translations_on_project_id"
     t.index ["translation_key_id", "locale_id"], name: "index_translations_on_translation_key_id_and_locale_id", unique: true
   end
 
@@ -179,6 +181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_120008) do
   add_foreign_key "translation_versions", "translations"
   add_foreign_key "translation_versions", "users", column: "author_id"
   add_foreign_key "translations", "locales"
+  add_foreign_key "translations", "projects"
   add_foreign_key "translations", "translation_keys"
   add_foreign_key "translations", "users", column: "author_id"
 end

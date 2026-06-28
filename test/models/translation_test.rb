@@ -6,6 +6,19 @@ class TranslationTest < ActiveSupport::TestCase
     assert translation.valid?
   end
 
+  test "assigns project from the translation key on create" do
+    translation = Translation.create!(translation_key: translation_keys(:main_app_common_farewell),
+                                      locale: locales(:main_app_pt_br), value: "Adeus")
+    assert_equal projects(:main_app), translation.project
+  end
+
+  test "rejects a key and locale from different projects" do
+    translation = Translation.new(translation_key: translation_keys(:main_app_common_greeting),
+                                  locale: locales(:marketing_site_en), value: "x")
+    assert_not translation.valid?
+    assert_includes translation.errors[:locale], "must belong to the same project as the key"
+  end
+
   test "requires translation_key" do
     translation = Translation.new(locale: locales(:main_app_en))
     assert_not translation.valid?

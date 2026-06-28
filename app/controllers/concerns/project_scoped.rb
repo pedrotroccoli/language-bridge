@@ -12,7 +12,7 @@ module ProjectScoped
     end
 
     def project_translations
-      Translation.joins(:translation_key).where(translation_keys: { project_id: @project.id })
+      @project.translations
     end
 
     def ensure_can_administer_project
