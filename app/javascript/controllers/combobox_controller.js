@@ -109,14 +109,14 @@ export default class extends Controller {
 
     const chip = document.createElement("span")
     chip.dataset.code = code
-    chip.className = "inline-flex items-center gap-[6px] bg-accent-soft text-accent rounded-[6px] pl-[9px] pr-[5px] py-[3px] text-[12px] font-medium"
+    chip.className = "chip"
     chip.innerHTML = `<span>${label}</span>`
 
     const remove = document.createElement("button")
     remove.type = "button"
     remove.textContent = "×"
     remove.setAttribute("aria-label", `Remove ${label}`)
-    remove.className = "leading-none text-[14px] opacity-70 hover:opacity-100"
+    remove.className = "chip__remove"
     remove.addEventListener("click", (e) => { e.stopPropagation(); this.removeChip(code) })
     chip.appendChild(remove)
 
