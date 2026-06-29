@@ -1,0 +1,46 @@
+<% content_for :title, "Account" %>
+
+<div class="max-w-[720px]">
+  <h1 class="m-0 mb-[18px] text-[18px] font-semibold -tracking-[0.01em] text-ink">Account</h1>
+
+  <%# ---- Profile ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink mb-4"><%= mi "person", size: 19, css: "text-ink-3" %>Profile</div>
+    <div class="flex items-center gap-4">
+      <div class="w-[56px] h-[56px] rounded-full bg-accent-soft text-accent flex items-center justify-center font-bold text-[20px] flex-none"><%= initials_for(current_user.email) %></div>
+      <div class="min-w-0">
+        <div class="font-mono text-[14px] text-ink truncate"><%= current_user.email %></div>
+        <div class="flex items-center gap-[8px] mt-[5px]">
+          <span class="text-[12px] text-mut capitalize border border-line rounded-full px-[10px] py-[2px]"><%= current_user.role %></span>
+          <span class="text-[12px] text-mut">member since <%= current_user.created_at.strftime("%b %Y") %></span>
+        </div>
+      </div>
+    </div>
+    <p class="text-[12.5px] text-mut mt-[16px] mb-0">Sign-in is passwordless — a one-time link is emailed to <span class="font-mono text-ink-2"><%= current_user.email %></span>. To change your email, ask an admin to re-invite you.</p>
+  </div>
+
+  <%# ---- Sessions ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5">
+    <div class="flex items-center justify-between gap-4 mb-4">
+      <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink"><%= mi "devices", size: 19, css: "text-ink-3" %>Active sessions</div>
+      <% if @sessions.size > 1 %>
+        <%= button_to "Sign out other sessions", account_sessions_path, method: :delete, class: "btn-secondary",
+              data: { turbo_confirm: "Sign out of all sessions except this one?" } %>
+      <% end %>
+    </div>
+    <div class="border border-line rounded-[9px] overflow-hidden">
+      <% @sessions.each do |session| %>
+        <div class="flex items-center gap-3 px-4 py-[11px] border-b border-line-3 last:border-b-0">
+          <%= mi "computer", size: 18, css: "text-faint" %>
+          <div class="min-w-0 flex-1">
+            <div class="text-[13px] text-ink truncate"><%= session.user_agent.presence || "Unknown device" %></div>
+            <div class="font-mono text-[11.5px] text-mut mt-[2px]"><%= session.ip_address.presence || "—" %> · <%= time_ago_in_words(session.created_at) %> ago</div>
+          </div>
+          <% if session.id == Current.session.id %>
+            <span class="font-mono text-[10px] text-accent bg-accent-soft rounded-[4px] px-[7px] py-px flex-none">THIS DEVICE</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

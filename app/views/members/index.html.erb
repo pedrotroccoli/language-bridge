@@ -1,0 +1,42 @@
+<% content_for :title, "Members" %>
+
+<div class="max-w-[920px]">
+  <div class="flex items-center justify-between mb-[6px]">
+    <div class="flex items-baseline gap-3">
+      <h2 class="m-0 text-[18px] font-semibold -tracking-[0.01em] text-ink">Members</h2>
+      <span class="font-mono text-[12px] text-mut"><%= format("%02d", @members.size) %></span>
+    </div>
+    <%= link_to new_invitation_path, class: "btn" do %>
+      <%= mi "person_add", size: 17, css: "mr-[5px]" %>Invite people
+    <% end %>
+  </div>
+  <p class="m-0 mb-5 text-[14px] text-mut">People with access to your Language Bridge workspace.</p>
+
+  <div class="border border-line rounded-[10px] overflow-hidden">
+    <% @members.each do |member| %>
+      <div class="flex items-center justify-between gap-4 px-[18px] py-[14px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
+        <div class="flex items-center gap-[13px] min-w-0">
+          <div class="w-[36px] h-[36px] rounded-full bg-line-3 text-ink-2 flex items-center justify-center font-semibold text-[14px] flex-none"><%= initials_for(member.email) %></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-[8px]">
+              <span class="text-[14px] font-semibold text-ink truncate"><%= member.email.split("@").first %></span>
+              <% if member == current_user %><span class="font-mono text-[11px] text-accent bg-accent-soft rounded-[4px] px-[6px] py-px">you</span><% end %>
+            </div>
+            <div class="font-mono text-[12px] text-mut mt-[3px] truncate"><%= member.email %></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-[12px] flex-none">
+          <% if member == current_user %>
+            <span class="text-[13px] text-ink-2 px-1 capitalize"><%= member.role %></span>
+          <% else %>
+            <%= form_with model: member, url: member_path(member), method: :patch, local: true, html: { class: "inline", data: { controller: "auto-submit" } } do |form| %>
+              <%= form.select :role, User::ROLES.map { |r| [ r.titleize, r ] }, {}, class: "!w-auto text-[13px]", data: { action: "change->auto-submit#submit" } %>
+            <% end %>
+            <%= button_to member_path(member), method: :delete, class: "text-[13px] text-mut hover:!text-danger bg-transparent border-0 cursor-pointer",
+                  data: { turbo_confirm: "Remove #{member.email} from the workspace?" } do %>Remove<% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
