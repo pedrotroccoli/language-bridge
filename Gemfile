@@ -40,6 +40,16 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
 
+# Cloud storage adapters for Active Storage. Each is only loaded when a storage
+# connection of that service type is actually built (see StorageConnection#build_service).
+gem "aws-sdk-s3", require: false             # S3 + S3-compatible (R2, MinIO, Spaces)
+gem "google-cloud-storage", "~> 1.11", require: false
+gem "azure-storage-blob", "~> 2.0", require: false
+
+# Snapshot import/export formats (no longer default gems on Ruby 3.4+).
+gem "csv"
+gem "rexml"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
