@@ -53,22 +53,55 @@ class Translation::Artifact < ApplicationRecord
       namespace = Namespace.find(namespace_id)
       locale = Locale.find(locale_id)
       content = TranslationBundle.new(namespace: namespace, locale: locale)
+      key = namespace.project.delivery_key_for(namespace, locale)
 
-      artifact = find_or_initialize_by(namespace: namespace, locale: locale)
-      artifact.update!(project: namespace.project, checksum: content.etag, built_at: Time.current)
-      artifact.file.attach(
-        io: StringIO.new(content.to_json),
-        filename: "#{locale.code}.json",
-        content_type: "application/json"
-      )
+      artifact = upsert(namespace, locale, content)
+      write_blob(artifact, key, locale, content.to_json)
+      # Advance the served checksum/ETag only AFTER the blob is durably written,
+      # so a failed upload never leaves the row pointing past its stored content.
+      artifact.update!(checksum: content.etag, built_at: Time.current)
       artifact
-    rescue ActiveRecord::RecordNotUnique
-      # A concurrent rebuild inserted the row first; retry so find_or_initialize
-      # takes the update path instead of a colliding insert.
-      retry
+    rescue ActiveRecord::RecordNotFound, ActiveRecord::InvalidForeignKey
+      # The namespace or locale was deleted concurrently (e.g. mid cascade);
+      # there's nothing left to materialize for this pair.
+      nil
     end
 
     private
+      def upsert(namespace, locale, content)
+        artifact = find_or_initialize_by(namespace: namespace, locale: locale)
+        artifact.project = namespace.project
+        # New rows need a checksum (NOT NULL); existing rows keep their current
+        # one until the blob is durably re-written (see rebuild).
+        artifact.checksum ||= content.etag
+        artifact.built_at ||= Time.current
+        artifact.save!
+        artifact
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent rebuild inserted the row first; retry so find_or_initialize
+        # takes the update path instead of a colliding insert.
+        retry
+      end
+
+      # Materialize the JSON at a deterministic key (issue #77). When the key is
+      # unchanged (a content edit), overwrite the existing blob in place — reusing
+      # the same key without the attach+purge churn that would otherwise delete the
+      # object we just wrote. When the key changed (template edit), purge the old
+      # blob and attach a fresh one at the new path.
+      def write_blob(artifact, key, locale, json)
+        io = StringIO.new(json)
+
+        if artifact.file.attached? && artifact.file.key == key
+          blob = artifact.file.blob
+          blob.upload(io, identify: false)
+          blob.content_type = "application/json"
+          blob.save!
+        else
+          artifact.file.purge if artifact.file.attached?
+          artifact.file.attach(io: io, key: key, filename: "#{locale.code}.json", content_type: "application/json")
+        end
+      end
+
       def batched
         Current.artifact_rebuild_batch
       end
