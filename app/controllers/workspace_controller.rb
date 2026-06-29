@@ -6,6 +6,7 @@ class WorkspaceController < ApplicationController
   def show
     @setting = Setting.current
     @storage_connections = StorageConnection.ordered
+    @new_connection = StorageConnection.new(service: "local")
   end
 
   def update

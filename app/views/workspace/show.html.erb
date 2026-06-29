@@ -1,8 +1,6 @@
 <% content_for :title, "Workspace" %>
 
-<div data-controller="connection-form"
-     data-connection-form-create-url-value="<%= storage_connections_path %>"
-     data-connection-form-test-url-value="<%= test_storage_connections_path %>">
+<div>
   <h2 class="m-0 mb-[4px] text-[18px] font-semibold text-ink">Workspace settings</h2>
   <p class="text-[13px] text-mut mb-5">Shared infrastructure — applies to every project in your workspace.</p>
 
@@ -13,9 +11,10 @@
         <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink"><%= mi "cloud_upload", size: 19, css: "text-ink-3" %>Storage connections</div>
         <div class="text-[13px] text-mut mt-[3px]">Buckets where uploads and backups live. Each project picks one.</div>
       </div>
-      <button type="button" class="btn flex-none" data-action="connection-form#openNew">
-        <%= mi "add", size: 17, css: "mr-[5px]" %>New connection
-      </button>
+      <span data-controller="modal" class="flex-none">
+        <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, css: "mr-[5px]" %>New connection</button>
+        <%= render "workspace/connection_form", connection: @new_connection %>
+      </span>
     </div>
 
     <% if @storage_connections.any? %>
@@ -37,19 +36,10 @@
               <% unless connection.is_default %>
                 <%= button_to "Make default", storage_connection_default_path(connection), method: :post, class: "btn-secondary", form_class: "inline" %>
               <% end %>
-              <button type="button" class="btn-secondary"
-                      data-action="connection-form#openEdit"
-                      data-url="<%= storage_connection_path(connection) %>"
-                      data-name="<%= connection.name %>"
-                      data-service="<%= connection.service %>"
-                      data-bucket="<%= connection.bucket %>"
-                      data-region="<%= connection.region %>"
-                      data-endpoint="<%= connection.endpoint %>"
-                      data-prefix="<%= connection.prefix %>"
-                      data-inherit="<%= connection.inherit_credentials %>"
-                      data-access-key-id="<%= connection.access_key_id %>">
-                <%= mi "edit", size: 15, css: "mr-[5px]" %>Edit
-              </button>
+              <span data-controller="modal">
+                <button type="button" class="btn-secondary" data-action="click->modal#open"><%= mi "edit", size: 15, css: "mr-[5px]" %>Edit</button>
+                <%= render "workspace/connection_form", connection: connection %>
+              </span>
               <%= button_to storage_connection_path(connection), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
                     "aria-label": "Remove connection", data: { turbo_confirm: "Remove storage connection \"#{connection.name}\"?" } do %>
                 <%= mi "delete", size: 16 %>
@@ -63,7 +53,10 @@
         <div class="w-[44px] h-[44px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-[14px]"><%= mi "database", size: 22 %></div>
         <h3 class="m-0 text-[15px] font-semibold text-ink">No storage connected</h3>
         <p class="mt-[7px] mb-4 text-[13px] text-mut max-w-[340px] leading-[1.5]">Connect a bucket to enable uploads and backups across your projects.</p>
-        <button type="button" class="btn" data-action="connection-form#openNew"><%= mi "add", size: 17, css: "mr-[5px]" %>New connection</button>
+        <span data-controller="modal">
+          <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, css: "mr-[5px]" %>New connection</button>
+          <%= render "workspace/connection_form", connection: @new_connection %>
+        </span>
       </div>
     <% end %>
   </div>
@@ -129,6 +122,4 @@
       </div>
     <% end %>
   </div>
-
-  <%= render "workspace/connection_modal" %>
 </div>

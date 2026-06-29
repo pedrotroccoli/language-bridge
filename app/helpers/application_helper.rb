@@ -102,6 +102,20 @@ module ApplicationHelper
     (0..23).map { |h| [ format("%02d:00", h), h ] }
   end
 
+  # Per-service field metadata for the storage-connection form. The view renders
+  # these as data-* on each service radio; connection_form_controller reads the
+  # checked radio to show the right fields/labels — no service config in JS.
+  STORAGE_SERVICE_FIELDS = {
+    "local" => { label: "Local", cloud: false },
+    "s3"    => { label: "S3",    cloud: true, region: true,  endpoint: true,  bucket_label: "Bucket",    bucket_placeholder: "my-bucket-prod", key_label: "Access key ID", secret_label: "Secret access key" },
+    "gcs"   => { label: "GCS",   cloud: true, region: false, endpoint: false, bucket_label: "Bucket",    bucket_placeholder: "my-bucket",      key_label: "Project ID",    secret_label: "Service account JSON" },
+    "azure" => { label: "Azure", cloud: true, region: false, endpoint: false, bucket_label: "Container", bucket_placeholder: "my-container",   key_label: "Account name",  secret_label: "Access key" }
+  }.freeze
+
+  def storage_service_fields
+    STORAGE_SERVICE_FIELDS
+  end
+
   # Common AWS regions for the storage-connection region select.
   def aws_region_options
     [
