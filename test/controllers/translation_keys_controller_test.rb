@@ -27,6 +27,22 @@ class TranslationKeysControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "admin creates key with context and a source-locale draft value" do
+    sign_in_as(users(:admin))
+    source = @project.locales.alphabetically.first
+
+    assert_difference "TranslationKey.count", 1 do
+      post project_namespace_translation_keys_path(@project, @namespace),
+           params: { translation_key: { key: "ctx.key", context: "shown to translators", source_value: "Hello there" } }
+    end
+
+    key = @namespace.translation_keys.find_by(key: "ctx.key")
+    assert_equal "shown to translators", key.context
+    translation = key.translations.find_by(locale: source)
+    assert_equal "Hello there", translation.value
+    assert translation.draft?, "source value should be created as a draft"
+  end
+
   test "admin creates key" do
     sign_in_as(users(:admin))
 

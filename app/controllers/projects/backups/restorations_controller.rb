@@ -12,9 +12,9 @@ class Projects::Backups::RestorationsController < ApplicationController
       return redirect_to project_backups_path(@project), alert: "Backup integrity check failed — the snapshot may be corrupted."
     end
 
-    count = TranslationSnapshot.restore(@project, JSON.parse(raw))
+    count = TranslationSnapshot.restore(@project, Snapshot.load(raw, format: backup.format))
     redirect_to project_backups_path(@project), notice: "Restored #{count} #{"translation".pluralize(count)} from backup."
-  rescue JSON::ParserError, TranslationSnapshot::FormatError => e
+  rescue Snapshot::FormatError, TranslationSnapshot::FormatError => e
     redirect_to project_backups_path(@project), alert: "Could not restore backup: #{e.message}"
   end
 end

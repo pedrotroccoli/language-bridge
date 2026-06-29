@@ -8,13 +8,18 @@ class TranslationKeysController < ApplicationController
   rescue_from ActiveRecord::RecordNotUnique, with: :key_already_taken
 
   def create
-    @translation_key = @namespace.translation_keys.build(translation_key_params.merge(project: @project))
+    namespace = chosen_namespace
+    @translation_key = namespace.translation_keys.build(translation_key_params.merge(project: @project))
 
-    if @translation_key.save
-      redirect_to namespace_path, notice: "Key created.", status: :see_other
-    else
-      redirect_with_alert(@translation_key)
+    # Key and its source-locale draft are written together so a failed value
+    # write never leaves a half-created key behind.
+    ActiveRecord::Base.transaction do
+      @translation_key.save!
+      create_source_value(namespace)
     end
+    redirect_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
+  rescue ActiveRecord::RecordInvalid
+    redirect_with_alert(@translation_key)
   end
 
   def update
@@ -45,7 +50,23 @@ class TranslationKeysController < ApplicationController
     end
 
     def translation_key_params
-      params.expect(translation_key: %i[ key ])
+      params.expect(translation_key: %i[ key context ])
+    end
+
+    # The namespace to create into — the modal's select, falling back to the
+    # current (route) namespace.
+    def chosen_namespace
+      id = params.dig(:translation_key, :namespace_id)
+      id.present? ? @project.namespaces.find(id) : @namespace
+    end
+
+    # Seed the source-locale value (first locale) as a draft, if one was entered.
+    def create_source_value(namespace)
+      value = params.dig(:translation_key, :source_value).to_s
+      return if value.blank?
+
+      source = @project.locales.alphabetically.first or return
+      @translation_key.set_translation(locale: source, value: value, author: current_user)
     end
 
     def key_already_taken

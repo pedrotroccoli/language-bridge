@@ -13,8 +13,9 @@ Rails.application.routes.draw do
   # Global, admin-only workspace settings (rate-limit defaults).
   resource :workspace, only: %i[ show update ], controller: "workspace"
 
-  resources :storage_connections, only: %i[ create destroy ] do
+  resources :storage_connections, only: %i[ create update destroy ] do
     resource :default, only: :create, controller: "storage_connections/defaults"
+    collection { post :test } # verify (unsaved) connection params
   end
 
   # Workspace members (users) and the signed-in user's own account.
@@ -27,6 +28,8 @@ Rails.application.routes.draw do
   resources :projects, only: %i[ index new create show edit update destroy ] do
     resource :activity, only: :show, controller: "projects/activity"
     resource :settings, only: :show, controller: "projects/settings"
+    resource :upload_settings, only: :update, controller: "projects/upload_settings"
+    resource :delivery_sync, only: :create, controller: "projects/delivery_sync"
     resources :api_tokens, only: %i[ create destroy ], controller: "projects/api_tokens"
     resources :missing, only: %i[ index destroy ], controller: "projects/missing" do
       resource :promotion, only: :create, controller: "projects/missing/promotions"
@@ -39,6 +42,8 @@ Rails.application.routes.draw do
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
       resource :publication, only: :create, module: :namespaces
       resource :import,      only: :create, module: :namespaces
+      resource :export,      only: :show,    module: :namespaces
+      resource :drafts,      only: :destroy, module: :namespaces
       resources :translation_keys, only: %i[ create update destroy ]
     end
     resources :translations, only: %i[ create update ] do

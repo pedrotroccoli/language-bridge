@@ -12,11 +12,20 @@ class Projects::BackupsControllerTest < ActionDispatch::IntegrationTest
 
   test "admin backs up now" do
     sign_in_as(users(:admin))
+    StorageConnection.create!(name: "Local", service: "local", is_default: true)
     assert_difference -> { @project.backups.count }, 1 do
       post project_backups_path(@project)
     end
     assert_redirected_to project_backups_path(@project)
     assert_equal "manual", @project.backups.recent.first.source
+  end
+
+  test "back up now is blocked until a storage connection exists" do
+    sign_in_as(users(:admin))
+    assert_no_difference -> { @project.backups.count } do
+      post project_backups_path(@project)
+    end
+    assert_match(/connect a storage bucket/i, flash[:alert])
   end
 
   test "admin saves the backup schedule" do

@@ -27,6 +27,9 @@ class Translation < ApplicationRecord
   scope :drafts_in_namespace, ->(namespace) {
     drafts.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
   }
+  scope :under_review_in_namespace, ->(namespace) {
+    under_review.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
+  }
 
   before_update :snapshot_version, if: -> { value_changed? }
   after_update :discard_publication, if: -> { saved_change_to_value? }

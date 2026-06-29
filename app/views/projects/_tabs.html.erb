@@ -11,7 +11,7 @@
     <% reported = project.missing_key_reports.count %>
     <% tabs = [
          { key: :overview, label: "Overview", icon: "dashboard",  url: project_path(project) },
-         { key: :editor,   label: "Editor",   icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : nil) },
+         { key: :editor,   label: "Editor",   icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : project_path(project, new: "namespace", anchor: "namespaces")) },
          { key: :missing,  label: "Missing",  icon: "inbox",      url: project_missing_index_path(project), badge: (reported.positive? ? reported : nil) },
          { key: :activity, label: "Activity", icon: "history",    url: project_activity_path(project) }
        ] %>

@@ -1,0 +1,92 @@
+<%# Storage-connection dialog — create (new_record) or edit (persisted), routed
+    by form_with. Driven by connection_form_controller for field visibility + the
+    test-before-save gate. Local: connection (StorageConnection, new or persisted). %>
+<dialog class="modal w-[560px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop"
+        data-controller="connection-form" data-connection-form-test-url-value="<%= test_storage_connections_path %>">
+  <%= form_with model: connection, data: { action: "input->connection-form#invalidate" }, html: { class: "flex flex-col max-h-[calc(100vh-48px)]" } do |form| %>
+    <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line">
+      <h3 class="m-0 text-[16px] font-semibold text-ink"><%= connection.persisted? ? "Edit connection" : "New connection" %></h3>
+      <button type="button" class="text-mut hover:text-ink" data-action="click->modal#close" aria-label="Close"><%= mi "close", size: 18 %></button>
+    </div>
+
+    <div class="px-[22px] py-[22px] flex flex-col gap-4 overflow-y-auto">
+      <div>
+        <%= form.label :name, "Connection name", class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" %>
+        <%= form.text_field :name, placeholder: "Production", spellcheck: "false", required: true, class: "w-full text-[14px]" %>
+      </div>
+
+      <div>
+        <span class="block text-[12.5px] font-medium text-ink-2 mb-[7px]">Service</span>
+        <div class="inline-flex items-center gap-[3px] p-[3px] bg-surface-2 rounded-[9px]">
+          <% storage_service_fields.each do |value, cfg| %>
+            <label class="cursor-pointer">
+              <%= form.radio_button :service, value, class: "peer sr-only",
+                    data: { action: "change->connection-form#serviceChanged",
+                            cloud: cfg[:cloud], region: cfg[:region], endpoint: cfg[:endpoint],
+                            "bucket-label": cfg[:bucket_label], "key-label": cfg[:key_label],
+                            "secret-label": cfg[:secret_label], "bucket-placeholder": cfg[:bucket_placeholder] } %>
+              <span class="flex items-center h-[30px] px-[14px] rounded-[7px] text-[12px] text-mut peer-checked:bg-surface peer-checked:text-ink peer-checked:font-semibold peer-checked:shadow-sm"><%= cfg[:label] %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <div data-connection-form-target="cloudFields" class="flex flex-col gap-4" hidden>
+        <label class="flex items-start gap-[10px] cursor-pointer p-[11px] border border-line rounded-[9px]">
+          <%= form.check_box :inherit_credentials, data: { "connection-form-target": "inherit", action: "change->connection-form#toggleInherit" }, class: "w-[16px] h-[16px] mt-[1px]" %>
+          <span>
+            <span class="block text-[13px] text-ink font-medium">Inherit credentials from environment</span>
+            <span class="block text-[12px] text-mut mt-[2px]">Use the instance / pod IAM role (EC2, ECS, EKS, GKE…). No keys are stored.</span>
+          </span>
+        </label>
+
+        <div class="grid grid-cols-[1fr_200px] gap-4">
+          <div>
+            <span class="block text-[12.5px] font-medium text-ink-2 mb-[7px]" data-connection-form-target="bucketLabel">Bucket</span>
+            <%= form.text_field :bucket, spellcheck: "false", data: { "connection-form-target": "bucket" }, class: "w-full font-mono text-[13px]" %>
+          </div>
+          <div data-connection-form-target="regionField">
+            <span class="block text-[12.5px] font-medium text-ink-2 mb-[7px]">Region</span>
+            <%= form.select :region, options_for_select(aws_region_options, connection.region.presence || "us-east-1"), {}, class: "w-full text-[13px]" %>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :prefix, class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" do %>Path prefix <span class="text-mut font-normal">(optional)</span><% end %>
+          <%= form.text_field :prefix, placeholder: "language-bridge-poc", spellcheck: "false", class: "w-full font-mono text-[13px]" %>
+          <p class="mt-[6px] text-[12px] text-mut">Base path inside the bucket for all objects (backups, uploads, the test probe). Matches a path-scoped IAM policy.</p>
+        </div>
+
+        <div data-connection-form-target="endpointField">
+          <%= form.label :endpoint, class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" do %>Endpoint <span class="text-mut font-normal">(optional — S3-compatible)</span><% end %>
+          <%= form.text_field :endpoint, placeholder: "https://…", spellcheck: "false", class: "w-full font-mono text-[13px]" %>
+        </div>
+
+        <div data-connection-form-target="credFields" class="flex flex-col gap-4">
+          <div>
+            <span class="block text-[12.5px] font-medium text-ink-2 mb-[7px]" data-connection-form-target="keyLabel">Access key ID</span>
+            <%= form.text_field :access_key_id, spellcheck: "false", class: "w-full font-mono text-[13px]" %>
+          </div>
+          <div>
+            <span class="block text-[12.5px] font-medium text-ink-2 mb-[7px]" data-connection-form-target="secretLabel">Secret access key</span>
+            <div class="relative">
+              <%= form.password_field :secret_access_key, placeholder: (connection.persisted? ? "•••••••• (leave blank to keep)" : "••••••••••••"),
+                    spellcheck: "false", autocomplete: "off", data: { "connection-form-target": "secret", "1p-ignore": "", bwignore: "", lpignore: "true" }, class: "w-full font-mono text-[13px] pr-[42px]" %>
+              <button type="button" class="absolute top-0 right-0 h-full w-[40px] flex items-center justify-center text-faint hover:text-ink" data-action="connection-form#toggleSecret" aria-label="Toggle secret visibility">
+                <span class="material-symbols-outlined" style="font-size:18px" data-connection-form-target="secretIcon">visibility</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-3 px-[22px] py-4 border-t border-line bg-surface-2 rounded-b-[13px]">
+      <span class="text-[12.5px]" data-connection-form-target="testResult"></span>
+      <div class="flex items-center gap-[9px]">
+        <button type="button" class="btn-secondary" data-action="connection-form#test"><%= mi "bolt", size: 16, css: "mr-[5px]" %>Test connection</button>
+        <%= form.submit "Save connection", disabled: true, data: { "connection-form-target": "submit" }, class: "btn" %>
+      </div>
+    </div>
+  <% end %>
+</dialog>

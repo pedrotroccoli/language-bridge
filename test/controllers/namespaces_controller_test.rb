@@ -40,7 +40,7 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".empty-state", text: /No locales yet/
   end
 
-  test "publish all button is disabled when there are no drafts" do
+  test "draft actions are hidden when there are no drafts" do
     sign_in_as(users(:admin))
     project = Project.create!(name: "NoDrafts")
     en = project.locales.create!(code: "en")
@@ -49,10 +49,11 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     Translation::Publication.create!(translation: Translation.create!(translation_key: key, locale: en, value: "v"))
 
     get project_namespace_path(project, namespace)
-    assert_select "#publish_all button[disabled]"
+    assert_select "#publish_all button", count: 0
+    assert_select "a", text: /Review drafts/, count: 0
   end
 
-  test "publish all button is enabled and counts drafts" do
+  test "draft banner shows publish/discard/review when drafts exist" do
     sign_in_as(users(:admin))
     project = Project.create!(name: "HasDrafts")
     en = project.locales.create!(code: "en")
@@ -61,8 +62,24 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     Translation.create!(translation_key: key, locale: en, value: "v")
 
     get project_namespace_path(project, namespace)
-    assert_select "#publish_all button:not([disabled])"
     assert_select "#publish_all button", text: /Publish all \(1\)/
+    assert_select "a", text: /Review drafts/
+    assert_select "button", text: /Discard all/
+  end
+
+  test "status=drafts narrows the grid to keys with a draft" do
+    sign_in_as(users(:admin))
+    project = Project.create!(name: "Filtered")
+    en = project.locales.create!(code: "en")
+    namespace = project.namespaces.create!(name: "common")
+    draft_key = namespace.translation_keys.create!(project: project, key: "draft.key")
+    Translation.create!(translation_key: draft_key, locale: en, value: "draft value") # unpublished → draft
+    clean_key = namespace.translation_keys.create!(project: project, key: "clean.key")
+    Translation.create!(translation_key: clean_key, locale: en, value: "v").publish(by: users(:admin))
+
+    get project_namespace_path(project, namespace, status: "drafts")
+    assert_match "draft.key", response.body
+    assert_no_match(/clean\.key/, response.body)
   end
 
   test "translator publish_all publishes drafts with values and skips blanks" do
@@ -197,11 +214,11 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
   test "import shows admin button only" do
     sign_in_as(users(:admin))
     get project_namespace_path(projects(:main_app), namespaces(:main_app_common))
-    assert_select "button", text: /Import JSON/
+    assert_select "button", text: /Import/
 
     sign_in_as(users(:translator))
     get project_namespace_path(projects(:main_app), namespaces(:main_app_common))
-    assert_select "button", text: /Import JSON/, count: 0
+    assert_select "button", text: /Import/, count: 0
   end
 
   test "non-admin cannot create/update/destroy" do

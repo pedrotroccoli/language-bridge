@@ -53,10 +53,11 @@ class Translation::Artifact < ApplicationRecord
       namespace = Namespace.find(namespace_id)
       locale = Locale.find(locale_id)
       content = TranslationBundle.new(namespace: namespace, locale: locale)
-      key = namespace.project.delivery_key_for(namespace, locale)
+      project = namespace.project
+      key = project.delivery_storage_key(namespace, locale)
 
       artifact = upsert(namespace, locale, content)
-      write_blob(artifact, key, locale, content.to_json)
+      write_blob(artifact, key, locale, content.to_json, project.storage_service_name)
       # Advance the served checksum/ETag only AFTER the blob is durably written,
       # so a failed upload never leaves the row pointing past its stored content.
       artifact.update!(checksum: content.etag, built_at: Time.current)
@@ -88,18 +89,27 @@ class Translation::Artifact < ApplicationRecord
       # the same key without the attach+purge churn that would otherwise delete the
       # object we just wrote. When the key changed (template edit), purge the old
       # blob and attach a fresh one at the new path.
-      def write_blob(artifact, key, locale, json)
+      def write_blob(artifact, key, locale, json, service_name)
         io = StringIO.new(json)
 
-        if artifact.file.attached? && artifact.file.key == key
+        # Reuse the blob in place only when both the key AND the routed service
+        # are unchanged; otherwise (template edit or a new/changed storage
+        # connection) purge and re-attach so the object moves to the right bucket.
+        if artifact.file.attached? && artifact.file.key == key && artifact.file.blob.service_name == (service_name || default_service_name)
           blob = artifact.file.blob
           blob.upload(io, identify: false)
           blob.content_type = "application/json"
           blob.save!
         else
           artifact.file.purge if artifact.file.attached?
-          artifact.file.attach(io: io, key: key, filename: "#{locale.code}.json", content_type: "application/json")
+          options = { io: io, key: key, filename: "#{locale.code}.json", content_type: "application/json" }
+          options[:service_name] = service_name if service_name
+          artifact.file.attach(**options)
         end
+      end
+
+      def default_service_name
+        ActiveStorage::Blob.service.name.to_s
       end
 
       def batched

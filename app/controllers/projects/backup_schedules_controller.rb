@@ -14,6 +14,9 @@ class Projects::BackupSchedulesController < ApplicationController
 
   private
     def schedule_params
-      params.expect(project: %i[ backups_enabled backup_frequency backup_retention backup_include_drafts ])
+      params.expect(project: %i[
+        backups_enabled backup_frequency backup_retention backup_include_drafts
+        backup_format backup_time_of_day
+      ])
     end
 end

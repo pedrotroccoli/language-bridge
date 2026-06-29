@@ -7,5 +7,6 @@ class Projects::SettingsController < ApplicationController
     @locales = @project.locales.alphabetically
     @namespaces = @project.namespaces.alphabetically
     @api_tokens = @project.api_tokens.active.order(created_at: :desc)
+    @storage_connections = StorageConnection.ordered
   end
 end

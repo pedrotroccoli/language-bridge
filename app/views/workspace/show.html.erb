@@ -1,6 +1,6 @@
 <% content_for :title, "Workspace" %>
 
-<div class="max-w-[920px]">
+<div>
   <h2 class="m-0 mb-[4px] text-[18px] font-semibold text-ink">Workspace settings</h2>
   <p class="text-[13px] text-mut mb-5">Shared infrastructure — applies to every project in your workspace.</p>
 
@@ -9,28 +9,37 @@
     <div class="flex items-start justify-between gap-4 mb-4">
       <div>
         <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink"><%= mi "cloud_upload", size: 19, css: "text-ink-3" %>Storage connections</div>
-        <div class="text-[13px] text-mut mt-[3px]">Active Storage buckets where backups and uploads live. Credentials come from your environment / IAM role — none are stored here.</div>
+        <div class="text-[13px] text-mut mt-[3px]">Buckets where uploads and backups live. Each project picks one.</div>
       </div>
+      <span data-controller="modal" class="flex-none">
+        <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, css: "mr-[5px]" %>New connection</button>
+        <%= render "workspace/connection_form", connection: @new_connection %>
+      </span>
     </div>
 
     <% if @storage_connections.any? %>
-      <div class="border border-line rounded-[9px] overflow-hidden mb-4">
+      <div class="border border-line rounded-[9px] overflow-hidden">
         <% @storage_connections.each do |connection| %>
-          <div class="flex items-center justify-between gap-3 px-4 py-[13px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
+          <div class="flex items-center justify-between gap-3 px-4 py-[14px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-[34px] h-[34px] rounded-[8px] bg-surface-2 flex items-center justify-center flex-none"><%= mi "database", size: 18, css: "text-ink-2" %></div>
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-[14px] font-semibold text-ink truncate"><%= connection.name %></span>
                   <% if connection.is_default %><span class="font-mono text-[10px] text-accent bg-accent-soft rounded-[4px] px-[7px] py-[2px]">DEFAULT</span><% end %>
+                  <% if connection.cloud? && connection.inherit_credentials %><span class="font-mono text-[10px] text-ink-2 bg-line-3 rounded-[4px] px-[7px] py-[2px]">IAM ROLE</span><% end %>
                 </div>
-                <div class="font-mono text-[12px] text-mut mt-[3px] truncate"><%= connection.service_name %> · <%= connection.summary %></div>
+                <div class="font-mono text-[12px] text-mut mt-[3px] truncate"><%= connection.service_label %> · <%= connection.summary %></div>
               </div>
             </div>
             <div class="flex items-center gap-2 flex-none">
               <% unless connection.is_default %>
                 <%= button_to "Make default", storage_connection_default_path(connection), method: :post, class: "btn-secondary", form_class: "inline" %>
               <% end %>
+              <span data-controller="modal">
+                <button type="button" class="btn-secondary" data-action="click->modal#open"><%= mi "edit", size: 15, css: "mr-[5px]" %>Edit</button>
+                <%= render "workspace/connection_form", connection: connection %>
+              </span>
               <%= button_to storage_connection_path(connection), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
                     "aria-label": "Remove connection", data: { turbo_confirm: "Remove storage connection \"#{connection.name}\"?" } do %>
                 <%= mi "delete", size: 16 %>
@@ -40,27 +49,35 @@
         <% end %>
       </div>
     <% else %>
-      <div class="border border-dashed border-line rounded-[9px] px-[26px] py-9 flex flex-col items-center text-center bg-surface-2 mb-4">
+      <div class="border border-dashed border-line rounded-[9px] px-[26px] py-9 flex flex-col items-center text-center bg-surface-2">
         <div class="w-[44px] h-[44px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-[14px]"><%= mi "database", size: 22 %></div>
         <h3 class="m-0 text-[15px] font-semibold text-ink">No storage connected</h3>
-        <p class="mt-[7px] mb-0 text-[13px] text-mut max-w-[340px] leading-[1.5]">Backups currently use the default Active Storage service. Add a connection to route them to a named bucket.</p>
+        <p class="mt-[7px] mb-4 text-[13px] text-mut max-w-[340px] leading-[1.5]">Connect a bucket to enable uploads and backups across your projects.</p>
+        <span data-controller="modal">
+          <button type="button" class="btn" data-action="click->modal#open"><%= mi "add", size: 17, css: "mr-[5px]" %>New connection</button>
+          <%= render "workspace/connection_form", connection: @new_connection %>
+        </span>
       </div>
     <% end %>
+  </div>
 
-    <%= form_with url: storage_connections_path, method: :post, local: true, html: { class: "grid grid-cols-1 sm:grid-cols-4 gap-3 items-end" } do %>
-      <div class="flex flex-col gap-[7px]">
-        <label class="text-[12.5px] font-medium text-ink-2">Name</label>
-        <%= text_field_tag "storage_connection[name]", nil, placeholder: "Production", required: true, class: "text-[14px]" %>
+  <%# ---- Upload defaults ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "tune", size: 19, css: "text-ink-3" %>Upload defaults</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Applied to every project unless a project overrides them.</div>
+
+    <%= form_with model: @setting, url: workspace_path, method: :patch, local: true do |form| %>
+      <div class="max-w-[240px] mb-[18px]">
+        <%= form.label :upload_max_bytes, "Max file size", class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" %>
+        <%= form.select :upload_max_bytes, upload_size_options, {}, class: "text-[14px]" %>
       </div>
-      <div class="flex flex-col gap-[7px]">
-        <label class="text-[12.5px] font-medium text-ink-2">Service</label>
-        <%= select_tag "storage_connection[service_name]", options_for_select(@available_services), class: "text-[14px]" %>
+      <div>
+        <label class="block text-[12.5px] font-medium text-ink-2 mb-[7px]">Allowed import formats</label>
+        <%= render "shared/format_checkboxes", form: form, field: :upload_allowed_formats, selected: @setting.upload_allowed_formats %>
       </div>
-      <div class="flex flex-col gap-[7px]">
-        <label class="text-[12.5px] font-medium text-ink-2">Bucket</label>
-        <%= text_field_tag "storage_connection[bucket]", nil, placeholder: "optional", class: "text-[14px]" %>
+      <div class="flex justify-end mt-[18px]">
+        <%= loading_submit form, "Save changes" %>
       </div>
-      <%= submit_tag "Add connection", class: "btn" %>
     <% end %>
   </div>
 
@@ -101,7 +118,7 @@
       </div>
 
       <div class="flex justify-end mt-[18px]">
-        <%= form.submit "Save changes", class: "btn" %>
+        <%= loading_submit form, "Save changes" %>
       </div>
     <% end %>
   </div>
