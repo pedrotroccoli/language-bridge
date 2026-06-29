@@ -4,7 +4,7 @@
 <%= render "projects/tabs", project: @project, active: :settings %>
 
 <div class="mx-auto w-full max-w-[1320px] px-6 py-7">
-  <div class="max-w-[920px]">
+  <div>
   <h2 class="m-0 mb-[18px] text-[17px] font-semibold text-ink">Settings</h2>
 
   <%# ---- General ---- %>
@@ -29,7 +29,7 @@
         </div>
       </div>
       <div class="flex justify-end mt-[18px]">
-        <%= form.submit "Save changes", class: "btn" %>
+        <%= loading_submit form, "Save changes" %>
       </div>
     <% end %>
   </div>
@@ -91,10 +91,82 @@
     <% end %>
   </div>
 
+  <%# ---- Uploads ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4"
+       data-controller="upload-settings">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "cloud_upload", size: 19, css: "text-ink-3" %>Uploads</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Per-project upload rules. The storage connection is managed in workspace settings.</div>
+
+    <% if @storage_connections.any?(&:cloud?) %>
+    <%= form_with model: @project, url: project_upload_settings_path(@project), method: :patch, local: true do |form| %>
+      <div class="flex items-end justify-between gap-3 mb-[7px]">
+        <label class="text-[12.5px] font-medium text-ink-2">Storage connection</label>
+        <%= link_to workspace_path, class: "flex items-center gap-[5px] text-[12.5px] text-accent font-medium hover:underline whitespace-nowrap" do %>
+          <%= mi "tune", size: 16 %>Manage connections
+        <% end %>
+      </div>
+      <%= form.select :storage_connection_id,
+            @storage_connections.map { |c| [ "#{c.name} (#{c.service_label})", c.id, { "data-bucket": c.bucket } ] },
+            { include_blank: "Workspace default#{StorageConnection.default ? " — #{StorageConnection.default.name}" : ""}" },
+            data: { "upload-settings-target": "connection", action: "upload-settings#syncBucket" }, class: "text-[14px] mb-[18px]" %>
+
+      <label class="block text-[12.5px] font-medium text-ink-2 mb-[7px]">Upload path</label>
+      <div class="flex items-stretch border border-line rounded-[9px] overflow-hidden bg-surface mb-[18px]">
+        <span class="flex items-center gap-[6px] px-[11px] pl-[13px] bg-surface-2 border-r border-line font-mono text-[13px] text-faint whitespace-nowrap"
+              data-upload-settings-target="bucketPrefix" <%= "hidden" if @project.effective_storage_connection&.bucket.blank? %>><%= "#{@project.effective_storage_connection&.bucket}/" if @project.effective_storage_connection&.bucket.present? %></span>
+        <%= form.text_field :upload_path, spellcheck: "false", placeholder: "uploads/", class: "flex-1 min-w-0 font-mono text-[13px] border-0 rounded-none" %>
+      </div>
+
+      <div class="flex items-center justify-between gap-6 mb-4">
+        <div>
+          <div class="text-[14px] font-medium text-ink">Override workspace defaults</div>
+          <div class="text-[12px] text-mut mt-[2px]">Use project-specific formats and size limit instead of the workspace defaults.</div>
+        </div>
+        <label class="cursor-pointer flex-none">
+          <%= form.check_box :upload_override, data: { "upload-settings-target": "override", action: "upload-settings#toggleOverride" }, class: "w-[16px] h-[16px]" %>
+        </label>
+      </div>
+
+      <div data-upload-settings-target="inheritSummary" class="border border-line rounded-[9px] bg-surface-2 px-[15px] py-[14px]">
+        <div class="flex items-center justify-between mb-[11px]"><span class="text-[12px] text-mut">Max file size</span><span class="font-mono text-[12px] text-ink"><%= number_to_human_size(Setting.current.upload_max_bytes) %></span></div>
+        <div class="flex items-start justify-between gap-4"><span class="text-[12px] text-mut leading-[26px]">Allowed formats</span>
+          <div class="flex flex-wrap gap-[6px] justify-end"><% Setting.current.upload_allowed_formats.each do |f| %><span class="font-mono text-[11px] text-ink-2 bg-surface border border-line rounded-[6px] px-2 py-[3px]"><%= f.upcase %></span><% end %></div>
+        </div>
+      </div>
+
+      <div data-upload-settings-target="overrideFields" hidden>
+        <div class="max-w-[220px] mb-[18px]">
+          <%= form.label :upload_max_bytes, "Max file size", class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" %>
+          <%= form.select :upload_max_bytes, upload_size_options, { include_blank: "Workspace default" }, class: "text-[14px]" %>
+        </div>
+        <label class="block text-[12.5px] font-medium text-ink-2 mb-[7px]">Allowed import formats</label>
+        <%= render "shared/format_checkboxes", form: form, field: :upload_allowed_formats, selected: (@project.upload_allowed_formats || Setting.current.upload_allowed_formats) %>
+      </div>
+
+      <div class="flex justify-end mt-5">
+        <%= loading_submit form, "Save changes" %>
+      </div>
+    <% end %>
+    <% else %>
+      <div class="border border-dashed border-line rounded-[9px] px-[26px] py-9 flex flex-col items-center text-center bg-surface-2">
+        <div class="w-[44px] h-[44px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-[14px]"><%= mi "cloud_off", size: 22 %></div>
+        <h3 class="m-0 text-[15px] font-semibold text-ink">Uploads need a cloud connection</h3>
+        <p class="mt-[7px] mb-4 text-[13px] text-mut max-w-[360px] leading-[1.5]">Connect an S3, GCS or Azure bucket in workspace settings to enable file uploads for this project.</p>
+        <%= link_to workspace_path, class: "btn" do %><%= mi "corporate_fare", size: 16, css: "mr-[6px]" %>Set up storage connection<% end %>
+      </div>
+    <% end %>
+  </div>
+
   <%# ---- Delivery / CDN ---- %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
-    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "cloud", size: 19, css: "text-ink-3" %>Public delivery</div>
-    <div class="text-[13px] text-mut mt-[3px] mb-4">Published translations are served as JSON from the CDN endpoint (i18next <code class="font-mono">loadPath</code> convention).</div>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "cloud", size: 19, css: "text-ink-3" %>Public delivery</div>
+        <div class="text-[13px] text-mut mt-[3px] mb-4">Published translations are served as JSON from the CDN endpoint (i18next <code class="font-mono">loadPath</code> convention).</div>
+      </div>
+      <%= loading_button_to "Sync all to storage", project_delivery_sync_path(@project), method: :post, icon: "sync", class: "btn-secondary flex-none",
+            data: { turbo_confirm: "Re-materialize every published namespace/locale to #{@project.effective_storage_connection&.name || "local storage"}?" } %>
+    </div>
     <div class="bg-[#0d0d0d] rounded-[9px] px-[18px] py-4 font-mono text-[12.5px] leading-[2] text-[#e4e4e4] overflow-x-auto">
       <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/{locale}/{namespace}</div>
       <% sample_locale = @project.locales.alphabetically.first&.code || "en" %>
@@ -128,7 +200,7 @@
       <div data-delivery-preview-target="output" class="border border-line rounded-[9px] bg-surface-2 px-[14px] py-[10px] flex flex-col gap-[3px]"></div>
 
       <div class="flex justify-end mt-[14px]">
-        <%= form.submit "Save path template", class: "btn" %>
+        <%= loading_submit form, "Save path template" %>
       </div>
     <% end %>
   </div>
@@ -203,7 +275,7 @@
         </div>
       </div>
       <div class="flex justify-end mt-[18px]">
-        <%= form.submit "Save rate limits", class: "btn" %>
+        <%= loading_submit form, "Save rate limits" %>
       </div>
     <% end %>
   </div>
@@ -216,10 +288,36 @@
         <div class="text-[13.5px] font-semibold text-ink">Delete this project</div>
         <div class="text-[13px] text-ink-3 mt-[3px]">Permanently removes all keys, locales and translations. This cannot be undone.</div>
       </div>
-      <%= button_to project_path(@project), method: :delete, class: "btn-secondary btn-danger flex-none",
-            data: { turbo_confirm: "Delete project \"#{@project.name}\"? This cannot be undone." } do %>
-        <%= mi "delete", size: 16 %>Delete project
-      <% end %>
+      <span data-controller="modal confirm-input" data-confirm-input-match-value="<%= @project.slug %>">
+        <button type="button" class="btn-secondary btn-danger flex-none" data-action="click->modal#open">
+          <%= mi "delete", size: 16, css: "mr-[5px]" %>Delete project
+        </button>
+
+        <dialog class="modal w-[432px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop confirm-input#reset" aria-labelledby="delete-project-title">
+          <%= form_with url: project_path(@project), method: :delete do %>
+            <div class="p-[22px] pb-0 flex items-start gap-[13px]">
+              <div class="w-[38px] h-[38px] rounded-[10px] bg-danger-soft text-danger-ink flex items-center justify-center flex-none"><%= mi "warning", size: 20 %></div>
+              <div class="min-w-0 flex-1">
+                <h3 id="delete-project-title" class="m-0 text-[16px] font-semibold text-ink">Delete this project</h3>
+                <p class="mt-[6px] mb-0 text-[13px] text-mut leading-[1.55]">This permanently removes all keys, locales and translations. This cannot be undone.</p>
+              </div>
+            </div>
+            <div class="px-[22px] pl-[73px] pt-4">
+              <label class="block text-[12px] text-mut mb-[7px]">Type the project slug <span class="font-mono text-ink-2"><%= @project.slug %></span> to confirm</label>
+              <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false"
+                     data-confirm-input-target="input" data-action="input->confirm-input#check"
+                     class="w-full font-mono text-[13px]" />
+            </div>
+            <div class="flex justify-end gap-[9px] p-[22px] pt-5">
+              <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
+              <button type="submit" data-confirm-input-target="submit" disabled
+                      class="inline-flex items-center justify-center h-[38px] px-[18px] rounded-[6px] bg-danger-ink text-white text-[13px] font-medium hover:bg-[#991b1b] disabled:opacity-50 disabled:cursor-not-allowed">
+                Delete project
+              </button>
+            </div>
+          <% end %>
+        </dialog>
+      </span>
     </div>
   </div>
   </div>

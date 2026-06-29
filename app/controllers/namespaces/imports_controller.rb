@@ -1,4 +1,5 @@
-# Imports a JSON file of translations for a locale into a namespace.
+# Imports a translations file (JSON / CSV / XLIFF) for a locale into a namespace,
+# honoring the project's allowed-format and max-size upload rules.
 class Namespaces::ImportsController < ApplicationController
   include ProjectScoped
 
@@ -10,9 +11,18 @@ class Namespaces::ImportsController < ApplicationController
     return redirect_back("Select a locale to import into.") if locale.nil?
 
     file = params[:file]
-    return redirect_back("Choose a JSON file to import.") if file.blank?
+    return redirect_back("Choose a file to import.") if file.blank?
 
-    result = TranslationImport.new(namespace: @namespace, locale: locale, author: current_user).import(file.read)
+    if file.size > @project.effective_upload_max_bytes
+      return redirect_back("File is too large (max #{helpers.number_to_human_size(@project.effective_upload_max_bytes)}).")
+    end
+
+    format = TranslationImport.format_from_filename(file.original_filename)
+    unless @project.effective_upload_allowed_formats.include?(format)
+      return redirect_back("#{format.upcase} files aren't allowed for this project.")
+    end
+
+    result = TranslationImport.new(namespace: @namespace, locale: locale, author: current_user, format: format).import(file.read)
     redirect_to project_namespace_path(@project, @namespace), notice: result.summary(locale), status: :see_other
   rescue TranslationImport::Error => e
     redirect_back("Import failed: #{e.message}")

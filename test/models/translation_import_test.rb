@@ -59,6 +59,31 @@ class TranslationImportTest < ActiveSupport::TestCase
     assert_raises(TranslationImport::Error) { import("{}") }
   end
 
+  test "imports a CSV file by key/value columns" do
+    result = TranslationImport.new(namespace: @namespace, locale: @locale, author: @author, format: "csv")
+                              .import("key,value\ngreeting,Hi\nbrand_new,Y\n")
+    assert_equal "Hi", value("greeting")
+    assert_equal "Y", value("brand_new")
+    assert_equal 1, result.keys_created
+  end
+
+  test "imports an XLIFF file by trans-unit target" do
+    xliff = <<~XML
+      <?xml version="1.0"?>
+      <xliff version="1.2"><file original="common" source-language="en" target-language="en"><body>
+        <trans-unit id="greeting" resname="greeting"><source>Hello</source><target>Hi there</target></trans-unit>
+      </body></file></xliff>
+    XML
+    TranslationImport.new(namespace: @namespace, locale: @locale, author: @author, format: "xliff").import(xliff)
+    assert_equal "Hi there", value("greeting")
+  end
+
+  test "detects format from filename extension" do
+    assert_equal "csv", TranslationImport.format_from_filename("data.csv")
+    assert_equal "xliff", TranslationImport.format_from_filename("data.xlf")
+    assert_equal "json", TranslationImport.format_from_filename("data.unknown")
+  end
+
   private
     def import(json)
       TranslationImport.new(namespace: @namespace, locale: @locale, author: @author).import(json)
