@@ -1,9 +1,15 @@
-<% target = local_assigns[:editor_namespace] ? project_namespace_path(project, editor_namespace, locales: [ locale.code ]) : nil %>
+<%# With a namespace → open the editor filtered to this locale. Without one →
+    send the user to create their first namespace (nothing to edit yet). %>
+<% target = local_assigns[:editor_namespace] ? project_namespace_path(project, editor_namespace, locales: [ locale.code ]) : project_path(project, new: "namespace", anchor: "namespaces") %>
 <% row = "flex items-center justify-between px-[18px] py-[15px] border-b border-line-3 last:border-b-0" %>
 
 <% content = capture do %>
   <span class="flex items-center gap-[11px] min-w-0">
-    <%= mi "language", size: 18, css: "text-faint" %>
+    <% if (flag = locale_flag(locale.code)) %>
+      <span class="text-[14px] leading-none flex-none w-[22px] text-center" aria-hidden="true"><%= flag %></span>
+    <% else %>
+      <%= mi "language", size: 18, css: "text-faint" %>
+    <% end %>
     <span class="font-mono text-[14px] font-semibold text-ink flex-none"><%= locale.code %></span>
     <% if locale_name(locale.code) %><span class="text-[13.5px] text-ink-3 truncate"><%= locale_name(locale.code) %></span><% end %>
   </span>

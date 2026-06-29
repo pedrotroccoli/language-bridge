@@ -11,9 +11,9 @@
 
     <%= yield :head %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
     <% if signed_in? %>
       <header class="h-[58px] flex items-center justify-between px-[26px] border-b border-line-2 shrink-0">
         <%= link_to root_path, class: "flex items-center gap-[11px] no-underline" do %>
-          <span class="w-[26px] h-[26px] rounded-[7px] bg-ink text-white font-mono text-[11px] font-semibold flex items-center justify-center">lb</span>
+          <%= image_tag "logo.png", alt: "Language Bridge", class: "w-[26px] h-[26px] rounded-full object-cover" %>
           <span class="font-semibold text-[15px] -tracking-[0.01em] text-ink">language bridge<span class="text-accent">.</span></span>
         <% end %>
 
@@ -82,6 +82,19 @@
           </details>
         </nav>
       </header>
+
+      <%# Global warning while no cloud bucket is connected — uploads/backups stay off. %>
+      <% unless StorageConnection.usable_cloud_exists? %>
+        <div class="flex items-center justify-between gap-4 px-[26px] py-[11px] bg-warn-soft border-b border-warn/40 text-[13px] shrink-0">
+          <div class="flex items-center gap-[10px] text-warn-ink min-w-0">
+            <%= mi "warning", size: 18, css: "flex-none" %>
+            <span class="truncate"><span class="font-semibold text-ink">No storage connection configured.</span> Uploads and backups stay disabled until an admin connects a bucket.</span>
+          </div>
+          <%= link_to workspace_path, class: "flex items-center gap-[5px] text-warn-ink font-semibold hover:underline whitespace-nowrap flex-none" do %>
+            Set up storage <%= mi "arrow_forward", size: 16 %>
+          <% end %>
+        </div>
+      <% end %>
     <% end %>
 
     <div id="flash" class="toast-region" aria-live="polite">

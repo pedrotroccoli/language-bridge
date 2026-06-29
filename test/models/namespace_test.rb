@@ -45,10 +45,11 @@ class NamespaceTest < ActiveSupport::TestCase
     assert namespace.valid?
   end
 
-  test "destroying project with namespaces is restricted" do
-    project = Project.create!(name: "Restricted")
-    project.namespaces.create!(name: "auth")
-    assert_raises(ActiveRecord::DeleteRestrictionError) { project.destroy! }
+  test "destroying a project cascades to its namespaces" do
+    project = Project.create!(name: "Cascading")
+    namespace = project.namespaces.create!(name: "auth")
+    project.destroy!
+    assert_not Namespace.exists?(namespace.id)
   end
 
   test "counter cache increments project.namespaces_count on create" do
