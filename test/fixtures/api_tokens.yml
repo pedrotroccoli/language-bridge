@@ -1,0 +1,16 @@
+# token_digest is the SHA-256 of the raw token used in tests. The raw values are:
+#   save_missing -> "test-save-missing-token"
+#   read_only    -> "test-read-only-token"
+save_missing:
+  project: main_app
+  creator: admin
+  name: CI saveMissing
+  scope: save_missing
+  token_digest: <%= Digest::SHA256.hexdigest("test-save-missing-token") %>
+
+read_only:
+  project: main_app
+  creator: admin
+  name: CI read only
+  scope: read_only
+  token_digest: <%= Digest::SHA256.hexdigest("test-read-only-token") %>
