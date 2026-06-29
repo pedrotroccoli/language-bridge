@@ -17,6 +17,16 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
     assert_equal TranslationBundle.new(namespace: @namespace, locale: @locale).etag, artifact.checksum
   end
 
+  test "published artifact is routed to the project's storage connection and prefix" do
+    connection = StorageConnection.create!(name: "Bucket", service: "local", prefix: "lb-poc", is_default: true)
+
+    @translation.publish(by: users(:admin))
+    artifact = artifact_for
+
+    assert_equal connection.service_key, artifact.file.blob.service_name
+    assert artifact.file.key.start_with?("lb-poc/"), "expected key under the connection prefix, got #{artifact.file.key}"
+  end
+
   test "unpublishing rebuilds the artifact without the translation" do
     @translation.publish(by: users(:admin))
     @translation.unpublish
