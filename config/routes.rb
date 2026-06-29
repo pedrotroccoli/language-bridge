@@ -10,9 +10,31 @@ Rails.application.routes.draw do
   get  "invitations/:token", to: "invitations#show",   as: :accept_invitation
   post "invitations/:token", to: "invitations#accept", as: :claim_invitation
 
+  # Global, admin-only workspace settings (rate-limit defaults).
+  resource :workspace, only: %i[ show update ], controller: "workspace"
+
+  resources :storage_connections, only: %i[ create destroy ] do
+    resource :default, only: :create, controller: "storage_connections/defaults"
+  end
+
+  # Workspace members (users) and the signed-in user's own account.
+  resources :members, only: %i[ index update destroy ]
+  resource :account, only: :show, controller: "account"
+  namespace :account do
+    resource :sessions, only: :destroy # revoke all sessions but the current one
+  end
+
   resources :projects, only: %i[ index new create show edit update destroy ] do
     resource :activity, only: :show, controller: "projects/activity"
     resource :settings, only: :show, controller: "projects/settings"
+    resources :api_tokens, only: %i[ create destroy ], controller: "projects/api_tokens"
+    resources :missing, only: %i[ index destroy ], controller: "projects/missing" do
+      resource :promotion, only: :create, controller: "projects/missing/promotions"
+    end
+    resources :backups, only: %i[ index create destroy ], controller: "projects/backups" do
+      resource :restoration, only: :create, controller: "projects/backups/restorations"
+    end
+    resource :backup_schedule, only: :update, controller: "projects/backup_schedules"
     resources :locales, only: %i[ create update destroy ]
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
       resource :publication, only: :create, module: :namespaces
@@ -28,6 +50,12 @@ Rails.application.routes.draw do
   # top-level app routes. namespace may contain dots, so the optional ".json"
   # suffix (i18next loadPath convention) is stripped in the controller rather
   # than parsed as a format.
+  namespace :api do
+    namespace :v1 do
+      post "projects/:project_slug/missing", to: "missing_translations#create"
+    end
+  end
+
   get "cdn/:project_slug/:locale/:namespace" => "delivery#show",
       as: :delivery,
       format: false,
