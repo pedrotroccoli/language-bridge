@@ -6,5 +6,6 @@ class Projects::SettingsController < ApplicationController
   def show
     @locales = @project.locales.alphabetically
     @namespaces = @project.namespaces.alphabetically
+    @api_tokens = @project.api_tokens.active.order(created_at: :desc)
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
     t.uuid "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "api_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "creator_id"
+    t.datetime "last_used_at"
+    t.string "name", null: false
+    t.uuid "project_id", null: false
+    t.datetime "revoked_at"
+    t.string "scope", null: false
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_api_tokens_on_creator_id"
+    t.index ["project_id"], name: "index_api_tokens_on_project_id"
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
   end
 
   create_table "events", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -79,6 +94,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
     t.index ["project_id"], name: "index_locales_on_project_id"
   end
 
+  create_table "missing_key_reports", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "first_reported_at"
+    t.integer "hits", default: 0, null: false
+    t.string "key", null: false
+    t.datetime "last_reported_at"
+    t.jsonb "locales", default: [], null: false
+    t.string "namespace", null: false
+    t.uuid "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "last_reported_at"], name: "index_missing_key_reports_on_project_id_and_last_reported_at"
+    t.index ["project_id", "namespace", "key"], name: "index_missing_key_reports_on_project_id_and_namespace_and_key", unique: true
+    t.index ["project_id"], name: "index_missing_key_reports_on_project_id"
+  end
+
   create_table "namespaces", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -88,9 +118,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
     t.index ["project_id", "name"], name: "index_namespaces_on_project_id_and_name", unique: true
   end
 
-  create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+  create_table "project_backups", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.bigint "byte_size", default: 0, null: false
+    t.string "checksum", null: false
     t.datetime "created_at", null: false
+    t.uuid "project_id", null: false
+    t.string "source", default: "manual", null: false
+    t.integer "translations_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "created_at"], name: "index_project_backups_on_project_id_and_created_at"
+    t.index ["project_id"], name: "index_project_backups_on_project_id"
+  end
+
+  create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "backup_frequency", default: "daily", null: false
+    t.boolean "backup_include_drafts", default: false, null: false
+    t.integer "backup_retention", default: 30, null: false
+    t.boolean "backups_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "delivery_path_template", default: "{project_slug}/{namespace}/{locale}.json", null: false
+    t.integer "delivery_rate_limit"
     t.integer "locales_count", default: 0, null: false
+    t.integer "missing_rate_limit"
     t.string "name", null: false
     t.integer "namespaces_count", default: 0, null: false
     t.string "slug", null: false
@@ -110,6 +159,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "settings", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "delivery_rate_limit", default: 300, null: false
+    t.integer "delivery_rate_period", default: 60, null: false
+    t.integer "missing_rate_limit", default: 30, null: false
+    t.integer "missing_rate_period", default: 60, null: false
+    t.boolean "rate_limiting_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "sign_in_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
@@ -118,6 +177,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
     t.uuid "user_id", null: false
     t.index ["token"], name: "index_sign_in_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_sign_in_tokens_on_user_id"
+  end
+
+  create_table "storage_connections", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "bucket"
+    t.datetime "created_at", null: false
+    t.boolean "is_default", default: false, null: false
+    t.string "name", null: false
+    t.string "region"
+    t.string "service_name", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "translation_approvals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -208,10 +277,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_015800) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "api_tokens", "projects"
+  add_foreign_key "api_tokens", "users", column: "creator_id", on_delete: :nullify
   add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "locales", "projects"
+  add_foreign_key "missing_key_reports", "projects"
   add_foreign_key "namespaces", "projects"
+  add_foreign_key "project_backups", "projects"
   add_foreign_key "sessions", "users"
   add_foreign_key "sign_in_tokens", "users"
   add_foreign_key "translation_approvals", "translations"

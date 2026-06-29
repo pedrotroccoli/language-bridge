@@ -35,6 +35,8 @@ class ProjectsController < ApplicationController
 
   def update
     if @project.update(project_params)
+      # A new path template re-keys every artifact (purging old blobs).
+      @project.rematerialize_delivery! if @project.saved_change_to_delivery_path_template?
       redirect_to @project, notice: "Project updated."
     else
       render :edit, status: :unprocessable_entity
@@ -52,7 +54,7 @@ class ProjectsController < ApplicationController
     end
 
     def project_params
-      params.expect(project: %i[ name ])
+      params.expect(project: %i[ name missing_rate_limit delivery_rate_limit delivery_path_template ])
     end
 
     def ensure_can_administer_project

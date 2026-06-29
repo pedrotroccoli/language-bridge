@@ -36,7 +36,7 @@ class ProjectsSearchTest < ApplicationSystemTestCase
     find('input[data-search-target="input"]').fill_in with: "zzz-nothing"
 
     assert_text "No projects found"
-    assert_text '"zzz-nothing"'
+    assert_text "“zzz-nothing”"
 
     click_button "Clear search"
 

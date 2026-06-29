@@ -36,11 +36,13 @@ class TranslationEditorTest < ApplicationSystemTestCase
 
     within ".locales-section" do
       click_button "New locale"
-      fill_in "Code", with: "fr"
-      click_button "Create"
+      # Multi-select combobox: type a custom IETF tag and press Enter to add it.
+      find('input[data-combobox-target="input"]').send_keys("fr", :enter)
+      find("#new-locale-title").click # click outside the combobox to dismiss its dropdown
+      click_button "Add languages"
     end
 
-    assert_text "Locale created."
+    assert_text "Added 1 locale"
     assert @project.locales.exists?(code: "fr")
   end
 end

@@ -1,0 +1,24 @@
+require "test_helper"
+
+class AccountControllerTest < ActionDispatch::IntegrationTest
+  test "shows the signed-in user's account" do
+    sign_in_as(users(:translator))
+    get account_path
+    assert_response :success
+    assert_select "h1", "Account"
+    assert_select "body", /#{users(:translator).email}/
+  end
+
+  test "revokes all other sessions but keeps the current one" do
+    user = users(:translator)
+    other = user.sessions.create!(user_agent: "Old", ip_address: "1.2.3.4")
+    sign_in_as(user)
+
+    assert_difference -> { user.sessions.count }, -1 do
+      delete account_sessions_path
+    end
+    assert_redirected_to account_path
+    assert_not Session.exists?(other.id), "other session revoked"
+    assert_equal 1, user.sessions.count, "current session kept"
+  end
+end

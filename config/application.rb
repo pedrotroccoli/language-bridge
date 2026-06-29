@@ -16,6 +16,10 @@ module Back
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Enqueue jobs only after the surrounding DB transaction commits, so a job
+    # never runs before the records it depends on are visible.
+    config.active_job.enqueue_after_transaction_commit = true
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
