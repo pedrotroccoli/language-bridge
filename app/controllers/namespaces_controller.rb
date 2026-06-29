@@ -65,15 +65,9 @@ class NamespacesController < ApplicationController
     # this namespace. nil status returns the relation unchanged (All).
     def filter_by_status(keys, status)
       case status
-      when "drafts"
-        keys.where(id: Translation.drafts_in_namespace(@namespace).select(:translation_key_id))
-      when "review"
-        review_key_ids = Translation.under_review.joins(:translation_key)
-                                    .where(translation_keys: { namespace_id: @namespace.id })
-                                    .select(:translation_key_id)
-        keys.where(id: review_key_ids)
-      else
-        keys
+      when "drafts" then keys.where(id: Translation.drafts_in_namespace(@namespace).select(:translation_key_id))
+      when "review" then keys.where(id: Translation.under_review_in_namespace(@namespace).select(:translation_key_id))
+      else keys
       end
     end
 

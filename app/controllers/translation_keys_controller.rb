@@ -11,12 +11,15 @@ class TranslationKeysController < ApplicationController
     namespace = chosen_namespace
     @translation_key = namespace.translation_keys.build(translation_key_params.merge(project: @project))
 
-    if @translation_key.save
+    # Key and its source-locale draft are written together so a failed value
+    # write never leaves a half-created key behind.
+    ActiveRecord::Base.transaction do
+      @translation_key.save!
       create_source_value(namespace)
-      redirect_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
-    else
-      redirect_with_alert(@translation_key)
     end
+    redirect_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
+  rescue ActiveRecord::RecordInvalid
+    redirect_with_alert(@translation_key)
   end
 
   def update
