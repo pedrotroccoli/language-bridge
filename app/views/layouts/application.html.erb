@@ -84,7 +84,7 @@
       </header>
 
       <%# Global warning while no cloud bucket is connected — uploads/backups stay off. %>
-      <% unless StorageConnection.usable_cloud_exists? %>
+      <% unless storage_configured? %>
         <div class="flex items-center justify-between gap-4 px-[26px] py-[11px] bg-warn-soft border-b border-warn/40 text-[13px] shrink-0">
           <div class="flex items-center gap-[10px] text-warn-ink min-w-0">
             <%= mi "warning", size: 18, css: "flex-none" %>
