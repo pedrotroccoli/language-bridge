@@ -15,7 +15,7 @@
     <div class="flex items-center gap-[9px]">
       <% if manageable && @locales.any? %>
         <span data-controller="modal">
-          <button type="button" class="btn-secondary h-[34px]" data-action="click->modal#open"><%= mi "download", size: 17, css: "text-ink-3" %>Import JSON</button>
+          <button type="button" class="btn-secondary h-[34px]" data-action="click->modal#open"><%= mi "download", size: 17, css: "text-ink-3" %>Import</button>
 
           <dialog class="modal w-[540px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="import-title">
             <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line-2">
@@ -28,9 +28,9 @@
                 <%= form.select :locale_id, @locales.map { |l| [ (locale_name(l.code) ? "#{l.code} · #{locale_name(l.code)}" : l.code), l.id ] }, { prompt: "Select locale" }, required: true, class: "text-[13px]" %>
               </div>
               <div class="flex flex-col gap-[7px]">
-                <%= form.label :file, "JSON file", class: "text-[12.5px] font-medium text-ink-2" %>
-                <%= form.file_field :file, accept: "application/json,.json", required: true, class: "text-[13px] file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-[12.5px]" %>
-                <small class="text-[12px] text-mut-2 leading-relaxed">Nested objects flatten to dotted keys (<code class="font-mono">home.title</code>). Existing values are overwritten (history kept). Imported as drafts.</small>
+                <%= form.label :file, "File", class: "text-[12.5px] font-medium text-ink-2" %>
+                <%= form.file_field :file, accept: ".json,.csv,.xliff,.xlf,application/json,text/csv", required: true, class: "text-[13px] file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-[12.5px]" %>
+                <small class="text-[12px] text-mut-2 leading-relaxed">JSON (nested → dotted keys), CSV (<code class="font-mono">key,value</code>) or XLIFF. Format detected from the extension. Existing values overwritten (history kept). Imported as drafts.</small>
               </div>
               <div class="flex justify-end gap-[9px]">
                 <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
@@ -41,8 +41,19 @@
         </span>
       <% end %>
 
-      <% if editable %>
-        <%= render "namespaces/publish_all", project: @project, namespace: @namespace, draft_count: @draft_count, editable: editable, keys_present: @total_keys.positive? %>
+      <% if @locales.any? %>
+        <details class="relative [&_summary::-webkit-details-marker]:hidden">
+          <summary class="list-none cursor-pointer btn-secondary h-[34px]"><%= mi "upload", size: 17, css: "text-ink-3" %>Export<%= mi "expand_more", size: 16, css: "text-faint" %></summary>
+          <div class="absolute top-[calc(100%+6px)] right-0 w-[190px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 p-[5px]">
+            <div class="px-[10px] py-[7px] eyebrow">Download namespace</div>
+            <% Snapshot::FORMATS.each do |fmt| %>
+              <%= link_to project_namespace_export_path(@project, @namespace, as: fmt), data: { turbo: false },
+                    class: "flex items-center gap-[9px] px-[10px] py-2 rounded-[7px] text-[13px] text-ink hover:bg-surface-2" do %>
+                <span class="font-mono text-[11px] text-mut-2 w-[42px]"><%= fmt.upcase %></span>Download
+              <% end %>
+            <% end %>
+          </div>
+        </details>
       <% end %>
 
       <% if manageable && @locales.any? %>
@@ -53,30 +64,66 @@
 
   <%# ---- draft banner ---- %>
   <% if editable && @draft_count.positive? %>
-    <div class="flex items-center gap-[11px] px-6 py-[11px] bg-banner-bg border-y border-banner-border text-[13px] text-banner-ink">
-      <span class="w-[7px] h-[7px] rounded-full bg-warn flex-none"></span>
-      <span><b class="font-semibold"><%= @draft_count %> unpublished <%= "draft".pluralize(@draft_count) %></b> — saved, but not yet live in production. Publish to push them live.</span>
+    <div class="flex items-center justify-between gap-4 px-6 py-[10px] bg-banner-bg border-y border-banner-border text-[13px] text-banner-ink">
+      <div class="flex items-center gap-[11px] min-w-0">
+        <span class="w-[7px] h-[7px] rounded-full bg-warn flex-none"></span>
+        <span class="truncate"><b class="font-semibold"><%= @draft_count %> unpublished <%= "draft".pluralize(@draft_count) %></b> — saved, but not yet live in production.</span>
+      </div>
+      <div class="flex items-center gap-[10px] flex-none">
+        <%= link_to project_namespace_path(@project, @namespace, status: "drafts"), class: "inline-flex items-center gap-[6px] h-[32px] px-[12px] bg-surface border border-line rounded-[8px] text-[12.5px] font-medium text-ink-2 hover:border-ink whitespace-nowrap" do %>
+          <%= mi "tune", size: 16, css: "text-mut-2" %>Review drafts
+        <% end %>
+        <%= button_to project_namespace_drafts_path(@project, @namespace), method: :delete, form_class: "inline",
+              class: "h-[32px] px-[10px] text-[12.5px] font-medium text-warn-ink hover:underline bg-transparent",
+              data: { turbo_confirm: "Discard all #{@draft_count} unpublished #{"draft".pluralize(@draft_count)} in #{@namespace.name}? This cannot be undone." } do %>
+          Discard all
+        <% end %>
+        <%= render "namespaces/publish_all", project: @project, namespace: @namespace, draft_count: @draft_count, editable: editable, keys_present: @total_keys.positive? %>
+      </div>
     </div>
   <% end %>
 
   <%# ---- new key dialog ---- %>
   <% if manageable %>
-    <dialog class="modal w-[460px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="new-key-title">
+    <dialog class="modal w-[560px]" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop" aria-labelledby="new-key-title">
       <div class="flex items-center justify-between px-[22px] py-[18px] border-b border-line-2">
-        <h3 id="new-key-title" class="m-0 text-[16px] font-semibold text-ink">New translation key</h3>
+        <h3 id="new-key-title" class="m-0 text-[16px] font-semibold text-ink">New key</h3>
         <button type="button" class="text-mut-2 hover:text-ink" data-action="click->modal#close" aria-label="Close"><%= mi "close", size: 18 %></button>
       </div>
       <%= form_with model: [ @project, @namespace, @new_translation_key ], local: true, html: { class: "p-[22px] flex flex-col gap-4" } do |form| %>
-        <div class="flex flex-col gap-[7px]">
-          <%= form.label :key, "Key", class: "text-[12.5px] font-medium text-ink-2" %>
-          <%= form.text_field :key, required: true, value: flash[:invalid_translation_key],
-                placeholder: "greeting, home.title, buttons.save", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
-                class: "font-mono text-[13px]" %>
-          <small class="text-[12px] text-mut-2">Unique within this namespace.</small>
+        <div class="grid grid-cols-[1fr_180px] gap-4">
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :key, "Key", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.text_field :key, required: true, value: flash[:invalid_translation_key],
+                  placeholder: "common.action.save", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
+                  class: "font-mono text-[13px]" %>
+          </div>
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :namespace_id, "Namespace", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.select :namespace_id, @namespaces.map { |n| [ n.name, n.id ] }, { selected: @namespace.id }, class: "text-[13px]" %>
+          </div>
         </div>
-        <div class="flex justify-end gap-[9px]">
+
+        <% source = @locales.first %>
+        <% if source %>
+          <div class="flex flex-col gap-[7px]">
+            <span class="flex items-center gap-2 text-[12.5px] font-medium text-ink-2">Source value
+              <span class="font-mono text-[10px] text-ink-2 bg-surface-2 border border-line rounded-[5px] px-[6px] py-px"><%= source.code %></span>
+            </span>
+            <%= text_field_tag "translation_key[source_value]", nil, placeholder: "Save changes",
+                  autocomplete: "off", spellcheck: "false", class: "text-[14px]" %>
+          </div>
+        <% end %>
+
+        <div class="flex flex-col gap-[7px]">
+          <label class="text-[12.5px] font-medium text-ink-2">Context <span class="text-mut font-normal">· for translators</span></label>
+          <%= form.text_area :context, rows: 2, placeholder: "Primary action on form footers — keep it short.",
+                class: "text-[13px] leading-[1.5]" %>
+        </div>
+
+        <div class="flex justify-end gap-[9px] pt-1">
           <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
-          <%= form.submit "Create", class: "btn" %>
+          <%= form.submit "Create key", class: "btn" %>
         </div>
       <% end %>
     </dialog>
@@ -185,6 +232,21 @@
                      data-action="input->auto-submit#submit">
             </div>
 
+            <%# status filter: All / Drafts / Review %>
+            <div class="flex items-center gap-[2px] p-[3px] bg-surface-2 rounded-[9px] flex-none">
+              <% [ [ nil, "All", nil, nil ], [ "drafts", "Drafts", @stats[:drafts], "bg-warn" ], [ "review", "Review", @stats[:review], "bg-review" ] ].each do |val, label, count, dot| %>
+                <label class="cursor-pointer">
+                  <input type="radio" name="status" value="<%= val %>" <%= "checked" if @status == val %>
+                         class="peer sr-only" data-action="change->auto-submit#submit">
+                  <span class="flex items-center gap-[6px] h-[30px] px-[12px] rounded-[7px] text-[12px] font-medium text-mut whitespace-nowrap
+                               peer-checked:bg-surface peer-checked:text-ink peer-checked:shadow-sm">
+                    <% if dot %><span class="w-[6px] h-[6px] rounded-full <%= dot %> flex-none"></span><% end %><%= label %>
+                    <% if count&.positive? %><span class="font-mono text-mut-2"><%= count %></span><% end %>
+                  </span>
+                </label>
+              <% end %>
+            </div>
+
             <% if @total_keys > @page_limit %>
               <span class="font-mono text-[11.5px] text-mut-2 whitespace-nowrap hidden lg:inline">showing first <%= @page_limit %></span>
             <% end %>
@@ -226,6 +288,8 @@
             <p class="key-meta font-mono text-[11.5px] text-ink-3 px-4 pt-[11px] pb-1">
               <% if @query.present? %>
                 <%= @match_count %> <%= "key".pluralize(@match_count) %> match “<%= @query %>”<%= " · showing first #{@page_limit}" if @match_count > @page_limit %>
+              <% elsif @status %>
+                <%= @match_count %> <%= @status %> <%= "key".pluralize(@match_count) %><%= " · showing first #{@page_limit}" if @match_count > @page_limit %>
               <% else %>
                 <%= @total_keys %> <%= "key".pluralize(@total_keys) %><%= " · showing first #{@page_limit}, search to narrow" if @total_keys > @page_limit %>
               <% end %>

@@ -40,6 +40,7 @@ class Namespace < ApplicationRecord
     stats = {
       translated: scoped.published.count,
       drafts: draft_count,
+      review: scoped.under_review.count,
       missing: [ slots - filled_total, 0 ].max,
       total: slots,
       changed_7: scoped.where("translations.updated_at >= ?", 7.days.ago).count,

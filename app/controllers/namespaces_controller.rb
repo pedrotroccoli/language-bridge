@@ -20,7 +20,11 @@ class NamespacesController < ApplicationController
 
     @total_keys = @namespace.translation_keys.count
 
+    # Status filter: All (default), Drafts (unpublished with a value), Review.
+    @status = params[:status].to_s.presence_in(%w[ drafts review ])
+
     keys = @query.present? ? @namespace.translation_keys.search(@query) : @namespace.translation_keys.order(:key)
+    keys = filter_by_status(keys, @status)
 
     @match_count = keys.count
     @page_limit = KEY_PAGE_LIMIT
@@ -57,6 +61,22 @@ class NamespacesController < ApplicationController
   end
 
   private
+    # Narrow a keys relation to those with a draft / under-review translation in
+    # this namespace. nil status returns the relation unchanged (All).
+    def filter_by_status(keys, status)
+      case status
+      when "drafts"
+        keys.where(id: Translation.drafts_in_namespace(@namespace).select(:translation_key_id))
+      when "review"
+        review_key_ids = Translation.under_review.joins(:translation_key)
+                                    .where(translation_keys: { namespace_id: @namespace.id })
+                                    .select(:translation_key_id)
+        keys.where(id: review_key_ids)
+      else
+        keys
+      end
+    end
+
     def set_namespace
       @namespace = @project.namespaces.find_by!(name: params[:id])
     end
