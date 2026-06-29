@@ -1,0 +1,17 @@
+<%#
+  Toggle chips for selecting import/export formats. Renders one checkbox per
+  Snapshot::FORMATS entry, styled as a pill that fills with the accent when on.
+  Locals: form, field (symbol), selected (array of format strings).
+%>
+<div class="flex flex-wrap gap-2">
+  <% Snapshot::FORMATS.each do |fmt| %>
+    <label class="cursor-pointer">
+      <%= check_box_tag "#{form.object_name}[#{field}][]", fmt, selected.include?(fmt),
+            id: "#{form.object_name}_#{field}_#{fmt}", class: "peer sr-only" %>
+      <span class="inline-flex items-center gap-[6px] h-[32px] px-3 rounded-[8px] border border-line bg-surface text-mut font-mono text-[12px] font-medium
+                   peer-checked:bg-accent-soft peer-checked:border-transparent peer-checked:text-accent peer-checked:font-semibold hover:border-ink transition-colors">
+        <%= fmt.upcase %>
+      </span>
+    </label>
+  <% end %>
+</div>

@@ -6,7 +6,6 @@ class WorkspaceController < ApplicationController
   def show
     @setting = Setting.current
     @storage_connections = StorageConnection.ordered
-    @available_services = StorageConnection.available_services
   end
 
   def update
@@ -20,10 +19,12 @@ class WorkspaceController < ApplicationController
 
   private
     def setting_params
-      params.expect(setting: %i[
-        rate_limiting_enabled
-        missing_rate_limit missing_rate_period
-        delivery_rate_limit delivery_rate_period
+      params.expect(setting: [
+        :rate_limiting_enabled,
+        :missing_rate_limit, :missing_rate_period,
+        :delivery_rate_limit, :delivery_rate_period,
+        :upload_max_bytes,
+        { upload_allowed_formats: [] }
       ])
     end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_29_161043) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,6 +122,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
     t.bigint "byte_size", default: 0, null: false
     t.string "checksum", null: false
     t.datetime "created_at", null: false
+    t.string "format", default: "json", null: false
     t.uuid "project_id", null: false
     t.string "source", default: "manual", null: false
     t.integer "translations_count", default: 0, null: false
@@ -131,9 +132,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
   end
 
   create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "backup_format", default: "json", null: false
     t.string "backup_frequency", default: "daily", null: false
     t.boolean "backup_include_drafts", default: false, null: false
     t.integer "backup_retention", default: 30, null: false
+    t.integer "backup_time_of_day", default: 3, null: false
     t.boolean "backups_enabled", default: true, null: false
     t.datetime "created_at", null: false
     t.string "delivery_path_template", default: "{project_slug}/{namespace}/{locale}.json", null: false
@@ -143,9 +146,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
     t.string "name", null: false
     t.integer "namespaces_count", default: 0, null: false
     t.string "slug", null: false
+    t.uuid "storage_connection_id"
     t.integer "translation_keys_count", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.string "upload_allowed_formats", array: true
+    t.bigint "upload_max_bytes"
+    t.boolean "upload_override", default: false, null: false
+    t.string "upload_path", default: "", null: false
     t.index ["slug"], name: "index_projects_on_slug", unique: true
+    t.index ["storage_connection_id"], name: "index_projects_on_storage_connection_id"
   end
 
   create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -167,6 +176,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
     t.integer "missing_rate_period", default: 60, null: false
     t.boolean "rate_limiting_enabled", default: true, null: false
     t.datetime "updated_at", null: false
+    t.string "upload_allowed_formats", default: ["json", "csv", "xliff"], null: false, array: true
+    t.bigint "upload_max_bytes", default: 5242880, null: false
   end
 
   create_table "sign_in_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -180,12 +191,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
   end
 
   create_table "storage_connections", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "access_key_id"
     t.string "bucket"
     t.datetime "created_at", null: false
+    t.string "endpoint"
+    t.boolean "inherit_credentials", default: false, null: false
     t.boolean "is_default", default: false, null: false
     t.string "name", null: false
+    t.string "prefix", default: "", null: false
     t.string "region"
-    t.string "service_name", null: false
+    t.string "secret_access_key"
+    t.string "service", default: "local", null: false
+    t.string "service_name"
     t.datetime "updated_at", null: false
   end
 
@@ -213,6 +230,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
   end
 
   create_table "translation_keys", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.text "context"
     t.datetime "created_at", null: false
     t.string "key", null: false
     t.uuid "namespace_id", null: false
@@ -285,6 +303,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_020600) do
   add_foreign_key "missing_key_reports", "projects"
   add_foreign_key "namespaces", "projects"
   add_foreign_key "project_backups", "projects"
+  add_foreign_key "projects", "storage_connections", on_delete: :nullify
   add_foreign_key "sessions", "users"
   add_foreign_key "sign_in_tokens", "users"
   add_foreign_key "translation_approvals", "translations"
