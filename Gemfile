@@ -69,3 +69,6 @@ group :test do
 end
 
 gem "tailwindcss-rails", "~> 4.6"
+
+# Throttle abusive requests (saveMissing + delivery) [https://github.com/rack/rack-attack]
+gem "rack-attack"
