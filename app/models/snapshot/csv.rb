@@ -44,5 +44,6 @@ module Snapshot
     def self.deep_to_h(hash)
       hash.transform_values { |v| v.is_a?(Hash) ? deep_to_h(v) : v }
     end
+    private_class_method :deep_to_h
   end
 end

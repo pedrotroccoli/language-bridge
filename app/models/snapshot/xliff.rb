@@ -1,4 +1,5 @@
 require "rexml/document"
+require "builder"
 
 module Snapshot
   # XLIFF 1.2. One <file> per (namespace, target locale): `original` carries the
@@ -13,26 +14,26 @@ module Snapshot
       source = locales.first || "en"
       namespaces = snapshot["namespaces"] || {}
 
-      out = +%(<?xml version="1.0" encoding="UTF-8"?>\n<xliff version="1.2">\n)
-      namespaces.each do |namespace, keys|
-        locales.each do |locale|
-          out << %(  <file original="#{esc(namespace)}" source-language="#{esc(source)}" target-language="#{esc(locale)}" datatype="plaintext">\n    <body>\n)
-          keys.each do |key, entries|
-            entry = entries[locale]
-            next unless entry
-
-            source_value = entries.dig(source, "value").to_s
-            state = entry["published"] ? "final" : "needs-translation"
-            out << %(      <trans-unit id="#{esc(key)}" resname="#{esc(key)}">\n)
-            out << %(        <source>#{esc(source_value)}</source>\n)
-            out << %(        <target state="#{state}">#{esc(entry["value"].to_s)}</target>\n)
-            out << %(      </trans-unit>\n)
+      xml = Builder::XmlMarkup.new(indent: 2)
+      xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
+      xml.xliff(version: "1.2") do
+        namespaces.each do |namespace, keys|
+          locales.each do |locale|
+            xml.file(original: namespace, "source-language": source, "target-language": locale, datatype: "plaintext") do
+              xml.body do
+                keys.each do |key, entries|
+                  entry = entries[locale] or next
+                  state = entry["published"] ? "final" : "needs-translation"
+                  xml.tag!("trans-unit", id: key, resname: key) do
+                    xml.source(entries.dig(source, "value").to_s)
+                    xml.target(entry["value"].to_s, state: state)
+                  end
+                end
+              end
+            end
           end
-          out << %(    </body>\n  </file>\n)
         end
       end
-      out << "</xliff>\n"
-      out
     end
 
     def self.load(body)
@@ -62,10 +63,6 @@ module Snapshot
       { "version" => TranslationSnapshot::VERSION, "locales" => locales.uniq, "namespaces" => namespaces.transform_values(&:itself) }
     rescue REXML::ParseException => e
       raise Snapshot::FormatError, "Invalid XLIFF: #{e.message}"
-    end
-
-    def self.esc(string)
-      REXML::Text.normalize(string.to_s)
     end
   end
 end
