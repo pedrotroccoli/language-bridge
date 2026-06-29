@@ -4,7 +4,7 @@
 <%= render "projects/tabs", project: @project, active: :backups %>
 
 <div class="mx-auto w-full max-w-[1320px] px-6 py-7">
-  <div class="max-w-[920px]">
+  <div>
 
     <%# ---- Header ---- %>
     <div class="flex items-start justify-between gap-6 mb-[18px]">
@@ -12,20 +12,34 @@
         <h2 class="m-0 text-[18px] font-semibold text-ink">Backups</h2>
         <p class="mt-[5px] mb-0 text-[13px] text-mut max-w-[520px] leading-[1.5]">Point-in-time snapshots of every key, locale and translation, stored in your Active Storage bucket. Restore or download any snapshot — automatically, on a schedule you set.</p>
       </div>
-      <%= button_to project_backups_path(@project), method: :post, class: "btn flex-none" do %>
-        <%= mi "backup", size: 17, css: "mr-[6px]" %>Back up now
+      <% connection = @project.effective_storage_connection %>
+      <% ready = connection&.usable? %>
+      <% if ready %>
+        <%= loading_button_to "Back up now", project_backups_path(@project), method: :post, icon: "backup", class: "btn flex-none" %>
+      <% else %>
+        <span class="btn flex-none" aria-disabled="true" title="Connect storage to enable backups" style="opacity:.5;cursor:not-allowed">
+          <%= mi "backup", size: 17, css: "mr-[6px]" %>Back up now
+        </span>
       <% end %>
     </div>
 
-    <% if StorageConnection.default.nil? %>
-      <div class="border border-banner-border bg-banner-bg rounded-[11px] px-[20px] py-4 mb-5 flex items-start gap-[14px]">
-        <div class="w-[34px] h-[34px] rounded-[9px] bg-draft-border/40 text-banner-ink flex items-center justify-center flex-none"><%= mi "cloud_off", size: 19 %></div>
+    <% unless ready %>
+      <%# ---- Paused (no storage connection) ---- %>
+      <div class="border border-banner-border bg-banner-bg rounded-[11px] px-[22px] py-5 flex items-start gap-[14px]">
+        <div class="w-[38px] h-[38px] rounded-[10px] bg-draft-border/40 text-banner-ink flex items-center justify-center flex-none"><%= mi "cloud_off", size: 20 %></div>
         <div class="flex-1 min-w-0">
-          <div class="text-[14px] font-semibold text-ink">Backups use local storage</div>
-          <div class="text-[13px] text-banner-ink mt-[3px] leading-[1.5]">No storage connection is set for this workspace, so snapshots are written to the default Active Storage service. <%= link_to "Connect a bucket", workspace_path, class: "font-semibold underline" %> for durable, off-box backups.</div>
+          <div class="text-[15px] font-semibold text-ink">Backups are paused</div>
+          <div class="text-[13px] text-banner-ink mt-[4px] leading-[1.5]">No storage connection is set up for this workspace yet. Connect a bucket to enable scheduled backups.</div>
+          <%= link_to workspace_path, class: "btn mt-[14px]" do %>
+            <%= mi "corporate_fare", size: 16, css: "mr-[6px]" %>Set up storage connection
+          <% end %>
         </div>
       </div>
-    <% end %>
+    <% else %>
+      <div class="border border-line rounded-[11px] px-[20px] py-[14px] mb-5 flex items-center gap-[12px] text-[13px] text-mut">
+        <%= mi "cloud_done", size: 19, css: "text-ok" %>
+        <span>Snapshots are written to <span class="font-semibold text-ink"><%= connection.name %></span> <span class="font-mono text-[12px]">(<%= connection.summary %>)</span>.</span>
+      </div>
 
     <%# ---- Schedule ---- %>
     <%= form_with model: @project, url: project_backup_schedule_path(@project), method: :patch, local: true do |form| %>
@@ -47,8 +61,16 @@
             <%= form.select :backup_frequency, Project::BACKUP_FREQUENCIES.map { |f| [ f.capitalize, f ] }, {}, class: "text-[14px]" %>
           </div>
           <div class="flex flex-col gap-[7px]">
+            <%= form.label :backup_time_of_day, "Run at (UTC)", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.select :backup_time_of_day, backup_hour_options, {}, class: "text-[14px]" %>
+          </div>
+          <div class="flex flex-col gap-[7px]">
             <%= form.label :backup_retention, "Retention (snapshots to keep)", class: "text-[12.5px] font-medium text-ink-2" %>
             <%= form.number_field :backup_retention, min: 1, class: "text-[14px]" %>
+          </div>
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :backup_format, "Export format", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.select :backup_format, Project::BACKUP_FORMATS.map { |f| [ f.upcase, f ] }, {}, class: "text-[14px]" %>
           </div>
         </div>
 
@@ -58,7 +80,7 @@
         </label>
 
         <div class="flex justify-end mt-[18px]">
-          <%= form.submit "Save schedule", class: "btn" %>
+          <%= loading_submit form, "Save schedule" %>
         </div>
       </div>
     <% end %>
@@ -78,7 +100,7 @@
           <div class="flex-1 min-w-0">Snapshot</div>
           <div class="w-[108px] flex-none">Keys</div>
           <div class="w-[88px] flex-none">Size</div>
-          <div class="w-[210px] flex-none text-right">Actions</div>
+          <div class="w-[300px] flex-none text-right">Actions</div>
         </div>
         <% @backups.each do |backup| %>
           <div class="flex items-center px-[18px] py-[13px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
@@ -90,10 +112,11 @@
               <% else %>
                 <span class="font-mono text-[10px] tracking-[0.05em] text-accent bg-accent-soft rounded px-[7px] py-[2px]">MANUAL</span>
               <% end %>
+              <span class="font-mono text-[10px] tracking-[0.05em] text-mut border border-line rounded px-[7px] py-[2px]"><%= backup.format.upcase %></span>
             </div>
             <div class="w-[108px] flex-none font-mono text-[12px] text-ink-2"><%= number_with_delimiter(backup.translations_count) %></div>
             <div class="w-[88px] flex-none font-mono text-[12px] text-ink-2"><%= number_to_human_size(backup.byte_size) %></div>
-            <div class="w-[210px] flex-none flex items-center justify-end gap-[7px]">
+            <div class="w-[300px] flex-none flex items-center justify-end gap-[7px]">
               <% if backup.file.attached? %>
                 <%= link_to rails_blob_path(backup.file, disposition: "attachment"), class: "btn-secondary" do %>
                   <%= mi "download", size: 15, css: "mr-[5px]" %>Download
@@ -115,6 +138,7 @@
       <div class="border border-line rounded-[11px] px-[22px] py-10 text-center">
         <div class="text-[13px] text-mut">No snapshots yet. Use <span class="font-medium text-ink-2">Back up now</span> to create one.</div>
       </div>
+    <% end %>
     <% end %>
   </div>
 </div>
