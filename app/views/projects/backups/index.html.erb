@@ -1,0 +1,120 @@
+<% content_for :title, "Backups · #{@project.name}" %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
+
+<%= render "projects/tabs", project: @project, active: :backups %>
+
+<div class="mx-auto w-full max-w-[1320px] px-6 py-7">
+  <div class="max-w-[920px]">
+
+    <%# ---- Header ---- %>
+    <div class="flex items-start justify-between gap-6 mb-[18px]">
+      <div>
+        <h2 class="m-0 text-[18px] font-semibold text-ink">Backups</h2>
+        <p class="mt-[5px] mb-0 text-[13px] text-mut max-w-[520px] leading-[1.5]">Point-in-time snapshots of every key, locale and translation, stored in your Active Storage bucket. Restore or download any snapshot — automatically, on a schedule you set.</p>
+      </div>
+      <%= button_to project_backups_path(@project), method: :post, class: "btn flex-none" do %>
+        <%= mi "backup", size: 17, css: "mr-[6px]" %>Back up now
+      <% end %>
+    </div>
+
+    <% if StorageConnection.default.nil? %>
+      <div class="border border-banner-border bg-banner-bg rounded-[11px] px-[20px] py-4 mb-5 flex items-start gap-[14px]">
+        <div class="w-[34px] h-[34px] rounded-[9px] bg-draft-border/40 text-banner-ink flex items-center justify-center flex-none"><%= mi "cloud_off", size: 19 %></div>
+        <div class="flex-1 min-w-0">
+          <div class="text-[14px] font-semibold text-ink">Backups use local storage</div>
+          <div class="text-[13px] text-banner-ink mt-[3px] leading-[1.5]">No storage connection is set for this workspace, so snapshots are written to the default Active Storage service. <%= link_to "Connect a bucket", workspace_path, class: "font-semibold underline" %> for durable, off-box backups.</div>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ---- Schedule ---- %>
+    <%= form_with model: @project, url: project_backup_schedule_path(@project), method: :patch, local: true do |form| %>
+      <div class="border border-line rounded-[11px] px-[22px] py-5 mb-5">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "schedule", size: 19, css: "text-ink-3" %>Automatic backups</div>
+            <div class="text-[13px] text-mut mt-[3px]">A snapshot is taken on this schedule and pruned to your retention limit.</div>
+          </div>
+          <label class="flex items-center gap-[9px] cursor-pointer flex-none">
+            <%= form.check_box :backups_enabled, class: "w-[16px] h-[16px]" %>
+            <span class="text-[13px] text-ink-2">Enabled</span>
+          </label>
+        </div>
+
+        <div class="border-t border-line-3 mt-[18px] pt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :backup_frequency, "Frequency", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.select :backup_frequency, Project::BACKUP_FREQUENCIES.map { |f| [ f.capitalize, f ] }, {}, class: "text-[14px]" %>
+          </div>
+          <div class="flex flex-col gap-[7px]">
+            <%= form.label :backup_retention, "Retention (snapshots to keep)", class: "text-[12.5px] font-medium text-ink-2" %>
+            <%= form.number_field :backup_retention, min: 1, class: "text-[14px]" %>
+          </div>
+        </div>
+
+        <label class="flex items-center gap-[9px] cursor-pointer mt-[18px]">
+          <%= form.check_box :backup_include_drafts, class: "w-[16px] h-[16px]" %>
+          <span class="text-[13px] text-ink-2">Include unpublished drafts <span class="text-mut">— back up draft values alongside the published ones</span></span>
+        </label>
+
+        <div class="flex justify-end mt-[18px]">
+          <%= form.submit "Save schedule", class: "btn" %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ---- Recent snapshots ---- %>
+    <div class="flex items-baseline justify-between mb-3">
+      <div class="flex items-baseline gap-[11px]">
+        <h3 class="m-0 text-[16px] font-semibold text-ink -tracking-[0.01em]">Recent snapshots</h3>
+        <span class="font-mono text-[12px] text-mut"><%= format("%02d", @backups.size) %></span>
+      </div>
+      <span class="font-mono text-[12px] text-mut">Keep last <%= @project.backup_retention %></span>
+    </div>
+
+    <% if @backups.any? %>
+      <div class="border border-line rounded-[11px] overflow-hidden">
+        <div class="flex items-center px-[18px] py-[9px] bg-surface-2 border-b border-line font-mono text-[11px] tracking-[0.05em] uppercase text-faint">
+          <div class="flex-1 min-w-0">Snapshot</div>
+          <div class="w-[108px] flex-none">Keys</div>
+          <div class="w-[88px] flex-none">Size</div>
+          <div class="w-[210px] flex-none text-right">Actions</div>
+        </div>
+        <% @backups.each do |backup| %>
+          <div class="flex items-center px-[18px] py-[13px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
+            <div class="flex-1 min-w-0 flex items-center gap-[11px]">
+              <span class="w-[8px] h-[8px] rounded-full bg-ok flex-none" title="Complete"></span>
+              <span class="text-[13px] text-ink font-medium"><%= backup.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+              <% if backup.source == "auto" %>
+                <span class="font-mono text-[10px] tracking-[0.05em] text-ink-2 bg-line-3 rounded px-[7px] py-[2px]">AUTO</span>
+              <% else %>
+                <span class="font-mono text-[10px] tracking-[0.05em] text-accent bg-accent-soft rounded px-[7px] py-[2px]">MANUAL</span>
+              <% end %>
+            </div>
+            <div class="w-[108px] flex-none font-mono text-[12px] text-ink-2"><%= number_with_delimiter(backup.translations_count) %></div>
+            <div class="w-[88px] flex-none font-mono text-[12px] text-ink-2"><%= number_to_human_size(backup.byte_size) %></div>
+            <div class="w-[210px] flex-none flex items-center justify-end gap-[7px]">
+              <% if backup.file.attached? %>
+                <%= link_to rails_blob_path(backup.file, disposition: "attachment"), class: "btn-secondary" do %>
+                  <%= mi "download", size: 15, css: "mr-[5px]" %>Download
+                <% end %>
+              <% end %>
+              <%= button_to project_backup_restoration_path(@project, backup), method: :post, class: "btn-secondary", form_class: "inline",
+                    data: { turbo_confirm: "Restore translations from #{backup.created_at.strftime("%Y-%m-%d %H:%M")}? Existing values will be overwritten." } do %>
+                <%= mi "restore", size: 15, css: "mr-[5px]" %>Restore
+              <% end %>
+              <%= button_to project_backup_path(@project, backup), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
+                    "aria-label": "Delete backup", data: { turbo_confirm: "Delete this snapshot?" } do %>
+                <%= mi "delete", size: 15 %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="border border-line rounded-[11px] px-[22px] py-10 text-center">
+        <div class="text-[13px] text-mut">No snapshots yet. Use <span class="font-medium text-ink-2">Back up now</span> to create one.</div>
+      </div>
+    <% end %>
+  </div>
+</div>
