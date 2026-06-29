@@ -38,6 +38,7 @@ class TranslationEditorTest < ApplicationSystemTestCase
       click_button "New locale"
       # Multi-select combobox: type a custom IETF tag and press Enter to add it.
       find('input[data-combobox-target="input"]').send_keys("fr", :enter)
+      find("#new-locale-title").click # click outside the combobox to dismiss its dropdown
       click_button "Add languages"
     end
 
