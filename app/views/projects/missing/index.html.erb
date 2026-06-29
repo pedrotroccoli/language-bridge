@@ -1,0 +1,68 @@
+<% content_for :title, "Missing · #{@project.name}" %>
+<% content_for :main_class, "flex-1 w-full flex flex-col min-h-0" %>
+
+<%= render "projects/tabs", project: @project, active: :missing %>
+
+<div class="mx-auto w-full max-w-[1320px] px-6 py-7">
+  <div class="max-w-[920px]">
+
+    <%# ---- Header ---- %>
+    <div class="flex items-start justify-between gap-6 mb-[6px]">
+      <div class="flex items-baseline gap-[11px]">
+        <h2 class="m-0 text-[19px] font-semibold -tracking-[0.02em] text-ink">Missing translations</h2>
+        <span class="font-mono text-[12px] text-mut"><%= @reports.size %> reported</span>
+      </div>
+      <span class="inline-flex items-center gap-[6px] font-mono text-[11px] text-ink-2 bg-line-3 rounded-[6px] px-[10px] py-[5px]">
+        <span class="w-[6px] h-[6px] rounded-full bg-ok"></span>i18next saveMissing · live
+      </span>
+    </div>
+    <p class="m-0 mb-4 text-[13px] text-mut max-w-[620px] leading-[1.5]">Keys your apps requested at runtime that don't exist yet. Reported by the SDK via <span class="font-mono text-ink-2">saveMissing</span> — promote them to real keys or ignore them.</p>
+
+    <div class="flex items-center gap-[10px] px-[14px] py-[11px] border border-line rounded-[9px] bg-surface-2 mb-[18px] font-mono text-[12px] text-ink-2 overflow-x-auto">
+      <span class="text-ok font-semibold">POST</span>
+      <span class="text-ink">/api/v1/projects/<%= @project.slug %>/missing</span>
+      <span class="text-faint">{ locale, namespace, keys }</span>
+    </div>
+
+    <% if @reports.any? %>
+      <div class="border border-line rounded-[11px] overflow-hidden">
+        <div class="flex items-center px-[18px] py-[9px] bg-surface-2 border-b border-line font-mono text-[11px] tracking-[0.05em] uppercase text-faint">
+          <div class="flex-1 min-w-0">Key</div>
+          <div class="w-[150px] flex-none">Locales</div>
+          <div class="w-[80px] flex-none text-right">Hits</div>
+          <div class="w-[96px] flex-none text-right">Last seen</div>
+          <div class="w-[188px] flex-none text-right">Actions</div>
+        </div>
+        <% @reports.each do |report| %>
+          <div class="flex items-center px-[18px] py-[13px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
+            <div class="flex-1 min-w-0 flex items-center gap-[11px]">
+              <span class="w-[8px] h-[8px] rounded-full border-[1.5px] border-faint-2 flex-none"></span>
+              <div class="min-w-0">
+                <div class="font-mono text-[13px] text-ink break-all leading-[1.5]"><%= report.key %></div>
+                <div class="flex items-center gap-[6px] font-mono text-[11px] text-faint mt-[2px]"><%= mi "folder", size: 13 %><%= report.namespace %></div>
+              </div>
+            </div>
+            <div class="w-[150px] flex-none font-mono text-[12px] text-ink-2 truncate"><%= report.locales.join(", ") %></div>
+            <div class="w-[80px] flex-none text-right font-mono text-[12px] text-ink font-semibold"><%= report.hits %></div>
+            <div class="w-[96px] flex-none text-right font-mono text-[12px] text-mut"><%= report.last_reported_at ? "#{time_ago_in_words(report.last_reported_at)} ago" : "—" %></div>
+            <div class="w-[188px] flex-none flex items-center justify-end gap-[7px]">
+              <% if current_user.can_edit_translations?(@project) %>
+                <%= button_to project_missing_path(@project, report), method: :delete, class: "btn-secondary", form_class: "inline",
+                      data: { turbo_confirm: "Ignore \"#{report.key}\"? It will be removed from the inbox." } do %>Ignore<% end %>
+                <%= button_to project_missing_promotion_path(@project, report), method: :post, class: "btn-secondary", form_class: "inline" do %>
+                  <%= mi "add", size: 15, css: "mr-[5px]" %>Create key
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="border border-dashed border-line rounded-[11px] px-[26px] py-12 flex flex-col items-center text-center bg-surface-2">
+        <div class="w-[48px] h-[48px] border-[1.5px] border-line rounded-[11px] flex items-center justify-center text-faint bg-surface mb-4"><%= mi "inbox", size: 24 %></div>
+        <h3 class="m-0 text-[16px] font-semibold text-ink">Inbox zero</h3>
+        <p class="mt-2 mb-0 text-[14px] text-mut max-w-[360px] leading-[1.5]">No missing keys reported. New keys requested at runtime will show up here automatically.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
