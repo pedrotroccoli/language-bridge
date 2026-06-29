@@ -8,12 +8,17 @@
   </div>
 
   <nav class="flex items-center gap-[22px] h-full text-[13px] ml-[6px]">
+    <% reported = project.missing_key_reports.count %>
     <% tabs = [
-         { key: :overview, label: "Overview", icon: "dashboard", url: project_path(project) },
+         { key: :overview, label: "Overview", icon: "dashboard",  url: project_path(project) },
          { key: :editor,   label: "Editor",   icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : nil) },
-         { key: :activity, label: "Activity", icon: "history",   url: project_activity_path(project) }
+         { key: :missing,  label: "Missing",  icon: "inbox",      url: project_missing_index_path(project), badge: (reported.positive? ? reported : nil) },
+         { key: :activity, label: "Activity", icon: "history",    url: project_activity_path(project) }
        ] %>
-    <% tabs << { key: :settings, label: "Settings", icon: "settings", url: project_settings_path(project) } if current_user.admin? %>
+    <% if current_user.admin? %>
+      <% tabs << { key: :backups,  label: "Backups",  icon: "backup",   url: project_backups_path(project) } %>
+      <% tabs << { key: :settings, label: "Settings", icon: "settings", url: project_settings_path(project) } %>
+    <% end %>
 
     <% tabs.each do |tab| %>
       <% is_active = active == tab[:key] %>
@@ -21,6 +26,7 @@
         <%= link_to tab[:url], "aria-current": (is_active ? "page" : nil),
               class: "flex items-center h-full no-underline border-b-2 #{is_active ? "text-ink font-semibold border-accent" : "text-ink-3 border-transparent hover:text-ink"}" do %>
           <%= mi tab[:icon], size: 17, css: "mr-[7px]" %><%= tab[:label] %>
+          <% if tab[:badge] %><span class="ml-[7px] font-mono text-[10px] bg-accent-soft text-accent rounded-full px-[7px] py-px font-semibold"><%= tab[:badge] %></span><% end %>
         <% end %>
       <% else %>
         <span class="flex items-center h-full text-faint border-b-2 border-transparent cursor-not-allowed" title="No namespaces yet">

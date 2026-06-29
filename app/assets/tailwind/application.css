@@ -103,6 +103,7 @@
   input[type="email"],
   input[type="password"],
   input[type="search"],
+  input[type="number"],
   select,
   textarea {
     width: 100%;
@@ -122,6 +123,7 @@
   input[type="email"]:focus,
   input[type="password"]:focus,
   input[type="search"]:focus,
+  input[type="number"]:focus,
   select:focus,
   textarea:focus {
     border-color: var(--color-accent);

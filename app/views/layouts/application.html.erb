@@ -38,12 +38,20 @@
           <% end %>
 
           <% if current_user.admin? %>
+            <%= link_to members_path, "aria-current": (nav_active?("members") ? "page" : nil), class: "flex items-center gap-[7px] no-underline transition-colors #{nav_active?("members") ? "text-ink font-semibold pb-[2px] border-b-2 border-accent" : "text-ink-3 hover:text-ink"}" do %>
+              <%= mi "group", size: 18 %><span>Members</span>
+            <% end %>
+
             <% pending_invites = Invitation.pending.count %>
             <%= link_to invitations_path, "aria-current": (nav_active?("invitations") ? "page" : nil), class: "flex items-center gap-[7px] no-underline transition-colors #{nav_active?("invitations") ? "text-ink font-semibold pb-[2px] border-b-2 border-accent" : "text-ink-3 hover:text-ink"}" do %>
               <%= mi "mail", size: 18 %><span>Invitations</span>
               <% if pending_invites.positive? %>
                 <span class="font-mono text-[10px] bg-accent-soft text-accent rounded-full px-[7px] py-px font-semibold"><%= pending_invites %></span>
               <% end %>
+            <% end %>
+
+            <%= link_to workspace_path, "aria-current": (nav_active?("workspace") ? "page" : nil), class: "flex items-center gap-[7px] no-underline transition-colors #{nav_active?("workspace") ? "text-ink font-semibold pb-[2px] border-b-2 border-accent" : "text-ink-3 hover:text-ink"}" do %>
+              <%= mi "corporate_fare", size: 18 %><span>Workspace</span>
             <% end %>
           <% end %>
 
@@ -58,6 +66,14 @@
                 </div>
               </div>
               <div class="p-[5px]">
+                <% if current_user.admin? %>
+                  <%= link_to workspace_path, class: "flex items-center gap-[10px] px-[10px] py-[9px] rounded-[7px] text-[13px] text-ink no-underline hover:bg-surface-2" do %>
+                    <%= mi "corporate_fare", size: 18, css: "text-ink-3" %>Workspace settings
+                  <% end %>
+                <% end %>
+                <%= link_to account_path, class: "flex items-center gap-[10px] px-[10px] py-[9px] rounded-[7px] text-[13px] text-ink no-underline hover:bg-surface-2" do %>
+                  <%= mi "person", size: 18, css: "text-ink-3" %>Account settings
+                <% end %>
                 <%= button_to sign_out_path, method: :delete, class: "w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-[7px] text-[13px] text-ink hover:bg-surface-2" do %>
                   <%= mi "logout", size: 18, css: "text-ink-3" %>Sign out
                 <% end %>

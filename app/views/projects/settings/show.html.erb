@@ -101,6 +101,111 @@
       <% sample_ns = @project.namespaces.alphabetically.first&.name || "common" %>
       <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/<%= sample_locale %>/<%= sample_ns %></div>
     </div>
+
+    <%# ---- Storage path template (issue #77): deterministic Active Storage key ---- %>
+    <%
+      ns_names  = @namespaces.any? ? @namespaces.first(2).map(&:name) : [ "common" ]
+      loc_codes = @locales.any? ? @locales.first(2).map(&:code) : [ "en" ]
+      delivery_samples = ns_names.product(loc_codes).first(3).map { |n, l| { project_slug: @project.slug, namespace: n, locale: l } }
+    %>
+    <%= form_with model: @project, local: true,
+          data: { controller: "delivery-preview", "delivery-preview-samples-value": delivery_samples.to_json } do |form| %>
+      <% if @project.errors[:delivery_path_template].any? %>
+        <ul class="mt-4 mb-2 text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+          <% @project.errors[:delivery_path_template].each do |msg| %><li>Path template <%= msg %></li><% end %>
+        </ul>
+      <% end %>
+
+      <label class="block text-[12.5px] font-medium text-ink-2 mt-[18px] mb-[7px]">Storage path template</label>
+      <%= form.text_field :delivery_path_template,
+            data: { "delivery-preview-target": "input", action: "input->delivery-preview#render" },
+            autocomplete: "off", autocapitalize: "none", spellcheck: "false", class: "font-mono text-[13px]" %>
+      <div class="text-[12px] text-mut mt-[7px]">Object key for materialized artifacts in your Active Storage bucket — point a CDN origin at it.
+        Tokens: <code class="font-mono">{project_slug}</code> <code class="font-mono">{namespace}</code> <code class="font-mono">{locale}</code>
+        (must include <code class="font-mono">{namespace}</code> and <code class="font-mono">{locale}</code>).</div>
+
+      <div class="mt-[12px] mb-[6px] text-[12px] font-medium text-ink-2">Resulting paths</div>
+      <div data-delivery-preview-target="output" class="border border-line rounded-[9px] bg-surface-2 px-[14px] py-[10px] flex flex-col gap-[3px]"></div>
+
+      <div class="flex justify-end mt-[14px]">
+        <%= form.submit "Save path template", class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ---- API tokens ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "key", size: 19, css: "text-ink-3" %>API tokens</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-4">Bearer tokens for client SDKs calling the saveMissing API. The raw token is shown once at creation — store it securely.</div>
+
+    <% if flash[:token_created].present? %>
+      <div class="mb-4 border border-accent rounded-[9px] bg-accent-soft px-4 py-3">
+        <div class="text-[12.5px] font-medium text-ink-2 mb-[6px]">New token (copy now — it won't be shown again):</div>
+        <code class="block font-mono text-[12.5px] text-ink break-all"><%= flash[:token_created] %></code>
+      </div>
+    <% end %>
+
+    <% if @api_tokens.any? %>
+      <div class="border border-line rounded-[9px] overflow-hidden mb-4">
+        <% @api_tokens.each do |token| %>
+          <div class="flex items-center gap-2 px-4 py-[10px] border-b border-line-3 last:border-b-0">
+            <%= mi "key", size: 18, css: "text-faint" %>
+            <span class="text-[13px] text-ink truncate min-w-0"><%= token.name %></span>
+            <span class="font-mono text-[11px] text-ink-3 bg-surface-2 rounded px-[6px] py-px"><%= token.scope %></span>
+            <span class="text-[12px] text-mut ml-auto"><%= token.last_used_at ? "used #{time_ago_in_words(token.last_used_at)} ago" : "never used" %></span>
+            <%= button_to project_api_token_path(@project, token), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
+                  "aria-label": "Revoke token #{token.name}",
+                  data: { turbo_confirm: "Revoke token \"#{token.name}\"? Clients using it will stop working." } do %>
+              <%= mi "delete", size: 16 %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-[13px] text-mut mb-4">No tokens yet.</p>
+    <% end %>
+
+    <%= form_with url: project_api_tokens_path(@project), method: :post, local: true, html: { class: "flex items-end gap-3 flex-wrap" } do %>
+      <div class="flex flex-col gap-[7px]">
+        <label class="text-[12.5px] font-medium text-ink-2">Name</label>
+        <%= text_field_tag "api_token[name]", nil, placeholder: "e.g. Web client", required: true, class: "text-[14px]" %>
+      </div>
+      <div class="flex flex-col gap-[7px]">
+        <label class="text-[12.5px] font-medium text-ink-2">Scope</label>
+        <%= select_tag "api_token[scope]", options_for_select(ApiToken::SCOPES, "save_missing"), class: "text-[14px]" %>
+      </div>
+      <%= submit_tag "Create token", class: "btn" %>
+    <% end %>
+  </div>
+
+  <%# ---- Rate limit override ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "speed", size: 19, css: "text-ink-3" %>Rate limits</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Per-IP request limits for this project. Leave blank to inherit the workspace defaults
+      (saveMissing <%= Setting.current.missing_rate_limit %>/<%= Setting.current.missing_rate_period %>s,
+      delivery <%= Setting.current.delivery_rate_limit %>/<%= Setting.current.delivery_rate_period %>s).</div>
+
+    <%= form_with model: @project, local: true do |form| %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-[7px]">
+          <%= form.label :missing_rate_limit, "saveMissing", class: "text-[12.5px] font-medium text-ink-2" %>
+          <div class="relative">
+            <%= form.number_field :missing_rate_limit, min: 1, placeholder: "#{Setting.current.missing_rate_limit} (inherited)", class: "text-[14px] pr-[66px]" %>
+            <span class="absolute right-[12px] top-1/2 -translate-y-1/2 font-mono text-[11.5px] text-mut pointer-events-none">req/min</span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-[7px]">
+          <%= form.label :delivery_rate_limit, "Delivery", class: "text-[12.5px] font-medium text-ink-2" %>
+          <div class="relative">
+            <%= form.number_field :delivery_rate_limit, min: 1, placeholder: "#{Setting.current.delivery_rate_limit} (inherited)", class: "text-[14px] pr-[66px]" %>
+            <span class="absolute right-[12px] top-1/2 -translate-y-1/2 font-mono text-[11.5px] text-mut pointer-events-none">req/min</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end mt-[18px]">
+        <%= form.submit "Save changes", class: "btn" %>
+      </div>
+    <% end %>
   </div>
 
   <%# ---- Danger zone ---- %>
