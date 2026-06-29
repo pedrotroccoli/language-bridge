@@ -82,15 +82,6 @@ class StorageConnection < ApplicationRecord
     service_object
   end
 
-  # Eagerly register this connection's service in the Active Storage registry so a
-  # blob can be validated + attached under its service_key. (The registry's lazy
-  # resolver only covers the no-block fetch path used by downloads — Blob's
-  # service_name validation passes a block, which would otherwise just fail.)
-  def register_service!
-    services = ActiveStorage::Blob.services.instance_variable_get(:@services)
-    services[service_key.to_sym] ||= build_active_storage_service
-  end
-
   private
     def service_config
       case service

@@ -1,20 +1,20 @@
 # Teach Active Storage's service registry to resolve "sc_<id>" service names by
-# building the service from the matching StorageConnection on demand. This lets
-# blobs attached to a connection be uploaded, downloaded and restored from any
-# process without pre-declaring every connection in config/storage.yml.
+# building the service from the matching StorageConnection on demand and caching
+# it for the process. This lets blobs attached to a connection be validated,
+# uploaded, downloaded and restored from any process without pre-declaring every
+# connection in config/storage.yml.
 module StorageConnectionRegistry
   def fetch(name)
-    super
-  rescue StandardError => e
-    raise unless name.to_s.start_with?("sc_")
+    return super unless name.to_s.start_with?("sc_")
 
-    id = name.to_s.delete_prefix("sc_")
-    connection = StorageConnection.find_by(id: id) or raise e
+    @services.fetch(name.to_sym) do
+      connection = StorageConnection.find_by(id: name.to_s.delete_prefix("sc_"))
+      # Unknown connection → fall back to the default behavior (yields the caller's
+      # block, e.g. the Blob service_name validation, or raises for missing config).
+      next super unless connection
 
-    service = connection.build_active_storage_service
-    # Cache for the life of the process, mirroring the registry's own behavior.
-    services = instance_variable_get(:@services)
-    services[name.to_sym] = service
+      @services[name.to_sym] = connection.build_active_storage_service
+    end
   end
 end
 
