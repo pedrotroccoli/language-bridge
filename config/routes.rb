@@ -38,7 +38,9 @@ Rails.application.routes.draw do
       resource :restoration, only: :create, controller: "projects/backups/restorations"
     end
     resource :backup_schedule, only: :update, controller: "projects/backup_schedules"
-    resources :locales, only: %i[ create update destroy ]
+    resources :locales, only: %i[ create update destroy ] do
+      member { post :source }
+    end
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
       resource :publication, only: :create, module: :namespaces
       resource :import,      only: :create, module: :namespaces

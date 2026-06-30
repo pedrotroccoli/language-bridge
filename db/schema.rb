@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_29_203409) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_30_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -87,10 +87,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_203409) do
   create_table "locales", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "code", null: false
     t.datetime "created_at", null: false
+    t.boolean "is_source", default: false, null: false
     t.uuid "project_id", null: false
     t.integer "translations_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["project_id", "code"], name: "index_locales_on_project_id_and_code", unique: true
+    t.index ["project_id"], name: "index_locales_on_one_source_per_project", unique: true, where: "is_source"
     t.index ["project_id"], name: "index_locales_on_project_id"
   end
 
@@ -169,6 +171,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_203409) do
   end
 
   create_table "settings", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "allowed_origins", default: [], null: false, array: true
     t.datetime "created_at", null: false
     t.integer "delivery_rate_limit", default: 300, null: false
     t.integer "delivery_rate_period", default: 60, null: false

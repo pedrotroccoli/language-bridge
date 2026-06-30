@@ -12,6 +12,7 @@
     <% end %>
     <span class="font-mono text-[14px] font-semibold text-ink flex-none"><%= locale.code %></span>
     <% if locale_name(locale.code) %><span class="text-[13.5px] text-ink-3 truncate"><%= locale_name(locale.code) %></span><% end %>
+    <% if locale.is_source %><span class="font-mono text-[10px] text-accent font-semibold bg-accent-soft rounded-[4px] px-[7px] py-px flex-none">SOURCE</span><% end %>
   </span>
   <span class="flex items-center gap-[18px]">
     <span class="font-mono text-[12px] text-ink-3"><span class="text-ink font-semibold"><%= locale.translations_count %></span> translations</span>

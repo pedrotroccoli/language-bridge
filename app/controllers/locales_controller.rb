@@ -1,8 +1,8 @@
 class LocalesController < ApplicationController
   include ProjectScoped
 
-  before_action :set_locale,                    only: %i[ update destroy ]
-  before_action :ensure_can_administer_project, only: %i[ create update destroy ]
+  before_action :set_locale,                    only: %i[ update destroy source ]
+  before_action :ensure_can_administer_project, only: %i[ create update destroy source ]
 
   # The DB unique index is the source of truth; a true race that slips past the
   # model validation surfaces here as a duplicate-code error.
@@ -31,6 +31,11 @@ class LocalesController < ApplicationController
   def destroy
     @locale.destroy!
     redirect_to project_path(@project), notice: "Locale deleted.", status: :see_other
+  end
+
+  def source
+    @locale.mark_as_source!
+    redirect_to project_path(@project), notice: "#{@locale.code} is now the source locale.", status: :see_other
   end
 
   private

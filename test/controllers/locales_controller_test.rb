@@ -22,6 +22,22 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "admin marks a locale as source" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+
+    post source_project_locale_path(project, locales(:main_app_pt_br))
+
+    assert_redirected_to project_path(project)
+    assert_equal locales(:main_app_pt_br), project.reload.source_locale
+  end
+
+  test "non-admin cannot set source" do
+    sign_in_as(users(:translator))
+    post source_project_locale_path(projects(:main_app), locales(:main_app_en))
+    assert_response :forbidden
+  end
+
   test "admin creates locale" do
     sign_in_as(users(:admin))
     project = projects(:main_app)
