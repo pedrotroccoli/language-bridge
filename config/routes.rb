@@ -22,7 +22,7 @@ Rails.application.routes.draw do
 
   # Workspace members (users) and the signed-in user's own account.
   resources :members, only: %i[ index update destroy ]
-  resource :account, only: :show, controller: "account"
+  resource :account, only: %i[ show update ], controller: "account"
   namespace :account do
     resource :sessions, only: :destroy # revoke all sessions but the current one
   end

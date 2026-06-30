@@ -6,16 +6,38 @@
   <%# ---- Profile ---- %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
     <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink mb-4"><%= mi "person", size: 19, css: "text-ink-3" %>Profile</div>
-    <div class="flex items-center gap-4">
-      <div class="w-[56px] h-[56px] rounded-full bg-accent-soft text-accent flex items-center justify-center font-bold text-[20px] flex-none"><%= initials_for(current_user.email) %></div>
-      <div class="min-w-0">
-        <div class="font-mono text-[14px] text-ink truncate"><%= current_user.email %></div>
-        <div class="flex items-center gap-[8px] mt-[5px]">
-          <span class="text-[12px] text-mut capitalize border border-line rounded-full px-[10px] py-[2px]"><%= current_user.role %></span>
-          <span class="text-[12px] text-mut">member since <%= current_user.created_at.strftime("%b %Y") %></span>
+
+    <%= form_with model: current_user, url: account_path, method: :patch, html: { multipart: true, class: "flex flex-col gap-4" } do |form| %>
+      <% if current_user.errors.any? %>
+        <ul class="text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+          <% current_user.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+        </ul>
+      <% end %>
+
+      <div class="flex items-center gap-4">
+        <%= avatar_for(current_user, px: 56, text_class: "text-[20px]", bg_class: "bg-accent-soft text-accent") %>
+        <div class="min-w-0 flex-1">
+          <%= form.label :avatar, "Photo", class: "block text-[12.5px] font-medium text-ink-2 mb-[6px]" %>
+          <%= form.file_field :avatar, accept: "image/png,image/jpeg,image/gif,image/webp", class: "text-[13px]" %>
+          <div class="text-[12px] text-mut mt-[5px]">PNG, JPEG, GIF, or WebP · 2 MB max.</div>
         </div>
       </div>
-    </div>
+
+      <div class="flex flex-col gap-[7px] max-w-[360px]">
+        <%= form.label :name, "Display name", class: "text-[12.5px] font-medium text-ink-2" %>
+        <%= form.text_field :name, placeholder: current_user.email.split("@").first, class: "text-[14px]" %>
+      </div>
+
+      <div class="flex items-center gap-[8px]">
+        <span class="text-[12px] text-mut capitalize border border-line rounded-full px-[10px] py-[2px]"><%= current_user.role %></span>
+        <span class="text-[12px] text-mut">member since <%= current_user.created_at.strftime("%b %Y") %></span>
+      </div>
+
+      <div class="flex justify-end">
+        <%= loading_submit form, "Save profile" %>
+      </div>
+    <% end %>
+
     <p class="text-[12.5px] text-mut mt-[16px] mb-0">Sign-in is passwordless — a one-time link is emailed to <span class="font-mono text-ink-2"><%= current_user.email %></span>. To change your email, ask an admin to re-invite you.</p>
   </div>
 

@@ -22,6 +22,17 @@ module ApplicationHelper
     end
   end
 
+  # Avatar chip for a user: the uploaded image when attached, else an initials
+  # fallback. `px` sets the square size; pass fallback colors via bg_class.
+  def avatar_for(user, px:, text_class: "text-[14px]", bg_class: "bg-line-3 text-ink-2")
+    base = "rounded-full flex items-center justify-center font-semibold flex-none overflow-hidden w-[#{px}px] h-[#{px}px]"
+    if user.avatar.attached?
+      image_tag(user.avatar, alt: user.display_name, class: "#{base} object-cover")
+    else
+      tag.div(user.initials, class: "#{base} #{bg_class} #{text_class}")
+    end
+  end
+
   # Ten-segment progress array (booleans) for the card meters.
   def progress_segments(percent, count: 10)
     on = ((percent.to_f / 100) * count).round

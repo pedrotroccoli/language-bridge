@@ -16,10 +16,10 @@
     <% @members.each do |member| %>
       <div class="flex items-center justify-between gap-4 px-[18px] py-[14px] border-b border-line-3 last:border-b-0 hover:bg-surface-2">
         <div class="flex items-center gap-[13px] min-w-0">
-          <div class="w-[36px] h-[36px] rounded-full bg-line-3 text-ink-2 flex items-center justify-center font-semibold text-[14px] flex-none"><%= initials_for(member.email) %></div>
+          <%= avatar_for(member, px: 36) %>
           <div class="min-w-0">
             <div class="flex items-center gap-[8px]">
-              <span class="text-[14px] font-semibold text-ink truncate"><%= member.email.split("@").first %></span>
+              <span class="text-[14px] font-semibold text-ink truncate"><%= member.display_name %></span>
               <% if member == current_user %><span class="font-mono text-[11px] text-accent bg-accent-soft rounded-[4px] px-[6px] py-px">you</span><% end %>
             </div>
             <div class="font-mono text-[12px] text-mut mt-[3px] truncate"><%= member.email %></div>
