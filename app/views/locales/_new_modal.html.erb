@@ -41,6 +41,12 @@
       </div>
       <small class="text-[12px] text-mut-2">Pick one or more, or type a custom IETF tag and press Enter.</small>
     </div>
+    <% if project.source_locale %>
+      <label class="flex items-center gap-[9px] cursor-pointer">
+        <%= check_box_tag "prefill_mt", "1", false, class: "w-[15px] h-[15px]" %>
+        <span class="text-[13px] text-ink-2">Pre-fill empty keys with machine translation (drafts)</span>
+      </label>
+    <% end %>
     <div class="flex justify-end gap-[9px] pt-1">
       <button type="button" class="btn-secondary" data-action="click->modal#close">Cancel</button>
       <%= form.submit "Add languages", class: "btn" %>

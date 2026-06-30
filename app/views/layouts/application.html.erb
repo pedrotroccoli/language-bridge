@@ -56,12 +56,12 @@
           <% end %>
 
           <details class="relative [&_summary::-webkit-details-marker]:hidden">
-            <summary class="list-none cursor-pointer w-[28px] h-[28px] rounded-full bg-line-3 text-ink-2 flex items-center justify-center text-[11px] font-semibold hover:bg-line"><%= initials_for(current_user.email) %></summary>
+            <summary class="list-none cursor-pointer hover:opacity-90"><%= avatar_for(current_user, px: 28, text_class: "text-[11px]") %></summary>
             <div class="absolute top-[calc(100%+12px)] right-0 w-[232px] bg-surface border border-line rounded-[11px] shadow-[0_12px_32px_-10px_rgba(0,0,0,0.22)] z-50 overflow-hidden">
               <div class="flex items-center gap-[11px] px-[14px] py-[13px] border-b border-line-3">
-                <div class="w-[34px] h-[34px] rounded-full bg-accent-soft text-accent flex items-center justify-center text-[13px] font-bold flex-none"><%= initials_for(current_user.email) %></div>
+                <%= avatar_for(current_user, px: 34, text_class: "text-[13px]", bg_class: "bg-accent-soft text-accent") %>
                 <div class="min-w-0">
-                  <div class="text-[13px] font-semibold text-ink capitalize"><%= current_user.role %></div>
+                  <div class="text-[13px] font-semibold text-ink truncate"><%= current_user.display_name %></div>
                   <div class="font-mono text-[11px] text-mut-2 truncate"><%= current_user.email %></div>
                 </div>
               </div>

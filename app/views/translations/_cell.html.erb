@@ -3,6 +3,15 @@
   <% has_value = translation&.value.present? %>
   <% draft = has_value && !published %>
   <% missing = translation.nil? || translation.value.blank? %>
+  <% under_review = translation&.review.present? %>
+  <% approved = translation&.approval.present? %>
+  <% source_translation = local_assigns[:source_translation] %>
+  <% qa_warnings = translation && source_translation ? Translation::Qa.warnings(translation, source_translation) : [] %>
+  <% fuzzy = translation && source_translation ? Translation::Qa.fuzzy?(translation, source_translation) : false %>
+  <% qa = capture do %>
+    <% if fuzzy %><span class="flex items-center gap-[3px] text-[10px] font-mono uppercase tracking-[0.04em] text-faint flex-none" title="Source changed after this translation"><%= mi "schedule", size: 12 %>fuzzy</span><% end %>
+    <% if qa_warnings.any? %><span class="flex items-center gap-[3px] text-[10px] text-warn-ink flex-none" title="<%= qa_warnings.join("; ") %>"><%= mi "warning", size: 12 %><%= qa_warnings.size %></span><% end %>
+  <% end %>
   <% box = if draft
              "border-draft-border bg-draft-bg"
            elsif missing
@@ -10,6 +19,21 @@
            else
              "border-line bg-surface"
            end %>
+
+  <%# Single status label, precedence: missing → needs review → published → approved → draft. %>
+  <% state = capture do %>
+    <% if missing %>
+      <span class="flex items-center gap-[6px] text-[11px] text-faint"><span class="dot dot-missing"></span>Missing</span>
+    <% elsif under_review %>
+      <span class="flex items-center gap-[7px] text-[11px] text-ink-3"><span class="w-[7px] h-[7px] rounded-full bg-review flex-none"></span>Needs review</span>
+    <% elsif published %>
+      <span class="flex items-center gap-[6px] text-[11px] text-ink-3"><span class="dot dot-done"></span>Published</span>
+    <% elsif approved %>
+      <span class="flex items-center gap-[5px] text-[11px] text-ok-ink"><%= mi "check_circle", size: 13 %>Approved</span>
+    <% else %>
+      <span class="flex items-center gap-[7px] text-[11px] text-warn-ink"><span class="uppercase font-mono text-[9px] font-semibold tracking-[0.05em] bg-warn-soft text-warn-ink px-[6px] py-[2px] rounded-[4px]">Draft</span>unpublished</span>
+    <% end %>
+  <% end %>
 
   <% if current_user.can_edit_translations?(project) %>
     <% if translation&.persisted? %>
@@ -32,27 +56,28 @@
       <% end %>
     <% end %>
 
-    <div class="flex items-center justify-between mt-2 min-h-[18px]">
-      <% if published %>
-        <span class="flex items-center gap-[6px] text-[11px] text-ink-3"><span class="dot dot-done"></span>Published</span>
-        <%= button_to "Unpublish", project_translation_publication_path(project, translation), method: :delete, form_class: "inline", class: "text-[11px] text-mut-2 hover:text-ink" %>
-      <% elsif draft %>
-        <span class="flex items-center gap-[7px] text-[11px] text-warn-ink"><span class="uppercase font-mono text-[9px] font-semibold tracking-[0.05em] bg-warn-soft text-warn-ink px-[6px] py-[2px] rounded-[4px]">Draft</span>unpublished</span>
-        <%= button_to "Publish", project_translation_publication_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-accent font-medium hover:underline" %>
-      <% else %>
-        <span class="flex items-center gap-[6px] text-[11px] text-faint"><span class="dot dot-missing"></span>Missing</span>
-      <% end %>
+    <div class="flex items-center justify-between mt-2 min-h-[18px] gap-2">
+      <div class="flex items-center gap-[8px] min-w-0"><%= state %><%= qa %></div>
+      <div class="flex items-center gap-[10px] flex-none">
+        <% if missing && source_translation&.value.present? %>
+          <%= button_to "Auto-translate", project_machine_translation_path(project),
+                params: { translation_key_id: translation_key.id, locale_id: locale.id },
+                method: :post, form_class: "inline", class: "text-[11px] text-accent font-medium hover:underline" %>
+        <% end %>
+        <% if under_review %>
+          <%= button_to "Approve", project_translation_approval_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-ok-ink font-medium hover:underline" %>
+        <% elsif has_value %>
+          <%= button_to "Mark for review", project_translation_review_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-mut-2 hover:text-ink" %>
+        <% end %>
+        <% if published %>
+          <%= button_to "Unpublish", project_translation_publication_path(project, translation), method: :delete, form_class: "inline", class: "text-[11px] text-mut-2 hover:text-ink" %>
+        <% elsif has_value %>
+          <%= button_to "Publish", project_translation_publication_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-accent font-medium hover:underline" %>
+        <% end %>
+      </div>
     </div>
   <% else %>
     <div class="translation-cell__value text-[13px] leading-[1.45] rounded-[7px] px-[11px] py-[9px] min-h-[40px] border whitespace-pre-wrap <%= box %> <%= "text-faint" if missing %>"><%= translation&.value.presence || "—" %></div>
-    <div class="flex items-center mt-2 min-h-[18px]">
-      <% if published %>
-        <span class="flex items-center gap-[6px] text-[11px] text-ink-3"><span class="dot dot-done"></span>Published</span>
-      <% elsif draft %>
-        <span class="flex items-center gap-[7px] text-[11px] text-warn-ink"><span class="uppercase font-mono text-[9px] font-semibold tracking-[0.05em] bg-warn-soft text-warn-ink px-[6px] py-[2px] rounded-[4px]">Draft</span>unpublished</span>
-      <% else %>
-        <span class="flex items-center gap-[6px] text-[11px] text-faint"><span class="dot dot-missing"></span>Missing</span>
-      <% end %>
-    </div>
+    <div class="flex items-center gap-[8px] mt-2 min-h-[18px]"><%= state %><%= qa %></div>
   <% end %>
 <% end %>

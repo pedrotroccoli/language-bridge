@@ -1,0 +1,78 @@
+<%= turbo_frame_tag "key_detail" do %>
+  <div class="flex flex-col h-full">
+    <%# Header %>
+    <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-line sticky top-0 bg-surface z-10">
+      <div class="min-w-0">
+        <div class="text-[11px] font-mono text-mut-2 mb-[3px]"><%= @namespace.name %></div>
+        <code class="font-mono text-[13.5px] font-semibold text-ink break-all leading-[1.5]"><%= @translation_key.key %></code>
+      </div>
+      <button type="button" class="text-faint-2 hover:text-ink flex-none" data-action="drawer#close" aria-label="Close">
+        <%= mi "close", size: 20 %>
+      </button>
+    </div>
+
+    <div class="px-5 py-5 flex flex-col gap-6">
+      <%# Context %>
+      <div>
+        <div class="text-[12px] font-semibold text-ink-2 uppercase tracking-[0.04em] mb-[9px]">Context</div>
+        <% if current_user.can_administer_project?(@project) %>
+          <%= form_with model: [ @project, @namespace, @translation_key ], method: :patch, data: { turbo_frame: "key_detail" } do |f| %>
+            <%= f.text_area :context, rows: 3, placeholder: "Notes to help translators — where this string appears, tone, constraints…",
+                  class: "w-full text-[13px] leading-[1.5] rounded-[7px] px-[11px] py-[9px] border border-line bg-surface resize-y" %>
+            <div class="flex justify-end mt-[8px]">
+              <%= f.submit "Save context", class: "btn-secondary" %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-[13px] text-mut leading-[1.5] m-0"><%= @translation_key.context.presence || "No context provided." %></p>
+        <% end %>
+      </div>
+
+      <%# Per-locale state %>
+      <div>
+        <div class="text-[12px] font-semibold text-ink-2 uppercase tracking-[0.04em] mb-[9px]">Translations</div>
+        <div class="border border-line rounded-[9px] overflow-hidden">
+          <% @locales.each do |locale| %>
+            <% t = @translations_by_locale[locale.id] %>
+            <% status = if t.nil? || t.value.blank? then [ "Missing", "text-faint" ]
+                        elsif t.review.present? then [ "Needs review", "text-review" ]
+                        elsif t.publication.present? then [ "Published", "text-ink-3" ]
+                        elsif t.approval.present? then [ "Approved", "text-ok-ink" ]
+                        else [ "Draft", "text-warn-ink" ] end %>
+            <div class="flex items-start gap-3 px-[13px] py-[11px] border-b border-line-3 last:border-b-0">
+              <span class="font-mono text-[12px] font-semibold text-ink flex-none w-[64px] pt-px"><%= locale.code %></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] text-ink whitespace-pre-wrap break-words <%= "text-faint" if t.nil? || t.value.blank? %>"><%= t&.value.presence || "—" %></div>
+              </div>
+              <span class="text-[11px] font-medium flex-none <%= status[1] %>"><%= status[0] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# History %>
+      <div>
+        <div class="text-[12px] font-semibold text-ink-2 uppercase tracking-[0.04em] mb-[9px]">History</div>
+        <% if @versions.any? %>
+          <ol class="flex flex-col gap-[14px] m-0 p-0 list-none">
+            <% @versions.each do |version| %>
+              <li class="flex gap-3">
+                <span class="dot dot-draft mt-[6px] flex-none"></span>
+                <div class="min-w-0">
+                  <div class="font-mono text-[11.5px] text-mut-2">
+                    <span class="text-ink-3 font-semibold"><%= version.translation.locale.code %></span>
+                    · <%= version.author&.display_name || "system" %>
+                    · <%= time_ago_in_words(version.created_at) %> ago
+                  </div>
+                  <div class="text-[13px] text-ink-2 whitespace-pre-wrap break-words mt-[2px]"><%= version.value.presence || "(empty)" %></div>
+                </div>
+              </li>
+            <% end %>
+          </ol>
+        <% else %>
+          <p class="text-[13px] text-mut m-0">No edits recorded yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

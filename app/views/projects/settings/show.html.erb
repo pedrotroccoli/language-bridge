@@ -48,7 +48,11 @@
                     pattern: "[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", autocomplete: "off", autocapitalize: "none", spellcheck: "false",
                     class: "font-mono text-[13px] max-w-[180px]" %>
               <% if locale_name(locale.code) %><span class="text-[13px] text-ink-3 truncate min-w-0"><%= locale_name(locale.code) %></span><% end %>
+              <% if locale.is_source %><span class="font-mono text-[10px] text-accent font-semibold bg-accent-soft rounded-[4px] px-[7px] py-px flex-none">SOURCE</span><% end %>
               <%= f.submit "Save", class: "btn-secondary ml-auto" %>
+            <% end %>
+            <% unless locale.is_source %>
+              <%= button_to "Set as source", source_project_locale_path(@project, locale), method: :post, class: "btn-secondary", form_class: "inline" %>
             <% end %>
             <%= button_to project_locale_path(@project, locale), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
                   "aria-label": "Delete locale #{locale.code}",

@@ -6,7 +6,9 @@ Rails.application.routes.draw do
   get    "sign_in/:token", to: "sessions#show", as: :sign_in_with_token
   delete "sign_out",       to: "sessions#destroy", as: :sign_out
 
-  resources :invitations, only: %i[ index new create destroy ]
+  resources :invitations, only: %i[ index new create destroy ] do
+    member { post :resend }
+  end
   get  "invitations/:token", to: "invitations#show",   as: :accept_invitation
   post "invitations/:token", to: "invitations#accept", as: :claim_invitation
 
@@ -20,9 +22,10 @@ Rails.application.routes.draw do
 
   # Workspace members (users) and the signed-in user's own account.
   resources :members, only: %i[ index update destroy ]
-  resource :account, only: :show, controller: "account"
+  resource :account, only: %i[ show update ], controller: "account"
   namespace :account do
     resource :sessions, only: :destroy # revoke all sessions but the current one
+    resource :personal_access_token, only: %i[ create destroy ] # generate/regenerate + revoke
   end
 
   resources :projects, only: %i[ index new create show edit update destroy ] do
@@ -38,16 +41,21 @@ Rails.application.routes.draw do
       resource :restoration, only: :create, controller: "projects/backups/restorations"
     end
     resource :backup_schedule, only: :update, controller: "projects/backup_schedules"
-    resources :locales, only: %i[ create update destroy ]
+    resources :locales, only: %i[ create update destroy ] do
+      member { post :source }
+    end
+    post "machine_translation", to: "translations/machine_translations#create"
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
       resource :publication, only: :create, module: :namespaces
       resource :import,      only: :create, module: :namespaces
       resource :export,      only: :show,    module: :namespaces
       resource :drafts,      only: :destroy, module: :namespaces
-      resources :translation_keys, only: %i[ create update destroy ]
+      resources :translation_keys, only: %i[ show create update destroy ]
     end
     resources :translations, only: %i[ create update ] do
       resource :publication, only: %i[ create destroy ], module: :translations
+      resource :review,      only: %i[ create destroy ], module: :translations
+      resource :approval,    only: :create,              module: :translations
     end
   end
 

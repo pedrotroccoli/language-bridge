@@ -65,6 +65,16 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Project created/, flash[:notice])
   end
 
+  test "admin creating a project seeds the chosen source locale" do
+    sign_in_as(users(:admin))
+
+    post projects_path, params: { project: { name: "With Source", source_locale_code: "pt-BR" } }
+
+    project = Project.find_by!(slug: "with-source")
+    assert_equal "pt-BR", project.source_locale&.code
+    assert project.source_locale.is_source
+  end
+
   test "admin sees errors when creating with blank name" do
     sign_in_as(users(:admin))
 

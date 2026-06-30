@@ -14,6 +14,16 @@ class Setting < ApplicationRecord
     Rails.cache.delete(CACHE_KEY)
   end
 
+  # Edit `allowed_origins` (a string array) as free text in the Workspace form:
+  # one origin per line. Splits on any whitespace or comma, trims, drops blanks.
+  def allowed_origins_text=(value)
+    self.allowed_origins = value.to_s.split(/[\s,]+/).map(&:strip).reject(&:blank?)
+  end
+
+  def allowed_origins_text
+    allowed_origins.join("\n")
+  end
+
   private
     def reset_cache
       self.class.reset_cache

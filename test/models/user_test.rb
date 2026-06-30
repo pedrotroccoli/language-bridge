@@ -45,4 +45,30 @@ class UserTest < ActiveSupport::TestCase
     assert     users(:admin).can_administer_project?
     assert_not users(:translator).can_administer_project?
   end
+
+  test "display_name falls back to the email local-part" do
+    assert_equal "admin", users(:admin).display_name
+    users(:admin).update!(name: "Ada Lovelace")
+    assert_equal "Ada Lovelace", users(:admin).display_name
+  end
+
+  test "initials derive from the display name" do
+    assert_equal "A", users(:admin).initials
+    users(:admin).update!(name: "Ada Lovelace")
+    assert_equal "AL", users(:admin).initials
+  end
+
+  test "name length is capped" do
+    user = users(:admin)
+    user.name = "x" * 101
+    assert_not user.valid?
+    assert_includes user.errors[:name], "is too long (maximum is 100 characters)"
+  end
+
+  test "rejects an oversized or non-image avatar" do
+    user = users(:admin)
+    user.avatar.attach(io: StringIO.new("not an image"), filename: "a.txt", content_type: "text/plain")
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], "must be a PNG, JPEG, GIF, or WebP image"
+  end
 end

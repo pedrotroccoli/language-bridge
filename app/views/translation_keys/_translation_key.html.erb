@@ -1,4 +1,6 @@
 <% translations_by_locale = translation_key.translations.index_by(&:locale_id) %>
+<% source = local_assigns[:source_locale] %>
+<% source_translation = source ? translations_by_locale[source.id] : nil %>
 <% missing_any = locales.any? { |l| t = translations_by_locale[l.id]; t.nil? || t.value.blank? } %>
 <% draft_any = translations_by_locale.values.any? { |t| t.value.present? && t.publication.nil? } %>
 <% dot = draft_any ? "dot-draft" : (missing_any ? "dot-missing" : "dot-done") %>
@@ -7,6 +9,12 @@
     <div class="flex items-start gap-[11px]">
       <span class="dot <%= dot %> mt-[6px]"></span>
       <code class="flex-1 min-w-0 font-mono text-[12.5px] text-ink break-all leading-[1.55]"><%= translation_key.key %></code>
+      <%= link_to project_namespace_translation_key_path(project, namespace, translation_key),
+            class: "text-faint-2 hover:text-ink flex-none mt-px",
+            data: { turbo_frame: "key_detail", action: "click->drawer#open" },
+            "aria-label": "Details for #{translation_key.key}" do %>
+        <%= mi "info", size: 16 %>
+      <% end %>
       <% if manageable %>
         <%= button_to project_namespace_translation_key_path(project, namespace, translation_key),
               method: :delete,
@@ -24,7 +32,8 @@
     <td class="w-[280px] align-top px-3 py-[14px] border-l border-line-4">
       <%= render "translations/cell",
             project: project, translation_key: translation_key, locale: locale,
-            translation: translations_by_locale[locale.id] %>
+            translation: translations_by_locale[locale.id],
+            source_translation: (locale.id == source&.id ? nil : source_translation) %>
     </td>
   <% end %>
 </tr>

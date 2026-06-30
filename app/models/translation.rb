@@ -32,7 +32,7 @@ class Translation < ApplicationRecord
   }
 
   before_update :snapshot_version, if: -> { value_changed? }
-  after_update :discard_publication, if: -> { saved_change_to_value? }
+  after_update :invalidate_on_value_change, if: -> { saved_change_to_value? }
   after_commit :rebuild_artifact_after_discard, on: :update
 
   def draft?
@@ -41,6 +41,39 @@ class Translation < ApplicationRecord
 
   def published?
     publication.present?
+  end
+
+  def under_review?
+    review.present?
+  end
+
+  def approved?
+    approval.present?
+  end
+
+  # Send a translation to review (idempotent). Approval, if any, is cleared —
+  # re-reviewing implies the prior sign-off no longer stands.
+  def request_review(by: Current.user)
+    return review if under_review?
+
+    transaction do
+      approval&.destroy!
+      association(:approval).reset
+      create_review!(requester: by)
+      track_event("review_requested", creator: by)
+    end
+    review
+  end
+
+  # Approve a translation, clearing any pending review request.
+  def approve(by: Current.user)
+    transaction do
+      create_approval!(approver: by) unless approved?
+      review&.destroy!
+      association(:review).reset
+      track_event("approved", creator: by)
+    end
+    approval
   end
 
   # Publishing/unpublishing is a state-record transition: create or destroy the
@@ -84,6 +117,13 @@ class Translation < ApplicationRecord
       versions.create!(value: value_was, author_id: author_id_was)
     end
 
+    # Editing the value invalidates everything earned by the old text: the
+    # publication (back to draft) and any review/approval sign-off.
+    def invalidate_on_value_change
+      discard_publication
+      reset_review_states
+    end
+
     # Editing the value invalidates any publication: the published content is
     # now stale, so the translation returns to draft (and the transition is
     # recorded, like an explicit unpublish).
@@ -104,5 +144,14 @@ class Translation < ApplicationRecord
 
       @publication_discarded = false
       Translation::Artifact.touch_for(self)
+    end
+
+    # Editing the value invalidates prior review/approval — the reviewed content
+    # has changed, so any sign-off must be earned again.
+    def reset_review_states
+      review&.destroy!
+      association(:review).reset
+      approval&.destroy!
+      association(:approval).reset
     end
 end

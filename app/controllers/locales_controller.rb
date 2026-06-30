@@ -1,8 +1,8 @@
 class LocalesController < ApplicationController
   include ProjectScoped
 
-  before_action :set_locale,                    only: %i[ update destroy ]
-  before_action :ensure_can_administer_project, only: %i[ create update destroy ]
+  before_action :set_locale,                    only: %i[ update destroy source ]
+  before_action :ensure_can_administer_project, only: %i[ create update destroy source ]
 
   # The DB unique index is the source of truth; a true race that slips past the
   # model validation surfaces here as a duplicate-code error.
@@ -33,6 +33,11 @@ class LocalesController < ApplicationController
     redirect_to project_path(@project), notice: "Locale deleted.", status: :see_other
   end
 
+  def source
+    @locale.mark_as_source!
+    redirect_to project_path(@project), notice: "#{@locale.code} is now the source locale.", status: :see_other
+  end
+
   private
     def set_locale
       @locale = @project.locales.find(params[:id])
@@ -46,6 +51,7 @@ class LocalesController < ApplicationController
       @locale = @project.locales.build(locale_params)
 
       if @locale.save
+        prefill_with_mt([ @locale ])
         redirect_to project_path(@project), notice: "Locale created.", status: :see_other
       else
         redirect_with_invalid_locale
@@ -57,6 +63,7 @@ class LocalesController < ApplicationController
     # leaving a partial set behind.
     def create_many(codes)
       results = Project.transaction { codes.map { |code| @project.locales.create(code: code) } }
+      prefill_with_mt(results.select(&:persisted?))
       created = results.count(&:persisted?)
       skipped = results.reject(&:persisted?).map(&:code)
 
@@ -73,6 +80,14 @@ class LocalesController < ApplicationController
                     notice: "Added #{created} #{"locale".pluralize(created)}.",
                     status: :see_other
       end
+    end
+
+    # Optionally machine-translate empty keys for freshly added locales (drafts),
+    # when the "pre-fill" box was checked and a source locale exists.
+    def prefill_with_mt(locales)
+      return unless params[:prefill_mt].present? && @project.source_locale
+
+      locales.each { |locale| MachineTranslationJob.perform_later(locale) unless locale.is_source }
     end
 
     def code_already_taken

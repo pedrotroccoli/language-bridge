@@ -10,6 +10,18 @@
     <%= form.text_field :name, required: true, autofocus: true, placeholder: "My App", class: "text-[14px]" %>
   </div>
 
+  <%# Source locale is only chosen at creation; afterwards it's managed from
+      project settings (a locale already exists to flag). %>
+  <% unless @project.persisted? %>
+    <div class="flex flex-col gap-[7px]">
+      <%= form.label :source_locale_code, "Source language", class: "text-[12.5px] font-medium text-ink-2" %>
+      <%= form.select :source_locale_code,
+            Locale::CATALOG.map { |code, name| [ "#{name} (#{code})", code ] },
+            { selected: "en" }, required: true, class: "text-[14px]" %>
+      <span class="text-[12px] text-mut">The language you translate from. Added as the first locale and marked as source.</span>
+    </div>
+  <% end %>
+
   <div class="flex justify-end gap-[9px] pt-1">
     <%= link_to "Cancel", (@project.persisted? ? project_path(@project) : projects_path), class: "btn-secondary" %>
     <%= form.submit class: "btn" %>

@@ -86,6 +86,31 @@ class TranslationKeysControllerTest < ActionDispatch::IntegrationTest
     assert_equal({}, JSON.parse(artifact.file.download))
   end
 
+  test "detail drawer shows per-locale state and version history" do
+    sign_in_as(users(:viewer))
+    key = translation_keys(:main_app_common_greeting)
+    translations(:greeting_en).update!(value: "Hi there", author: users(:translator)) # creates a Version
+
+    get project_namespace_translation_key_path(@project, @namespace, key)
+
+    assert_response :success
+    assert_select "turbo-frame#key_detail"
+    assert_select "body", /History/
+    assert_select "body", /Hello/ # the snapshotted previous value
+  end
+
+  test "saving context from the drawer reloads the frame" do
+    sign_in_as(users(:admin))
+    key = translation_keys(:main_app_common_greeting)
+
+    patch project_namespace_translation_key_path(@project, @namespace, key),
+          params: { translation_key: { context: "Shown on the home screen" } },
+          headers: { "Turbo-Frame" => "key_detail" }
+
+    assert_redirected_to project_namespace_translation_key_path(@project, @namespace, key)
+    assert_equal "Shown on the home screen", key.reload.context
+  end
+
   private
     def artifact
       Translation::Artifact.find_by!(namespace: @namespace, locale: locales(:main_app_en))

@@ -169,4 +169,36 @@ class TranslationTest < ActiveSupport::TestCase
     assert_equal "published", event.action
     assert_equal({ "locale" => "en" }, event.metadata)
   end
+
+  test "request_review marks under review and is idempotent" do
+    translation = translations(:greeting_en)
+    assert_difference -> { Translation::Review.count }, 1 do
+      translation.request_review(by: users(:translator))
+    end
+    assert translation.under_review?
+    assert_no_difference -> { Translation::Review.count } do
+      translation.request_review(by: users(:translator))
+    end
+  end
+
+  test "approve clears any pending review" do
+    translation = translations(:greeting_en)
+    translation.request_review(by: users(:translator))
+
+    translation.approve(by: users(:admin))
+
+    assert translation.approved?
+    assert_not translation.under_review?
+  end
+
+  test "editing the value resets review and approval" do
+    translation = translations(:greeting_en)
+    translation.request_review(by: users(:translator))
+    translation.approve(by: users(:admin))
+
+    translation.update!(value: "Changed", author: users(:translator))
+
+    assert_not translation.reload.under_review?
+    assert_not translation.approved?
+  end
 end

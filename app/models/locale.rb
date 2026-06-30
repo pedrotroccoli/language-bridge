@@ -13,6 +13,16 @@ class Locale < ApplicationRecord
                    uniqueness: { scope: :project_id }
 
   scope :alphabetically, -> { order(code: :asc) }
+  scope :source, -> { where(is_source: true) }
+
+  # Make this the project's single source locale, clearing any previous one.
+  # The partial unique index guards the invariant; this keeps it consistent.
+  def mark_as_source!
+    transaction do
+      project.locales.where.not(id: id).where(is_source: true).update_all(is_source: false)
+      update!(is_source: true)
+    end
+  end
 
   # Common IETF language tags → human (mostly native) names. Powers the
   # locale picker and the "what language is this" label across the UI.

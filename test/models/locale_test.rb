@@ -50,4 +50,25 @@ class LocaleTest < ActiveSupport::TestCase
       locale.destroy!
     end
   end
+
+  test "mark_as_source sets the project source locale" do
+    locale = locales(:main_app_en)
+    locale.mark_as_source!
+    assert locale.reload.is_source
+    assert_equal locale, projects(:main_app).source_locale
+  end
+
+  test "mark_as_source clears the previous source in the same project" do
+    previous = locales(:main_app_en).tap(&:mark_as_source!)
+    locales(:main_app_pt_br).mark_as_source!
+    assert_not previous.reload.is_source
+    assert_equal locales(:main_app_pt_br), projects(:main_app).reload.source_locale
+  end
+
+  test "only one source allowed per project" do
+    locales(:main_app_en).update!(is_source: true)
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      locales(:main_app_pt_br).update_columns(is_source: true)
+    end
+  end
 end

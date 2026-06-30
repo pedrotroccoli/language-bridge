@@ -27,6 +27,7 @@ class ProjectsController < ApplicationController
     @project = Project.new(project_params)
 
     if @project.save
+      create_source_locale
       redirect_to @project, notice: "Project created."
     else
       render :new, status: :unprocessable_entity
@@ -55,6 +56,15 @@ class ProjectsController < ApplicationController
 
     def project_params
       params.expect(project: %i[ name missing_rate_limit delivery_rate_limit delivery_path_template ])
+    end
+
+    # The create form picks a source language; seed it as the project's first
+    # locale, flagged as source. Invalid/blank codes are simply skipped.
+    def create_source_locale
+      code = params.dig(:project, :source_locale_code).to_s.strip
+      return if code.blank?
+
+      @project.locales.create(code: code, is_source: true)
     end
 
     def ensure_can_administer_project

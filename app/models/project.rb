@@ -9,6 +9,7 @@ class Project < ApplicationRecord
 
   has_many :namespaces, dependent: :destroy
   has_many :locales, dependent: :destroy
+  has_one :source_locale, -> { source }, class_name: "Locale"
   has_many :translation_keys, dependent: :destroy
   has_many :translations, dependent: :destroy
   has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy

@@ -122,4 +122,20 @@
       </div>
     <% end %>
   </div>
+
+  <%# ---- CORS ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "lan", size: 19, css: "text-ink-3" %>API access (CORS)</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Browser origins allowed to call the private API (<span class="font-mono text-[12px]">/api/*</span>) — one per line, e.g. <span class="font-mono text-[12px]">https://app.example.com</span>. Leave empty to block all cross-origin API calls. Public delivery (<span class="font-mono text-[12px]">/cdn/*</span>) is always open.</div>
+
+    <%= form_with model: @setting, url: workspace_path, method: :patch, local: true do |form| %>
+      <div class="flex flex-col gap-[7px]">
+        <%= form.label :allowed_origins_text, "Allowed origins", class: "text-[12.5px] font-medium text-ink-2" %>
+        <%= form.text_area :allowed_origins_text, rows: 4, placeholder: "https://app.example.com", class: "font-mono text-[13px]" %>
+      </div>
+      <div class="flex justify-end mt-[18px]">
+        <%= loading_submit form, "Save changes" %>
+      </div>
+    <% end %>
+  </div>
 </div>
