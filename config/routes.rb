@@ -44,6 +44,7 @@ Rails.application.routes.draw do
     resources :locales, only: %i[ create update destroy ] do
       member { post :source }
     end
+    post "machine_translation", to: "translations/machine_translations#create"
     resources :namespaces, only: %i[ create update destroy show ], constraints: { id: %r{[^/]+} } do
       resource :publication, only: :create, module: :namespaces
       resource :import,      only: :create, module: :namespaces

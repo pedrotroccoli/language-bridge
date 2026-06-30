@@ -59,6 +59,11 @@
     <div class="flex items-center justify-between mt-2 min-h-[18px] gap-2">
       <div class="flex items-center gap-[8px] min-w-0"><%= state %><%= qa %></div>
       <div class="flex items-center gap-[10px] flex-none">
+        <% if missing && source_translation&.value.present? %>
+          <%= button_to "Auto-translate", project_machine_translation_path(project),
+                params: { translation_key_id: translation_key.id, locale_id: locale.id },
+                method: :post, form_class: "inline", class: "text-[11px] text-accent font-medium hover:underline" %>
+        <% end %>
         <% if under_review %>
           <%= button_to "Approve", project_translation_approval_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-ok-ink font-medium hover:underline" %>
         <% elsif has_value %>
