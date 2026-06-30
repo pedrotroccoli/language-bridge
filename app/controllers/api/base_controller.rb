@@ -10,11 +10,21 @@ module Api
         @project = Project.find_by(slug: params[:project_slug])
         return render_error(:not_found, "Project not found") if @project.nil?
 
-        @api_token = ApiToken.authenticate(bearer_token, project: @project)
+        @api_token = authenticate_token
         return render_error(:unauthorized, "Invalid or missing API token") if @api_token.nil?
 
         Current.api_token = @api_token
-        @api_token.touch_last_used!
+      end
+
+      # A personal access token (lb_pat_…) authenticates as its user across the
+      # projects they can access; otherwise fall back to a per-project ApiToken.
+      def authenticate_token
+        if (pat = PersonalAccessToken.authenticate(bearer_token))
+          return pat if pat.user.accessible_projects.exists?(id: @project.id)
+          return nil
+        end
+
+        ApiToken.authenticate(bearer_token, project: @project)&.tap(&:touch_last_used!)
       end
 
       def bearer_token

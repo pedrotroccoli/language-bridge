@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   resource :account, only: %i[ show update ], controller: "account"
   namespace :account do
     resource :sessions, only: :destroy # revoke all sessions but the current one
+    resource :personal_access_token, only: %i[ create destroy ] # generate/regenerate + revoke
   end
 
   resources :projects, only: %i[ index new create show edit update destroy ] do

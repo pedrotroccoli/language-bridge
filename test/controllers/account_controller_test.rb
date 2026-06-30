@@ -30,6 +30,22 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     assert user.reload.avatar.attached?
   end
 
+  test "generates and revokes a personal access token" do
+    user = users(:translator)
+    sign_in_as(user)
+
+    assert_difference -> { PersonalAccessToken.count }, 1 do
+      post account_personal_access_token_path
+    end
+    assert_redirected_to account_path
+    assert flash[:pat_created].to_s.start_with?(PersonalAccessToken::PREFIX)
+
+    assert_difference -> { PersonalAccessToken.count }, -1 do
+      delete account_personal_access_token_path
+    end
+    assert_nil user.reload.personal_access_token
+  end
+
   test "revokes all other sessions but keeps the current one" do
     user = users(:translator)
     other = user.sessions.create!(user_agent: "Old", ip_address: "1.2.3.4")
