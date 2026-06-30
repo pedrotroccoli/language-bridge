@@ -35,6 +35,10 @@ class NamespacesController < ApplicationController
     @locale_coverage = overview[:coverage]
     @draft_count = @stats[:drafts]
     @new_translation_key = @namespace.translation_keys.build
+
+    # Source locale powers QA (placeholder/length warnings + fuzzy/stale flags).
+    @source_locale = @project.source_locale
+    @qa = @namespace.qa_overview(@source_locale)
   end
 
   def create

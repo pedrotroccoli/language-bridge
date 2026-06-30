@@ -1,4 +1,6 @@
 <% translations_by_locale = translation_key.translations.index_by(&:locale_id) %>
+<% source = local_assigns[:source_locale] %>
+<% source_translation = source ? translations_by_locale[source.id] : nil %>
 <% missing_any = locales.any? { |l| t = translations_by_locale[l.id]; t.nil? || t.value.blank? } %>
 <% draft_any = translations_by_locale.values.any? { |t| t.value.present? && t.publication.nil? } %>
 <% dot = draft_any ? "dot-draft" : (missing_any ? "dot-missing" : "dot-done") %>
@@ -30,7 +32,8 @@
     <td class="w-[280px] align-top px-3 py-[14px] border-l border-line-4">
       <%= render "translations/cell",
             project: project, translation_key: translation_key, locale: locale,
-            translation: translations_by_locale[locale.id] %>
+            translation: translations_by_locale[locale.id],
+            source_translation: (locale.id == source&.id ? nil : source_translation) %>
     </td>
   <% end %>
 </tr>

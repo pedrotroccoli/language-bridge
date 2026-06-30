@@ -5,6 +5,13 @@
   <% missing = translation.nil? || translation.value.blank? %>
   <% under_review = translation&.review.present? %>
   <% approved = translation&.approval.present? %>
+  <% source_translation = local_assigns[:source_translation] %>
+  <% qa_warnings = translation && source_translation ? Translation::Qa.warnings(translation, source_translation) : [] %>
+  <% fuzzy = translation && source_translation ? Translation::Qa.fuzzy?(translation, source_translation) : false %>
+  <% qa = capture do %>
+    <% if fuzzy %><span class="flex items-center gap-[3px] text-[10px] font-mono uppercase tracking-[0.04em] text-faint flex-none" title="Source changed after this translation"><%= mi "schedule", size: 12 %>fuzzy</span><% end %>
+    <% if qa_warnings.any? %><span class="flex items-center gap-[3px] text-[10px] text-warn-ink flex-none" title="<%= qa_warnings.join("; ") %>"><%= mi "warning", size: 12 %><%= qa_warnings.size %></span><% end %>
+  <% end %>
   <% box = if draft
              "border-draft-border bg-draft-bg"
            elsif missing
@@ -49,9 +56,9 @@
       <% end %>
     <% end %>
 
-    <div class="flex items-center justify-between mt-2 min-h-[18px]">
-      <%= state %>
-      <div class="flex items-center gap-[10px]">
+    <div class="flex items-center justify-between mt-2 min-h-[18px] gap-2">
+      <div class="flex items-center gap-[8px] min-w-0"><%= state %><%= qa %></div>
+      <div class="flex items-center gap-[10px] flex-none">
         <% if under_review %>
           <%= button_to "Approve", project_translation_approval_path(project, translation), method: :post, form_class: "inline", class: "text-[11px] text-ok-ink font-medium hover:underline" %>
         <% elsif has_value %>
@@ -66,6 +73,6 @@
     </div>
   <% else %>
     <div class="translation-cell__value text-[13px] leading-[1.45] rounded-[7px] px-[11px] py-[9px] min-h-[40px] border whitespace-pre-wrap <%= box %> <%= "text-faint" if missing %>"><%= translation&.value.presence || "—" %></div>
-    <div class="flex items-center mt-2 min-h-[18px]"><%= state %></div>
+    <div class="flex items-center gap-[8px] mt-2 min-h-[18px]"><%= state %><%= qa %></div>
   <% end %>
 <% end %>

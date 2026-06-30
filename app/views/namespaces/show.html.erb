@@ -205,6 +205,8 @@
             <div class="eyebrow px-2 mb-2">Stats</div>
             <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "check_circle", size: 16, fill: 1, css: "text-ok" %>translated</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:translated]) %></span></div>
             <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "do_not_disturb_on", size: 16, fill: 1, css: "text-faint" %>untranslated</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@stats[:missing]) %></span></div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "warning", size: 16, fill: 1, css: "text-warn" %>warnings</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@qa[:warnings]) %></span></div>
+            <div class="flex items-center justify-between px-2 py-[5px] text-[12.5px]"><span class="flex items-center gap-2 text-ink"><%= mi "schedule", size: 16, css: "text-faint" %>fuzzy</span><span class="font-mono text-ink tabular-nums"><%= number_with_delimiter(@qa[:fuzzy]) %></span></div>
           </div>
 
           <div class="border-t border-line-3 pt-4">
@@ -308,7 +310,7 @@
                 </thead>
                 <tbody>
                   <% @translation_keys.each do |translation_key| %>
-                    <%= render "translation_keys/translation_key", translation_key: translation_key, project: @project, namespace: @namespace, locales: @column_locales, editable: editable, manageable: manageable %>
+                    <%= render "translation_keys/translation_key", translation_key: translation_key, project: @project, namespace: @namespace, locales: @column_locales, editable: editable, manageable: manageable, source_locale: @source_locale %>
                   <% end %>
                 </tbody>
               </table>
