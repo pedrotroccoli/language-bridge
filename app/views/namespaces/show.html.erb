@@ -5,7 +5,7 @@
 
 <%= render "projects/tabs", project: @project, active: :editor, wide: true %>
 
-<section class="flex-1 flex flex-col min-h-0" data-controller="modal" data-modal-open-on-connect-value="<%= flash[:invalid_translation_key].present? %>">
+<section class="flex-1 flex flex-col min-h-0" data-controller="modal drawer" data-modal-open-on-connect-value="<%= flash[:invalid_translation_key].present? %>">
   <%# ---- action toolbar ---- %>
   <div class="flex items-center justify-between px-6 py-[14px] gap-3 flex-wrap">
     <div class="flex items-baseline gap-[11px] min-w-0">
@@ -335,4 +335,14 @@
       </div>
     </div>
   <% end %>
+
+  <%# ---- Key detail drawer (slide-over) ---- %>
+  <div data-drawer-target="backdrop" class="hidden fixed inset-0 bg-black/25 z-40" data-action="click->drawer#close"></div>
+  <aside data-drawer-target="panel"
+         class="fixed top-0 right-0 h-full w-[460px] max-w-[92vw] bg-surface border-l border-line z-50 translate-x-full transition-transform duration-200 ease-out overflow-y-auto shadow-[-12px_0_32px_-16px_rgba(0,0,0,0.25)]"
+         data-action="keydown.esc@window->drawer#close">
+    <%= turbo_frame_tag "key_detail" do %>
+      <div class="flex items-center justify-center h-full text-[13px] text-faint">Select a key to see its details.</div>
+    <% end %>
+  </aside>
 </section>

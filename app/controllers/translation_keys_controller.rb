@@ -2,10 +2,23 @@ class TranslationKeysController < ApplicationController
   include ProjectScoped
 
   before_action :set_namespace
-  before_action :set_translation_key,           only: %i[ update destroy ]
+  before_action :set_translation_key,           only: %i[ show update destroy ]
   before_action :ensure_can_administer_project, only: %i[ create update destroy ]
 
   rescue_from ActiveRecord::RecordNotUnique, with: :key_already_taken
+
+  # Key detail drawer: per-locale state + cross-locale version history.
+  def show
+    @locales = @project.locales.alphabetically
+    @translations_by_locale = @translation_key.translations
+                                               .includes(:locale, :publication, :review, :approval)
+                                               .index_by(&:locale_id)
+    @versions = Translation::Version
+                  .where(translation_id: @translation_key.translations.select(:id))
+                  .includes(:author, translation: :locale)
+                  .order(created_at: :desc)
+                  .limit(50)
+  end
 
   def create
     namespace = chosen_namespace
@@ -24,7 +37,13 @@ class TranslationKeysController < ApplicationController
 
   def update
     if @translation_key.update(translation_key_params)
-      redirect_to namespace_path, notice: "Key updated.", status: :see_other
+      # Edited from the detail drawer → reload the drawer frame; otherwise it's
+      # an inline rename on the settings/editor page → back to the namespace.
+      if turbo_frame_request?
+        redirect_to project_namespace_translation_key_path(@project, @namespace, @translation_key), status: :see_other
+      else
+        redirect_to namespace_path, notice: "Key updated.", status: :see_other
+      end
     else
       redirect_with_alert(@translation_key)
     end

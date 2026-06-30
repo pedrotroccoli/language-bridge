@@ -7,6 +7,12 @@
     <div class="flex items-start gap-[11px]">
       <span class="dot <%= dot %> mt-[6px]"></span>
       <code class="flex-1 min-w-0 font-mono text-[12.5px] text-ink break-all leading-[1.55]"><%= translation_key.key %></code>
+      <%= link_to project_namespace_translation_key_path(project, namespace, translation_key),
+            class: "text-faint-2 hover:text-ink flex-none mt-px",
+            data: { turbo_frame: "key_detail", action: "click->drawer#open" },
+            "aria-label": "Details for #{translation_key.key}" do %>
+        <%= mi "info", size: 16 %>
+      <% end %>
       <% if manageable %>
         <%= button_to project_namespace_translation_key_path(project, namespace, translation_key),
               method: :delete,

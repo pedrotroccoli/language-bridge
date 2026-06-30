@@ -49,7 +49,7 @@ Rails.application.routes.draw do
       resource :import,      only: :create, module: :namespaces
       resource :export,      only: :show,    module: :namespaces
       resource :drafts,      only: :destroy, module: :namespaces
-      resources :translation_keys, only: %i[ create update destroy ]
+      resources :translation_keys, only: %i[ show create update destroy ]
     end
     resources :translations, only: %i[ create update ] do
       resource :publication, only: %i[ create destroy ], module: :translations
