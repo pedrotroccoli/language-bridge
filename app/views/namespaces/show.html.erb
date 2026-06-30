@@ -340,9 +340,9 @@
 
   <%# ---- Key detail drawer (slide-over) ---- %>
   <div data-drawer-target="backdrop" class="hidden fixed inset-0 bg-black/25 z-40" data-action="click->drawer#close"></div>
-  <aside data-drawer-target="panel"
-         class="fixed top-0 right-0 h-full w-[460px] max-w-[92vw] bg-surface border-l border-line z-50 translate-x-full transition-transform duration-200 ease-out overflow-y-auto shadow-[-12px_0_32px_-16px_rgba(0,0,0,0.25)]"
-         data-action="keydown.esc@window->drawer#close">
+  <aside data-drawer-target="panel" role="dialog" aria-modal="true" aria-label="Key details" tabindex="-1" aria-hidden="true"
+         class="fixed top-0 right-0 h-full w-[460px] max-w-[92vw] bg-surface border-l border-line z-50 translate-x-full transition-transform duration-200 ease-out overflow-y-auto shadow-[-12px_0_32px_-16px_rgba(0,0,0,0.25)] focus:outline-none"
+         data-action="keydown.esc@window->drawer#close keydown@window->drawer#trap">
     <%= turbo_frame_tag "key_detail" do %>
       <div class="flex items-center justify-center h-full text-[13px] text-faint">Select a key to see its details.</div>
     <% end %>

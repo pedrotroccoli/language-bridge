@@ -32,8 +32,7 @@ class Translation < ApplicationRecord
   }
 
   before_update :snapshot_version, if: -> { value_changed? }
-  after_update :discard_publication, if: -> { saved_change_to_value? }
-  after_update :reset_review_states, if: -> { saved_change_to_value? }
+  after_update :invalidate_on_value_change, if: -> { saved_change_to_value? }
   after_commit :rebuild_artifact_after_discard, on: :update
 
   def draft?
@@ -116,6 +115,13 @@ class Translation < ApplicationRecord
 
     def snapshot_version
       versions.create!(value: value_was, author_id: author_id_was)
+    end
+
+    # Editing the value invalidates everything earned by the old text: the
+    # publication (back to draft) and any review/approval sign-off.
+    def invalidate_on_value_change
+      discard_publication
+      reset_review_states
     end
 
     # Editing the value invalidates any publication: the published content is

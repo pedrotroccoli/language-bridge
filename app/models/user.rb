@@ -10,6 +10,10 @@ class User < ApplicationRecord
 
   has_one :personal_access_token, dependent: :destroy
 
+  # Served via Active Storage's default :redirect delivery (302 to the blob),
+  # so bytes don't stream through the app. A downscaled, preprocessed :thumb
+  # variant (active-storage.md) is deferred until an image processor (libvips)
+  # is available in the deploy image — avatars are capped at 2 MB meanwhile.
   has_one_attached :avatar
 
   normalizes :email, with: ->(email) { email.strip.downcase }

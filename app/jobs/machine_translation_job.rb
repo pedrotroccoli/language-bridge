@@ -9,12 +9,19 @@ class MachineTranslationJob < ApplicationJob
     source = project.source_locale
     return if source.nil? || source.id == locale.id
 
-    source.translations.where.not(value: [ nil, "" ]).includes(:translation_key).find_each do |src|
-      key = src.translation_key
-      next if key.translations.find_by(locale_id: locale.id)&.value.present?
+    sources = source.translations.where.not(value: [ nil, "" ]).includes(:translation_key)
+
+    # Preload the target locale's already-filled keys in one query so the loop
+    # doesn't issue a find_by per source key (N+1).
+    already_filled = project.translations
+                            .where(locale_id: locale.id).where.not(value: [ nil, "" ])
+                            .pluck(:translation_key_id).to_set
+
+    sources.find_each do |src|
+      next if already_filled.include?(src.translation_key_id)
 
       translated = MachineTranslation.translate(src.value, from: source.code, to: locale.code)
-      key.set_translation(locale: locale, value: translated, author: nil)
+      src.translation_key.set_translation(locale: locale, value: translated, author: nil)
     end
   end
 end
