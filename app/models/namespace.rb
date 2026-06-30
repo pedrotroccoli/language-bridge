@@ -53,21 +53,22 @@ class Namespace < ApplicationRecord
   # Namespace-wide QA tally against the project's source locale:
   #   :warnings — translations with a placeholder/length warning
   #   :fuzzy    — translations stale relative to a newer source value
-  # One query loads every translation in the namespace; grouped by key in Ruby.
+  # Loads the source-locale values once (one per key), then streams the other
+  # translations in batches so the whole namespace isn't held in memory.
   def qa_overview(source_locale)
     return { warnings: 0, fuzzy: 0 } if source_locale.nil?
 
-    by_key = translations.to_a.group_by(&:translation_key_id)
+    sources = translations.where(locale_id: source_locale.id)
+                          .select(:translation_key_id, :value, :updated_at)
+                          .index_by(&:translation_key_id)
     warnings = fuzzy = 0
 
-    by_key.each_value do |group|
-      source = group.find { |t| t.locale_id == source_locale.id }
-      group.each do |translation|
-        next if translation.locale_id == source_locale.id
-
-        warnings += 1 if Translation::Qa.warnings(translation, source).any?
-        fuzzy += 1 if Translation::Qa.fuzzy?(translation, source)
-      end
+    translations.where.not(locale_id: source_locale.id)
+                .select(:id, :translation_key_id, :value, :updated_at)
+                .find_each do |translation|
+      source = sources[translation.translation_key_id]
+      warnings += 1 if Translation::Qa.warnings(translation, source).any?
+      fuzzy += 1 if Translation::Qa.fuzzy?(translation, source)
     end
 
     { warnings:, fuzzy: }

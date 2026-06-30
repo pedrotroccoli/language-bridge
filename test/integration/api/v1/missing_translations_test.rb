@@ -35,6 +35,26 @@ class Api::V1::MissingTranslationsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "a translator's PAT carries the save_missing scope" do
+    raw = PersonalAccessToken.regenerate_for(users(:translator))
+
+    assert_difference -> { MissingKeyReport.count }, 1 do
+      post_missing(headers: { "Authorization" => "Bearer #{raw}" },
+                   locale: "en", namespace: "common", keys: { "t.key" => "x" })
+    end
+    assert_response :success
+  end
+
+  test "a viewer's PAT lacks the save_missing scope" do
+    raw = PersonalAccessToken.regenerate_for(users(:viewer))
+
+    assert_no_difference -> { MissingKeyReport.count } do
+      post_missing(headers: { "Authorization" => "Bearer #{raw}" },
+                   locale: "en", namespace: "common", keys: { "v.key" => "x" })
+    end
+    assert_response :forbidden
+  end
+
   test "replaying the same payload bumps hits, not rows" do
     post_missing(locale: "en", namespace: "common", keys: { "brand.new" => "Fresh" })
     assert_no_difference -> { MissingKeyReport.count } do

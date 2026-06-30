@@ -40,7 +40,7 @@ class TranslationKeysController < ApplicationController
       # Edited from the detail drawer → reload the drawer frame; otherwise it's
       # an inline rename on the settings/editor page → back to the namespace.
       if turbo_frame_request?
-        redirect_to project_namespace_translation_key_path(@project, @namespace, @translation_key), status: :see_other
+        redirect_to project_namespace_translation_key_path(@project, @namespace, @translation_key), notice: "Key updated.", status: :see_other
       else
         redirect_to namespace_path, notice: "Key updated.", status: :see_other
       end

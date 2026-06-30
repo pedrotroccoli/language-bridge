@@ -25,6 +25,12 @@ class PersonalAccessTokenTest < ActiveSupport::TestCase
     assert_nil PersonalAccessToken.authenticate("#{PersonalAccessToken::PREFIX}bogus")
   end
 
+  test "scope mirrors the user's role" do
+    assert_equal "admin",        PersonalAccessToken.new(user: users(:admin)).scope
+    assert_equal "save_missing", PersonalAccessToken.new(user: users(:translator)).scope
+    assert_equal "read_only",    PersonalAccessToken.new(user: users(:viewer)).scope
+  end
+
   test "authenticate stamps last_used_at" do
     raw = PersonalAccessToken.regenerate_for(users(:admin))
     assert_nil users(:admin).reload.personal_access_token.last_used_at

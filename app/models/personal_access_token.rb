@@ -33,9 +33,12 @@ class PersonalAccessToken < ApplicationRecord
     Digest::SHA256.hexdigest(raw.to_s)
   end
 
-  # A PAT carries the full access of its user, so it satisfies any API scope.
+  # The API scope a PAT grants mirrors its user's role, so a viewer's token
+  # can't do more through the API than the user can in the app.
+  ROLE_SCOPES = { "admin" => "admin", "translator" => "save_missing", "viewer" => "read_only" }.freeze
+
   def scope
-    "admin"
+    ROLE_SCOPES.fetch(user.role, "read_only")
   end
 
   def touch_last_used!

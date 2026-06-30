@@ -51,10 +51,28 @@ class User < ApplicationRecord
   end
 
   private
+    # Validate only when a new avatar is being attached (not on every save), and
+    # sniff the real MIME from the bytes rather than trusting the client-declared
+    # Content-Type, which is spoofable.
     def acceptable_avatar
-      return unless avatar.attached?
+      change = attachment_changes["avatar"]
+      return if change.nil?
 
-      errors.add(:avatar, "must be a PNG, JPEG, GIF, or WebP image") unless avatar.content_type.in?(AVATAR_TYPES)
-      errors.add(:avatar, "is too large (2 MB max)") if avatar.byte_size > AVATAR_MAX_BYTES
+      errors.add(:avatar, "is too large (2 MB max)") if change.blob.byte_size > AVATAR_MAX_BYTES
+      errors.add(:avatar, "must be a PNG, JPEG, GIF, or WebP image") unless sniffed_avatar_type(change.attachable).in?(AVATAR_TYPES)
+    end
+
+    # Detect the MIME from the uploaded bytes (form upload, IO, or io-hash).
+    def sniffed_avatar_type(attachable)
+      io =
+        if attachable.respond_to?(:open) then attachable.open
+        elsif attachable.respond_to?(:read) then attachable
+        elsif attachable.is_a?(Hash) then attachable[:io]
+        end
+      return "application/octet-stream" if io.nil?
+
+      Marcel::MimeType.for(io)
+    ensure
+      io.rewind if io.respond_to?(:rewind)
     end
 end
