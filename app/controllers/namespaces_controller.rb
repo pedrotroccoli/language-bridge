@@ -28,7 +28,7 @@ class NamespacesController < ApplicationController
 
     @match_count = keys.count
     @page_limit = KEY_PAGE_LIMIT
-    @translation_keys = keys.includes(translations: :publication).limit(KEY_PAGE_LIMIT)
+    @translation_keys = keys.includes(translations: %i[ publication review approval ]).limit(KEY_PAGE_LIMIT)
 
     overview = @namespace.editor_overview(@locales, total_keys: @total_keys)
     @stats = overview[:stats]

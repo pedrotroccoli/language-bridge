@@ -53,6 +53,8 @@ Rails.application.routes.draw do
     end
     resources :translations, only: %i[ create update ] do
       resource :publication, only: %i[ create destroy ], module: :translations
+      resource :review,      only: %i[ create destroy ], module: :translations
+      resource :approval,    only: :create,              module: :translations
     end
   end
 
