@@ -32,13 +32,24 @@
               <span class="text-[14.5px] font-semibold text-ink truncate"><%= invitation.email %></span>
               <span class="font-mono text-[10px] text-ink-3 border border-line rounded-[4px] px-[7px] py-px"><%= invitation.role.titleize %></span>
             </div>
-            <div class="font-mono text-[11.5px] text-mut-2 mt-1">invited <%= time_ago_in_words(invitation.created_at) %> ago · expires <%= invitation.expires_at.strftime("%b %d, %Y") %></div>
+            <div class="font-mono text-[11.5px] text-mut-2 mt-1">
+              <% if invitation.accepted? %>
+                accepted <%= time_ago_in_words(invitation.accepted_at) %> ago
+              <% else %>
+                invited <%= time_ago_in_words(invitation.created_at) %> ago · expires <%= invitation.expires_at.strftime("%b %d, %Y") %>
+              <% end %>
+            </div>
           </div>
         </div>
         <div class="flex items-center gap-[14px]">
-          <span class="text-[11.5px] font-semibold text-banner-ink bg-banner-bg border border-banner-border px-[10px] py-[3px] rounded-full">Pending</span>
-          <%= button_to invitation_path(invitation), method: :delete, class: "btn-secondary h-8 hover:!border-danger hover:!text-danger",
-                form_class: "inline", data: { turbo_confirm: "Revoke invitation for #{invitation.email}?" } do %>Revoke<% end %>
+          <% if invitation.accepted? %>
+            <span class="text-[11.5px] font-semibold text-ok-ink bg-ok-soft border border-ok px-[10px] py-[3px] rounded-full">Accepted</span>
+          <% else %>
+            <span class="text-[11.5px] font-semibold text-banner-ink bg-banner-bg border border-banner-border px-[10px] py-[3px] rounded-full">Pending</span>
+            <%= button_to "Resend", resend_invitation_path(invitation), method: :post, class: "btn-secondary h-8", form_class: "inline" %>
+            <%= button_to invitation_path(invitation), method: :delete, class: "btn-secondary h-8 hover:!border-danger hover:!text-danger",
+                  form_class: "inline", data: { turbo_confirm: "Revoke invitation for #{invitation.email}?" } do %>Revoke<% end %>
+          <% end %>
         </div>
       </div>
     <% end %>

@@ -6,7 +6,9 @@ Rails.application.routes.draw do
   get    "sign_in/:token", to: "sessions#show", as: :sign_in_with_token
   delete "sign_out",       to: "sessions#destroy", as: :sign_out
 
-  resources :invitations, only: %i[ index new create destroy ]
+  resources :invitations, only: %i[ index new create destroy ] do
+    member { post :resend }
+  end
   get  "invitations/:token", to: "invitations#show",   as: :accept_invitation
   post "invitations/:token", to: "invitations#accept", as: :claim_invitation
 

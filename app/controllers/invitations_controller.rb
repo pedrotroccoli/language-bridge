@@ -1,12 +1,12 @@
 class InvitationsController < ApplicationController
   allow_unauthenticated only: %i[ show accept ]
 
-  before_action :require_admin, only: %i[ index new create destroy ]
-  before_action :set_invitation, only: %i[ destroy ]
+  before_action :require_admin, only: %i[ index new create destroy resend ]
+  before_action :set_invitation, only: %i[ destroy resend ]
   before_action :set_claimable_invitation, only: %i[ show accept ]
 
   def index
-    @invitations = Invitation.pending.order(created_at: :desc)
+    @invitations = Invitation.visible.order(created_at: :desc)
     @invitation = Invitation.new(role: "translator")
   end
 
@@ -28,6 +28,16 @@ class InvitationsController < ApplicationController
   def destroy
     @invitation.destroy!
     redirect_to invitations_path, notice: "Invitation revoked."
+  end
+
+  def resend
+    if @invitation.accepted?
+      redirect_to invitations_path, alert: "That invitation was already accepted."
+    else
+      @invitation.resend!
+      InvitationMailer.with(invitation: @invitation).invite.deliver_later
+      redirect_to invitations_path, notice: "Invitation re-sent to #{@invitation.email}."
+    end
   end
 
   def show

@@ -15,6 +15,9 @@ class Invitation < ApplicationRecord
 
   scope :pending, -> { where(accepted_at: nil).where("expires_at > ?", Time.current) }
   scope :accepted, -> { where.not(accepted_at: nil) }
+  # Shown in the list: still-claimable invites plus everyone who's accepted.
+  # Hides only the stale (expired, never accepted) ones.
+  scope :visible, -> { pending.or(accepted) }
 
   def accepted?
     accepted_at.present?
@@ -26,6 +29,12 @@ class Invitation < ApplicationRecord
 
   def claimable?
     !accepted? && !expired?
+  end
+
+  # Re-send a pending invite: push the expiry back out so the link is fresh
+  # again. The token is unchanged, so any earlier email still works too.
+  def resend!
+    update!(expires_at: EXPIRES_IN.from_now)
   end
 
   def accept!(now: Time.current)
