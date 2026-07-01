@@ -18,7 +18,8 @@ require "zip"
 class NamespaceExport
   FORMATS = %w[ json csv ].freeze
 
-  File = Struct.new(:body, :content_type, :filename, keyword_init: true)
+  # A ready-to-send download: raw body plus how to serve it.
+  Download = Struct.new(:body, :content_type, :filename, keyword_init: true)
 
   class Error < StandardError; end
 
@@ -58,7 +59,7 @@ class NamespaceExport
 
     # One locale, one file — prefix it with project/namespace for a friendly name.
     def single(file)
-      File.new(body: file.body, content_type: file.content_type, filename: "#{prefix}-#{file.filename}")
+      Download.new(body: file.body, content_type: file.content_type, filename: "#{prefix}-#{file.filename}")
     end
 
     def zip(files, format)
@@ -68,14 +69,14 @@ class NamespaceExport
           zos.write(file.body)
         end
       end
-      File.new(body: buffer.string, content_type: "application/zip", filename: "#{prefix}-#{format}.zip")
+      Download.new(body: buffer.string, content_type: "application/zip", filename: "#{prefix}-#{format}.zip")
     end
 
     def file_for(locale, format)
       values = flat_values(locale)
       case format
-      when "json" then File.new(body: JSON.pretty_generate(nest(values)), content_type: "application/json", filename: "#{locale.code}.json")
-      when "csv"  then File.new(body: csv(values), content_type: "text/csv", filename: "#{locale.code}.csv")
+      when "json" then Download.new(body: JSON.pretty_generate(nest(values)), content_type: "application/json", filename: "#{locale.code}.json")
+      when "csv"  then Download.new(body: csv(values), content_type: "text/csv", filename: "#{locale.code}.csv")
       end
     end
 
@@ -91,7 +92,7 @@ class NamespaceExport
       scope = scope.published unless @include_drafts
 
       scope.each_with_object({}) { |t, h| h[t.translation_key.key] = t.value }
-           .sort.to_h
+           .sort_by(&:first).to_h
     end
 
     # Expand dotted keys into nested objects (inverse of TranslationImport#flatten).
@@ -111,7 +112,7 @@ class NamespaceExport
     end
 
     def csv(values)
-      ::CSV.generate do |out|
+      CSV.generate do |out|
         out << %w[ key value ]
         values.each { |key, value| out << [ key, value ] }
       end

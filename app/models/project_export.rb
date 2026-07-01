@@ -18,8 +18,8 @@ class ProjectExport
     @namespaces = project.namespaces.order(:name).to_a
   end
 
-  # Returns a NamespaceExport::File (body, content_type, filename): always a ZIP.
-  # Namespaces with no values for a given locale are skipped (no empty entries).
+  # Returns a NamespaceExport::Download (body, content_type, filename): always a
+  # ZIP. Namespaces with no values for a given locale are skipped (no empty files).
   def download(format)
     format = format.to_s
     raise NamespaceExport::Error, "Unsupported data format #{format.inspect}" unless FORMATS.include?(format)
@@ -38,7 +38,7 @@ class ProjectExport
       end
     end
 
-    NamespaceExport::File.new(body: buffer.string, content_type: "application/zip", filename: "#{@project.slug}-#{format}.zip")
+    NamespaceExport::Download.new(body: buffer.string, content_type: "application/zip", filename: "#{@project.slug}-#{format}.zip")
   end
 
   private
