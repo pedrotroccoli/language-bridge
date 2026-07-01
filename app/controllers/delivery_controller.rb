@@ -26,9 +26,27 @@ class DeliveryController < ApplicationController
     # Stream the stored blob chunk by chunk instead of loading it whole into
     # memory. Cache headers are set before the freshness check so a 304 carries
     # them too.
+    #
+    # The blob may be stored gzip/brotli-compressed (issue #95). When the client
+    # accepts that encoding we stream the bytes as-is under Content-Encoding;
+    # otherwise we decode on the fly and serve raw JSON. Vary: Accept-Encoding is
+    # always set so caches key on it.
     def serve_artifact(artifact)
       set_cache_headers
-      send_blob_stream(artifact.file, disposition: "inline") if stale?(etag: artifact.checksum)
+      response.set_header("Vary", "Accept-Encoding")
+      encoding = artifact.content_encoding
+
+      if encoding.nil? || client_accepts?(encoding)
+        response.set_header("Content-Encoding", encoding) if encoding
+        send_blob_stream(artifact.file, disposition: "inline") if stale?(etag: artifact.checksum)
+      elsif stale?(etag: artifact.checksum)
+        json = DeliveryCompression.decompress(artifact.file.download, encoding)
+        send_data json, type: "application/json", disposition: "inline"
+      end
+    end
+
+    def client_accepts?(encoding)
+      request.get_header("HTTP_ACCEPT_ENCODING").to_s.include?(encoding)
     end
 
     def serve_live(namespace, locale)

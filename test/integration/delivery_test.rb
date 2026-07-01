@@ -63,6 +63,30 @@ class DeliveryTest < ActionDispatch::IntegrationTest
     assert_equal({ "title" => "Hi" }, response.parsed_body)
   end
 
+  test "serves the stored gzip bytes under Content-Encoding when the client accepts gzip" do
+    get cdn_path("common"), headers: { "Accept-Encoding" => "gzip" }
+    assert_response :success
+    assert_equal "gzip", response.headers["Content-Encoding"]
+    assert_includes response.headers["Vary"].to_s, "Accept-Encoding"
+    assert_equal({ "greeting" => "Hello" }, JSON.parse(ActiveSupport::Gzip.decompress(response.body)))
+  end
+
+  test "decompresses to plain JSON for a client that does not accept gzip" do
+    get cdn_path("common"), headers: { "Accept-Encoding" => "identity" }
+    assert_response :success
+    assert_nil response.headers["Content-Encoding"]
+    assert_equal({ "greeting" => "Hello" }, response.parsed_body)
+  end
+
+  test "ETag is stable across compression so 304 still works for a gzip client" do
+    get cdn_path("common"), headers: { "Accept-Encoding" => "gzip" }
+    etag = response.headers["ETag"]
+    assert etag.present?
+
+    get cdn_path("common"), headers: { "Accept-Encoding" => "gzip", "If-None-Match" => etag }
+    assert_response :not_modified
+  end
+
   test "404 for an unknown project" do
     get "/cdn/nope/en/common"
     assert_response :not_found

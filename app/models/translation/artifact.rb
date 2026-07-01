@@ -56,11 +56,17 @@ class Translation::Artifact < ApplicationRecord
       project = namespace.project
       key = project.delivery_storage_key(namespace, locale)
 
+      # Store the bytes already compressed (issue #95) so delivery streams them
+      # as-is under Content-Encoding. nil encoding = stored uncompressed.
+      encoding, body = DeliveryCompression.compress(content.to_json, Setting.current.delivery_compression)
+
       artifact = upsert(namespace, locale, content)
-      write_blob(artifact, key, locale, content.to_json, project.storage_service_name)
+      write_blob(artifact, key, locale, body, project.storage_service_name, encoding)
       # Advance the served checksum/ETag only AFTER the blob is durably written,
       # so a failed upload never leaves the row pointing past its stored content.
-      artifact.update!(checksum: content.etag, built_at: Time.current)
+      # The checksum is the hash of the *logical* JSON (compression-independent),
+      # so 304s keep working across a compression-mode change.
+      artifact.update!(checksum: content.etag, built_at: Time.current, content_encoding: encoding)
       artifact
     rescue ActiveRecord::RecordNotFound, ActiveRecord::InvalidForeignKey
       # The namespace or locale was deleted concurrently (e.g. mid cascade);
@@ -89,8 +95,8 @@ class Translation::Artifact < ApplicationRecord
       # the same key without the attach+purge churn that would otherwise delete the
       # object we just wrote. When the key changed (template edit), purge the old
       # blob and attach a fresh one at the new path.
-      def write_blob(artifact, key, locale, json, service_name)
-        io = StringIO.new(json)
+      def write_blob(artifact, key, locale, body, service_name, encoding)
+        io = StringIO.new(body)
 
         # Reuse the blob in place only when both the key AND the routed service
         # are unchanged; otherwise (template edit or a new/changed storage
@@ -106,6 +112,26 @@ class Translation::Artifact < ApplicationRecord
           options[:service_name] = service_name if service_name
           artifact.file.attach(**options)
         end
+
+        # Stamp the object's Content-Encoding so a customer CDN reading the bucket
+        # directly (bypassing DeliveryController) decompresses correctly. Active
+        # Storage's attach/upload don't set it; do it best-effort on S3 services.
+        set_object_content_encoding(artifact.file.blob, encoding)
+      end
+
+      # Best-effort: set the stored object's Content-Encoding metadata. Only S3
+      # services support it; Disk (dev/test) and anything else are skipped. Never
+      # let a metadata hiccup fail the rebuild — the DeliveryController path still
+      # sends the header from artifact.content_encoding regardless.
+      def set_object_content_encoding(blob, encoding)
+        return if encoding.nil?
+        service = blob.service
+        return unless service.class.name.to_s.include?("S3")
+
+        object = service.send(:bucket).object(blob.key)
+        object.copy_from(object, content_type: "application/json", content_encoding: encoding, metadata_directive: "REPLACE")
+      rescue => e
+        Rails.logger.warn("[delivery] could not set Content-Encoding on #{blob.key}: #{e.class}: #{e.message}")
       end
 
       def default_service_name

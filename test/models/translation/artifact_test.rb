@@ -13,8 +13,33 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
     end
     artifact = artifact_for
     assert artifact.file.attached?
-    assert_equal({ "greeting" => "Hello" }, JSON.parse(artifact.file.download))
+    assert_equal({ "greeting" => "Hello" }, payload(artifact))
     assert_equal TranslationBundle.new(namespace: @namespace, locale: @locale).etag, artifact.checksum
+  end
+
+  test "stores the blob gzip-compressed with content_encoding by default" do
+    @translation.publish(by: users(:admin))
+    artifact = artifact_for
+
+    assert_equal "gzip", artifact.content_encoding
+    raw = artifact.file.download
+    assert_raises(JSON::ParserError) { JSON.parse(raw) } # the stored bytes are not plain JSON
+    assert_equal({ "greeting" => "Hello" }, JSON.parse(ActiveSupport::Gzip.decompress(raw)))
+  end
+
+  test "stores the blob uncompressed when delivery_compression is none" do
+    Setting.current.update!(delivery_compression: "none")
+
+    @translation.publish(by: users(:admin))
+    artifact = artifact_for
+
+    assert_nil artifact.content_encoding
+    assert_equal({ "greeting" => "Hello" }, JSON.parse(artifact.file.download))
+  end
+
+  test "checksum stays the logical-JSON etag regardless of compression" do
+    @translation.publish(by: users(:admin))
+    assert_equal TranslationBundle.new(namespace: @namespace, locale: @locale).etag, artifact_for.checksum
   end
 
   test "published artifact is routed to the project's storage connection and prefix" do
@@ -30,13 +55,13 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
   test "unpublishing rebuilds the artifact without the translation" do
     @translation.publish(by: users(:admin))
     @translation.unpublish
-    assert_equal({}, JSON.parse(artifact_for.file.download))
+    assert_equal({}, payload(artifact_for))
   end
 
   test "editing a published value rebuilds the artifact" do
     @translation.publish(by: users(:admin))
     @translation.update!(value: "Hi", author: users(:admin)) # discards publication
-    assert_equal({}, JSON.parse(artifact_for.file.download))
+    assert_equal({}, payload(artifact_for))
   end
 
   test "batch defers rebuilds and coalesces the same pair into one artifact" do
@@ -82,5 +107,10 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
   private
     def artifact_for
       Translation::Artifact.find_by!(namespace: @namespace, locale: @locale)
+    end
+
+    # Stored blobs are compression-encoded (issue #95); decode before parsing.
+    def payload(artifact)
+      JSON.parse(DeliveryCompression.decompress(artifact.file.download, artifact.content_encoding))
     end
 end
