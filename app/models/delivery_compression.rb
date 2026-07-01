@@ -1,4 +1,4 @@
-# Transport compression for delivery artifacts (issue #95). The compiled JSON is
+# Transport compression for delivery artifacts. The compiled JSON is
 # stored already-compressed so /cdn responses can stream the bytes as-is under a
 # Content-Encoding header — transparent to clients that decompress (i18next,
 # browsers, most HTTP libs).
@@ -25,8 +25,7 @@ module DeliveryCompression
     end
   end
 
-  # Compress json for the given mode. Returns [encoding, bytes] where encoding is
-  # the Content-Encoding token ("gzip"/"br") or nil when stored uncompressed.
+  # Returns [encoding, bytes]; encoding is the Content-Encoding token or nil.
   def compress(json, mode)
     case effective_mode(mode)
     when "br"   then [ "br", ::Brotli.deflate(json) ]
@@ -35,8 +34,6 @@ module DeliveryCompression
     end
   end
 
-  # Inverse of #compress, for the rare client that doesn't accept the stored
-  # encoding (we decode on the fly and serve raw JSON).
   def decompress(bytes, encoding)
     case encoding
     when "br"   then ::Brotli.inflate(bytes)
