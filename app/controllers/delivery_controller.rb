@@ -27,7 +27,7 @@ class DeliveryController < ApplicationController
     # memory. Cache headers are set before the freshness check so a 304 carries
     # them too.
     #
-    # The blob may be stored gzip/brotli-compressed (issue #95). When the client
+    # The blob may be stored gzip/brotli-compressed. When the client
     # accepts that encoding we stream the bytes as-is under Content-Encoding;
     # otherwise we decode on the fly and serve raw JSON. Vary: Accept-Encoding is
     # always set so caches key on it.
@@ -45,8 +45,13 @@ class DeliveryController < ApplicationController
       end
     end
 
+    # Honors Accept-Encoding q-values, so an explicit refusal (e.g. "gzip;q=0")
+    # falls through to the decode-and-serve-raw path instead of shipping bytes the
+    # client can't decode.
     def client_accepts?(encoding)
-      request.get_header("HTTP_ACCEPT_ENCODING").to_s.include?(encoding)
+      Rack::Utils.q_values(request.get_header("HTTP_ACCEPT_ENCODING")).any? do |enc, q|
+        (enc == encoding || enc == "*") && q.positive?
+      end
     end
 
     def serve_live(namespace, locale)

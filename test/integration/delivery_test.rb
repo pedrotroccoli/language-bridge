@@ -78,6 +78,13 @@ class DeliveryTest < ActionDispatch::IntegrationTest
     assert_equal({ "greeting" => "Hello" }, response.parsed_body)
   end
 
+  test "serves plain JSON when the client explicitly refuses gzip via q=0" do
+    get cdn_path("common"), headers: { "Accept-Encoding" => "gzip;q=0" }
+    assert_response :success
+    assert_nil response.headers["Content-Encoding"]
+    assert_equal({ "greeting" => "Hello" }, response.parsed_body)
+  end
+
   test "ETag is stable across compression so 304 still works for a gzip client" do
     get cdn_path("common"), headers: { "Accept-Encoding" => "gzip" }
     etag = response.headers["ETag"]
