@@ -22,4 +22,10 @@ class Projects::ExportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal TranslationSnapshot::VERSION, data["version"]
     assert data["namespaces"].key?("common")
   end
+
+  test "a viewer cannot export (drafts must not leak)" do
+    sign_in_as(users(:viewer))
+    get project_export_path(@project, as: "json")
+    assert_response :forbidden
+  end
 end

@@ -6,6 +6,8 @@
 class Projects::ExportsController < ApplicationController
   include ProjectScoped
 
+  before_action :ensure_can_edit_translations
+
   def show
     params[:mode] == "backup" ? send_backup : send_data_export
   end

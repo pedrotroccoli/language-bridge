@@ -52,4 +52,10 @@ class Namespaces::ExportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "namespace,key,locale,value,published", response.body
   end
+
+  test "a viewer cannot export (drafts must not leak)" do
+    sign_in_as(users(:viewer))
+    get project_namespace_export_path(@project, @namespace, as: "json", locale: "en")
+    assert_response :forbidden
+  end
 end
