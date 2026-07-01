@@ -68,27 +68,15 @@
         <span class="font-mono text-[12px] text-faint"><%= format("%02d", @namespaces.size) %></span>
       </div>
       <div class="flex items-center gap-[9px]">
-        <% if @namespaces.any? && @locales.any? %>
-          <% row = "flex items-center gap-[10px] px-[11px] py-[9px] rounded-[7px] text-[13.5px] text-ink hover:bg-surface-2" %>
-          <% tag = "font-mono text-[11.5px] text-mut-2 w-[48px]" %>
-          <details class="relative [&_summary::-webkit-details-marker]:hidden">
-            <summary class="list-none cursor-pointer btn-secondary h-[34px]"><%= mi "upload", size: 17, css: "text-ink-3" %>Export<%= mi "expand_more", size: 16, css: "text-faint" %></summary>
-            <div class="absolute top-[calc(100%+6px)] right-0 w-[280px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 p-[6px]">
-              <div class="px-[10px] py-[7px] eyebrow">Data — i18next / locize</div>
-              <% ProjectExport::FORMATS.each do |fmt| %>
-                <%= link_to project_export_path(@project, as: fmt), data: { turbo: false }, class: row do %>
-                  <span class="<%= tag %>"><%= fmt.upcase %></span>All namespaces (.zip)
-                <% end %>
-              <% end %>
-              <div class="my-[5px] border-t border-line"></div>
-              <div class="px-[10px] py-[7px] eyebrow">Backup — with metadata</div>
-              <% Snapshot::FORMATS.each do |fmt| %>
-                <%= link_to project_export_path(@project, as: fmt, mode: "backup"), data: { turbo: false }, class: row do %>
-                  <span class="<%= tag %>"><%= fmt.upcase %></span>Download
-                <% end %>
-              <% end %>
-            </div>
-          </details>
+        <% if current_user.can_edit_translations?(@project) && @namespaces.any? && @locales.any? %>
+          <%= render "shared/export_menu",
+                data_links: ProjectExport::FORMATS.map { |fmt| {
+                  tag: fmt.upcase, label: "All namespaces (.zip)",
+                  url: project_export_path(@project, as: fmt) } },
+                per_locale_title: nil, per_locale_links: [],
+                backup_links: Snapshot::FORMATS.map { |fmt| {
+                  tag: fmt.upcase, label: "Download",
+                  url: project_export_path(@project, as: fmt, mode: "backup") } } %>
         <% end %>
         <% if current_user.admin? %>
           <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New namespace</button>
