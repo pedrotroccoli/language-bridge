@@ -69,11 +69,11 @@
       </div>
       <div class="flex items-center gap-[9px]">
         <% if @namespaces.any? && @locales.any? %>
-          <% row = "flex items-center gap-[9px] px-[10px] py-2 rounded-[7px] text-[13px] text-ink hover:bg-surface-2" %>
-          <% tag = "font-mono text-[11px] text-mut-2 w-[42px]" %>
+          <% row = "flex items-center gap-[10px] px-[11px] py-[9px] rounded-[7px] text-[13.5px] text-ink hover:bg-surface-2" %>
+          <% tag = "font-mono text-[11.5px] text-mut-2 w-[48px]" %>
           <details class="relative [&_summary::-webkit-details-marker]:hidden">
             <summary class="list-none cursor-pointer btn-secondary h-[34px]"><%= mi "upload", size: 17, css: "text-ink-3" %>Export<%= mi "expand_more", size: 16, css: "text-faint" %></summary>
-            <div class="absolute top-[calc(100%+6px)] right-0 w-[230px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 p-[5px]">
+            <div class="absolute top-[calc(100%+6px)] right-0 w-[280px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 p-[6px]">
               <div class="px-[10px] py-[7px] eyebrow">Data — i18next / locize</div>
               <% ProjectExport::FORMATS.each do |fmt| %>
                 <%= link_to project_export_path(@project, as: fmt), data: { turbo: false }, class: row do %>
