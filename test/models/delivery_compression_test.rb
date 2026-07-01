@@ -19,12 +19,15 @@ class DeliveryCompressionTest < ActiveSupport::TestCase
     assert_equal json, DeliveryCompression.decompress(bytes, encoding)
   end
 
-  test "brotli falls back to gzip when the gem is unavailable" do
-    skip "brotli gem installed" if DeliveryCompression.brotli_available?
+  test "brotli compresses and round-trips" do
+    assert DeliveryCompression.brotli_available?, "brotli gem should be a dependency"
 
-    assert_equal "gzip", DeliveryCompression.effective_mode("br")
-    encoding, = DeliveryCompression.compress("{}", "br")
-    assert_equal "gzip", encoding
+    json = { greeting: "Hello" }.to_json
+    encoding, bytes = DeliveryCompression.compress(json, "br")
+
+    assert_equal "br", encoding
+    assert_not_equal json, bytes
+    assert_equal json, DeliveryCompression.decompress(bytes, encoding)
   end
 
   test "unknown mode degrades to none" do

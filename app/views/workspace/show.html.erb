@@ -93,9 +93,6 @@
               [ [ "None", "none" ], [ "Gzip", "gzip" ], [ "Brotli", "br" ] ],
               {}, class: "text-[14px]" %>
       </div>
-      <% unless DeliveryCompression.brotli_available? %>
-        <div class="text-[12px] text-mut mt-[7px]">Brotli requires the <span class="font-mono">brotli</span> gem; without it, Brotli falls back to Gzip.</div>
-      <% end %>
       <div class="flex justify-end mt-[18px]">
         <%= loading_submit form, "Save changes" %>
       </div>
