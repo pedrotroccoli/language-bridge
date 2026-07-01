@@ -109,7 +109,7 @@ class Translation::ArtifactTest < ActiveSupport::TestCase
       Translation::Artifact.find_by!(namespace: @namespace, locale: @locale)
     end
 
-    # Stored blobs are compression-encoded (issue #95); decode before parsing.
+    # Stored blobs are compression-encoded; decode before parsing.
     def payload(artifact)
       JSON.parse(DeliveryCompression.decompress(artifact.file.download, artifact.content_encoding))
     end

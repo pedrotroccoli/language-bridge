@@ -56,7 +56,7 @@ class Translation::Artifact < ApplicationRecord
       project = namespace.project
       key = project.delivery_storage_key(namespace, locale)
 
-      # Store the bytes already compressed (issue #95) so delivery streams them
+      # Store the bytes already compressed so delivery streams them
       # as-is under Content-Encoding. nil encoding = stored uncompressed.
       encoding, body = DeliveryCompression.compress(content.to_json, Setting.current.delivery_compression)
 
@@ -90,7 +90,7 @@ class Translation::Artifact < ApplicationRecord
         retry
       end
 
-      # Materialize the JSON at a deterministic key (issue #77). When the key is
+      # Materialize the JSON at a deterministic key. When the key is
       # unchanged (a content edit), overwrite the existing blob in place — reusing
       # the same key without the attach+purge churn that would otherwise delete the
       # object we just wrote. When the key changed (template edit), purge the old
@@ -119,14 +119,16 @@ class Translation::Artifact < ApplicationRecord
         set_object_content_encoding(artifact.file.blob, encoding)
       end
 
-      # Best-effort: set the stored object's Content-Encoding metadata. Only S3
-      # services support it; Disk (dev/test) and anything else are skipped. Never
-      # let a metadata hiccup fail the rebuild — the DeliveryController path still
-      # sends the header from artifact.content_encoding regardless.
+      # Best-effort: stamp the stored object's Content-Encoding so a customer CDN
+      # reading the bucket directly (bypassing DeliveryController) decodes it.
+      # Only the S3 service is handled (via its private #bucket) — Disk and other
+      # services are skipped, and any failure is swallowed since DeliveryController
+      # still sends the header from artifact.content_encoding regardless.
       def set_object_content_encoding(blob, encoding)
         return if encoding.nil?
         service = blob.service
-        return unless service.class.name.to_s.include?("S3")
+        return unless service.class.name == "ActiveStorage::Service::S3Service"
+        return unless service.respond_to?(:bucket, true)
 
         object = service.send(:bucket).object(blob.key)
         object.copy_from(object, content_type: "application/json", content_encoding: encoding, metadata_directive: "REPLACE")
