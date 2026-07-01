@@ -41,6 +41,7 @@ Rails.application.routes.draw do
       resource :restoration, only: :create, controller: "projects/backups/restorations"
     end
     resource :backup_schedule, only: :update, controller: "projects/backup_schedules"
+    resource :export, only: :show, controller: "projects/exports"
     resources :locales, only: %i[ create update destroy ] do
       member { post :source }
     end

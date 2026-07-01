@@ -42,6 +42,15 @@ class NamespaceExport
     files.one? ? single(files.first) : zip(files, format)
   end
 
+  # Serialized body for one locale in the given format, without any packaging —
+  # lets a project-wide exporter reuse per-namespace rendering under its own paths.
+  def content(locale, format)
+    format = format.to_s
+    raise Error, "Unsupported data format #{format.inspect}" unless FORMATS.include?(format)
+
+    file_for(locale, format).body
+  end
+
   private
     def prefix
       "#{@namespace.project.slug}-#{@namespace.name}"
