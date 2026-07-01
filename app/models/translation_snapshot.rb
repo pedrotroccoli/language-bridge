@@ -8,13 +8,16 @@ class TranslationSnapshot
 
   class FormatError < StandardError; end
 
-  def self.build(project, include_drafts: true)
-    new(project, include_drafts:).build
+  # Pass namespace: to scope the snapshot to a single namespace (e.g. a namespace
+  # export); omit it for the whole project.
+  def self.build(project, include_drafts: true, namespace: nil)
+    new(project, include_drafts:, namespace:).build
   end
 
-  def initialize(project, include_drafts: true)
+  def initialize(project, include_drafts: true, namespace: nil)
     @project = project
     @include_drafts = include_drafts
+    @namespace = namespace
   end
 
   def build
@@ -60,8 +63,9 @@ class TranslationSnapshot
   private
     def namespaces_hash
       result = {}
-      @project.namespaces.order(:name)
-              .includes(translation_keys: { translations: %i[ locale publication ] }).each do |namespace|
+      scope = @project.namespaces.order(:name).includes(translation_keys: { translations: %i[ locale publication ] })
+      scope = scope.where(id: @namespace.id) if @namespace
+      scope.each do |namespace|
         keys = {}
         namespace.translation_keys.sort_by(&:key).each do |translation_key|
           entries = {}

@@ -41,19 +41,18 @@
         </span>
       <% end %>
 
-      <% if @locales.any? %>
-        <details class="relative [&_summary::-webkit-details-marker]:hidden">
-          <summary class="list-none cursor-pointer btn-secondary h-[34px]"><%= mi "upload", size: 17, css: "text-ink-3" %>Export<%= mi "expand_more", size: 16, css: "text-faint" %></summary>
-          <div class="absolute top-[calc(100%+6px)] right-0 w-[190px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 p-[5px]">
-            <div class="px-[10px] py-[7px] eyebrow">Download namespace</div>
-            <% Snapshot::FORMATS.each do |fmt| %>
-              <%= link_to project_namespace_export_path(@project, @namespace, as: fmt), data: { turbo: false },
-                    class: "flex items-center gap-[9px] px-[10px] py-2 rounded-[7px] text-[13px] text-ink hover:bg-surface-2" do %>
-                <span class="font-mono text-[11px] text-mut-2 w-[42px]"><%= fmt.upcase %></span>Download
-              <% end %>
-            <% end %>
-          </div>
-        </details>
+      <% if editable && @locales.any? %>
+        <%= render "shared/export_menu",
+              data_links: NamespaceExport::FORMATS.map { |fmt| {
+                tag: fmt.upcase, label: (@locales.size > 1 ? "All locales (.zip)" : "Download"),
+                url: project_namespace_export_path(@project, @namespace, as: fmt) } },
+              per_locale_title: "JSON by locale",
+              per_locale_links: (@locales.size > 1 ? @locales.map { |locale| {
+                tag: locale.code, label: ".json",
+                url: project_namespace_export_path(@project, @namespace, as: "json", locale: locale.code) } } : []),
+              backup_links: Snapshot::FORMATS.map { |fmt| {
+                tag: fmt.upcase, label: "Download",
+                url: project_namespace_export_path(@project, @namespace, as: fmt, mode: "backup") } } %>
       <% end %>
 
       <% if manageable && @locales.any? %>

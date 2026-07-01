@@ -67,9 +67,21 @@
         <h3 class="m-0 text-[16px] font-semibold text-ink">Namespaces</h3>
         <span class="font-mono text-[12px] text-faint"><%= format("%02d", @namespaces.size) %></span>
       </div>
-      <% if current_user.admin? %>
-        <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New namespace</button>
-      <% end %>
+      <div class="flex items-center gap-[9px]">
+        <% if current_user.can_edit_translations?(@project) && @namespaces.any? && @locales.any? %>
+          <%= render "shared/export_menu",
+                data_links: ProjectExport::FORMATS.map { |fmt| {
+                  tag: fmt.upcase, label: "All namespaces (.zip)",
+                  url: project_export_path(@project, as: fmt) } },
+                per_locale_title: nil, per_locale_links: [],
+                backup_links: Snapshot::FORMATS.map { |fmt| {
+                  tag: fmt.upcase, label: "Download",
+                  url: project_export_path(@project, as: fmt, mode: "backup") } } %>
+        <% end %>
+        <% if current_user.admin? %>
+          <button type="button" class="btn h-[34px]" data-action="click->modal#open"><%= mi "add", size: 17, weight: 400 %>New namespace</button>
+        <% end %>
+      </div>
     </div>
 
     <% if current_user.admin? %>
