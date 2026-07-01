@@ -32,7 +32,7 @@ class Translation::ArtifactDeliveryKeyTest < ActiveSupport::TestCase
     assert_equal key, artifact.file.key, "key must stay stable across edits"
     assert_equal blob_id, artifact.file.blob.id, "same blob reused (in-place upload, no churn)"
     assert_not_equal old_checksum, artifact.reload.checksum
-    assert_match "Hi there", artifact.file.download
+    assert_match "Hi there", DeliveryCompression.decompress(artifact.file.download, artifact.content_encoding)
   end
 
   test "changing the template re-keys and purges the old blob" do

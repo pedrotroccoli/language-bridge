@@ -4,6 +4,8 @@
 class Setting < ApplicationRecord
   CACHE_KEY = "app_setting".freeze
 
+  validates :delivery_compression, inclusion: { in: DeliveryCompression::MODES }
+
   after_commit :reset_cache
 
   def self.current

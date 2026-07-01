@@ -1,50 +1,83 @@
 erDiagram
-    Companies {
-        int id
+    Project {
+        uuid id
         string name
         string slug
+        uuid storage_connection_id
     }
-    Projects {
-        int id
-        int company_id
-        string name
-        string slug
-    }
-    Locales {
-        int id
-        int project_id
+    Locale {
+        uuid id
+        uuid project_id
         string code
+        boolean is_source
     }
-    Namespaces {
-        int id
-        int project_id
+    Namespace {
+        uuid id
+        uuid project_id
         string name
     }
-    TranslationKeys {
-        int id
-        int project_id
-        int namespace_id
+    TranslationKey {
+        uuid id
+        uuid project_id
+        uuid namespace_id
         string key
+        text context
     }
-    Translations {
-        int id
-        int translation_key_id
-        int locale_id
-        string value
-        string status
-        datetime published_at
+    Translation {
+        uuid id
+        uuid project_id
+        uuid translation_key_id
+        uuid locale_id
+        text value
+        uuid author_id
     }
-    Users {
-        int id
-        int company_id
+    TranslationPublication {
+        uuid id
+        uuid translation_id
+        uuid publisher_id
+    }
+    TranslationReview {
+        uuid id
+        uuid translation_id
+        uuid requester_id
+    }
+    TranslationApproval {
+        uuid id
+        uuid translation_id
+        uuid approver_id
+    }
+    TranslationVersion {
+        uuid id
+        uuid translation_id
+        text value
+        uuid author_id
+    }
+    TranslationArtifact {
+        uuid id
+        uuid project_id
+        uuid namespace_id
+        uuid locale_id
+        string checksum
+        string content_encoding
+    }
+    User {
+        uuid id
         string email
+        string name
         string role
     }
-    Companies ||--o{ Projects : "has many"
-    Companies ||--o{ Users : "has many"
-    Projects ||--o{ Locales : "has many"
-    Projects ||--o{ Namespaces : "has many"
-    Projects ||--o{ TranslationKeys : "has many"
-    Namespaces ||--o{ TranslationKeys : "has many"
-    TranslationKeys ||--o{ Translations : "has many"
-    Locales ||--o{ Translations : "has many"
+    Project ||--o{ Locale : "has many"
+    Project ||--o{ Namespace : "has many"
+    Project ||--o{ TranslationKey : "has many"
+    Project ||--o{ Translation : "has many"
+    Project ||--o{ TranslationArtifact : "has many"
+    Namespace ||--o{ TranslationKey : "has many"
+    Namespace ||--o{ TranslationArtifact : "has many"
+    Locale ||--o{ Translation : "has many"
+    Locale ||--o{ TranslationArtifact : "has many"
+    TranslationKey ||--o{ Translation : "has many"
+    Translation |o--o| TranslationPublication : "state record"
+    Translation |o--o| TranslationReview : "state record"
+    Translation |o--o| TranslationApproval : "state record"
+    Translation ||--o{ TranslationVersion : "history"
+    User ||--o{ Translation : "authored"

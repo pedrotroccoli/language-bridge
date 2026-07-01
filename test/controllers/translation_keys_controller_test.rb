@@ -79,11 +79,11 @@ class TranslationKeysControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:admin))
     greeting = translations(:greeting_en) # key "greeting", value "Hello"
     greeting.publish(by: users(:admin))
-    assert_equal({ "greeting" => "Hello" }, JSON.parse(artifact.file.download))
+    assert_equal({ "greeting" => "Hello" }, JSON.parse(DeliveryCompression.decompress(artifact.file.download, artifact.content_encoding)))
 
     delete project_namespace_translation_key_path(@project, @namespace, greeting.translation_key)
 
-    assert_equal({}, JSON.parse(artifact.file.download))
+    assert_equal({}, JSON.parse(DeliveryCompression.decompress(artifact.file.download, artifact.content_encoding)))
   end
 
   test "detail drawer shows per-locale state and version history" do

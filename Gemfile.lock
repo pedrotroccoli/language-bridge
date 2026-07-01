@@ -113,6 +113,7 @@ GEM
       msgpack (~> 1.2)
     brakeman (8.0.5)
       racc
+    brotli (0.8.0)
     builder (3.3.0)
     bundler-audit (0.9.3)
       bundler (>= 1.2.0)
@@ -512,6 +513,7 @@ DEPENDENCIES
   azure-storage-blob (~> 2.0)
   bootsnap
   brakeman
+  brotli
   bundler-audit
   capybara
   csv

@@ -62,10 +62,14 @@ export default class extends Controller {
     event.preventDefault()
     this.renderTest("Testing connection…", "text-mut")
     try {
+      // Strip Rails' method-override field: on the edit form it carries
+      // _method=patch, which would reroute this POST to #update (id="test").
+      const body = new FormData(this.element.querySelector("form"))
+      body.delete("_method")
       const res = await fetch(this.testUrlValue, {
         method: "POST",
         headers: { "X-CSRF-Token": this.csrfToken, Accept: "application/json" },
-        body: new FormData(this.element.querySelector("form"))
+        body
       })
       const json = await res.json()
       this.renderTest(json.message, json.ok ? "text-ok-ink" : "text-danger-ink")

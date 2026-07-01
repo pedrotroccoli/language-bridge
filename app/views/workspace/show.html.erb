@@ -81,6 +81,24 @@
     <% end %>
   </div>
 
+  <%# ---- Delivery compression ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "compress", size: 19, css: "text-ink-3" %>Delivery compression</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">How published translation files are stored and served over <span class="font-mono text-[12px]">/cdn/*</span>. Compressed responses carry <span class="font-mono text-[12px]">Content-Encoding</span> and are transparent to clients that decompress (browsers, i18next). Clients that don't accept it are served plain JSON automatically.</div>
+
+    <%= form_with model: @setting, url: workspace_path, method: :patch, local: true do |form| %>
+      <div class="max-w-[240px]">
+        <%= form.label :delivery_compression, "Compression", class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" %>
+        <%= form.select :delivery_compression,
+              [ [ "None", "none" ], [ "Gzip", "gzip" ], [ "Brotli", "br" ] ],
+              {}, class: "text-[14px]" %>
+      </div>
+      <div class="flex justify-end mt-[18px]">
+        <%= loading_submit form, "Save changes" %>
+      </div>
+    <% end %>
+  </div>
+
   <%# ---- Rate limiting ---- %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
     <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "speed", size: 19, css: "text-ink-3" %>Rate limiting</div>

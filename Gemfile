@@ -50,6 +50,9 @@ gem "azure-storage-blob", "~> 2.0", require: false
 gem "csv"
 gem "rexml"
 
+# Brotli delivery compression (workspace-selectable; gzip is the stdlib default).
+gem "brotli"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

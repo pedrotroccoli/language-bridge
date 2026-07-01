@@ -26,7 +26,9 @@ class ProjectBackupFormatTest < ActiveSupport::TestCase
   end
 
   test "auto backup is skipped when content is unchanged" do
-    @project.create_backup!(source: "auto")
+    @project.backups.destroy_all # start from a known state, independent of fixtures/order
+
+    assert_not_nil @project.create_backup!(source: "auto")
     assert_nil @project.create_backup!(source: "auto")
   end
 
