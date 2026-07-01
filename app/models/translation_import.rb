@@ -32,7 +32,6 @@ class TranslationImport
 
   class Error < StandardError; end
 
-  # Best-effort format detection from the uploaded filename's extension.
   def self.format_from_filename(filename)
     ext = File.extname(filename.to_s).delete(".").downcase
     ext = "xliff" if ext == "xlf"
@@ -54,7 +53,7 @@ class TranslationImport
 
     keys_created = 0
     written = 0
-    revalued_ids = [] # ids of existing translations whose value changed
+    revalued_ids = []
 
     ActiveRecord::Base.transaction do
       entries.each_slice(@batch_size) do |slice|
@@ -89,7 +88,7 @@ class TranslationImport
     # version snapshots already written here, and invalidation done at the end).
     def import_chunk(chunk)
       key_ids = upsert_keys(chunk.keys)
-      keys_created = chunk.keys.count { |k| key_ids[:created].include?(k) }
+      keys_created = key_ids[:created].size
 
       existing = Translation
         .where(translation_key_id: key_ids[:map].values, locale_id: @locale.id)
