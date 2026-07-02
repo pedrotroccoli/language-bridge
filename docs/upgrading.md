@@ -5,12 +5,22 @@ image; upgrading is rebuild + recreate, and schema changes apply themselves.
 
 ## The one command
 
+Production (`docker-compose.prod.yml`, published image) — pull the new tag and
+recreate:
+
 ```bash
-docker compose -f docker-compose.prod.yml up --build -d
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-That rebuilds the image (new code + new `db/migrate/*`), then recreates the
-containers. The `pg-data` volume is **not** touched, so all data survives.
+Local / test (`docker-compose.local.yml`, builds from source):
+
+```bash
+docker compose -f docker-compose.local.yml up --build -d
+```
+
+Either recreates the containers with new code + new `db/migrate/*`. The `pg-data`
+volume is **not** touched, so all data survives.
 
 > **Never** add `-v`. `docker compose down -v` deletes the `pg-data` volume — a
 > full data wipe. A normal upgrade never removes volumes.
@@ -32,7 +42,7 @@ scaling or restarting web never triggers a concurrent migration — no races.
 ## Guarantees & limits
 
 - **Forward migrations just work.** Commit each migration with its `schema.rb`
-  and it applies on the next `up --build`.
+  and it applies on the next recreate.
 - **A failed migration blocks the release.** If `migrate` exits non-zero, `web`
   will not start — the app stays down rather than booting against a half-migrated
   schema. **Test migrations before publishing the image.**
