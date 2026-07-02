@@ -1,0 +1,42 @@
+# One-shot migration Job: creates the 4 Solid databases and runs migrations.
+# Web/job pods wait for this via an initContainer, so no replica ever races to
+# migrate. Re-runs safely on each deploy (db:prepare is idempotent).
+#
+# ttlSecondsAfterFinished cleans the Job up automatically. Bump the name (or use
+# `kubectl delete job` first) if you re-apply before it's collected.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: language-bridge-migrate
+  labels:
+    app: language-bridge
+    component: migrate
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: language-bridge
+        component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: belzkai/language-bridge:0.0.1
+          command: ["./bin/rails", "db:prepare"]
+          envFrom:
+            - configMapRef:
+                name: language-bridge-config
+            - secretRef:
+                name: language-bridge-secrets
+          env:
+            - name: RUN_DB_PREPARE
+              value: "false"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

@@ -1,0 +1,31 @@
+# Ingress example. Provider-neutral; adjust ingressClassName and annotations to
+# your controller (nginx, traefik, GKE, ALB, ...). TLS is terminated here, which
+# is why the app runs with RAILS_ASSUME_SSL/RAILS_FORCE_SSL=true.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: language-bridge
+  labels:
+    app: language-bridge
+  annotations:
+    # cert-manager (if installed) — auto-provision a Let's Encrypt cert:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx — allow large translation import/backup uploads:
+    # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx # <-- your ingress controller
+  tls:
+    - hosts:
+        - app.example.com # <-- your host (match APP_HOST / RAILS_HOSTS)
+      secretName: language-bridge-tls
+  rules:
+    - host: app.example.com # <-- your host
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: language-bridge-web
+                port:
+                  name: http

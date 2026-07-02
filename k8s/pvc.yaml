@@ -1,0 +1,22 @@
+# Active Storage keeps app blobs (imports/exports, backups) on local disk at
+# /rails/storage. That path is per-pod, so it MUST be shared (ReadWriteMany) when
+# more than one pod writes to it. The web and jobs Deployments mount this claim.
+#
+# Many cloud block-storage classes are ReadWriteOnce only — if RWX is
+# unavailable, use ReadWriteOnce and keep web replicas at 1 (and disable the HPA).
+# For true horizontal scale, back /rails/storage with an RWX class (NFS, EFS,
+# Filestore, Longhorn, ...). Cloud delivery targets are separate and configured
+# in the UI (StorageConnection).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: language-bridge-storage
+  labels:
+    app: language-bridge
+spec:
+  accessModes:
+    - ReadWriteMany # use ReadWriteOnce + replicas:1 if RWX is unavailable
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: nfs   # <-- an RWX-capable class

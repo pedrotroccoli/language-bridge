@@ -1,0 +1,81 @@
+# Production-shaped, single-node deployment: builds the app image, runs an
+# external Postgres, migrates once, then serves. Two steps to run:
+#   1) cp .env.example .env   && fill SECRET_KEY_BASE, AR_ENCRYPTION_*, BACK_DATABASE_PASSWORD
+#   2) docker compose -f docker-compose.prod.yml up -d
+# Pulls belzkai/language-bridge:0.0.1 from Docker Hub. App on http://localhost:8080
+# (health: /up). To build locally instead, uncomment `build:` below and add --build.
+#
+# NOTE: this is the "Docker" path. For the dev sandbox (Postgres + Mailhog only)
+# use compose.yml instead.
+
+x-app: &app
+  # Uses the published image by default. Uncomment `build` to build locally
+  # instead (the built image is tagged with the same name).
+  # build:
+  #   context: .
+  image: belzkai/language-bridge:0.0.1
+  env_file: .env
+  environment:
+    RAILS_ENV: production
+    # Talk to the bundled Postgres over the compose network.
+    DB_HOST: db
+    DB_PORT: "5432"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      # Production connects as role "back" (see config/database.yml). Its
+      # password comes from BACK_DATABASE_PASSWORD in your .env.
+      POSTGRES_USER: back
+      POSTGRES_PASSWORD: ${BACK_DATABASE_PASSWORD:?set BACK_DATABASE_PASSWORD in .env}
+      POSTGRES_DB: back_production
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U back -d back_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: creates the 4 Solid databases (primary/cache/queue/cable) and migrates.
+  migrate:
+    <<: *app
+    command: ["./bin/rails", "db:prepare"]
+    environment:
+      RAILS_ENV: production
+      DB_HOST: db
+      DB_PORT: "5432"
+      RUN_DB_PREPARE: "false"
+    restart: "no"
+
+  web:
+    <<: *app
+    command: ["./bin/thrust", "./bin/rails", "server"]
+    environment:
+      RAILS_ENV: production
+      DB_HOST: db
+      DB_PORT: "5432"
+      # Migration handled by the `migrate` service; don't race on boot.
+      RUN_DB_PREPARE: "false"
+      # Run the Solid Queue supervisor inside Puma (single-node = one process).
+      SOLID_QUEUE_IN_PUMA: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Persist Active Storage blobs (imports/exports, backups) on local disk.
+    volumes:
+      - app-storage:/rails/storage
+
+volumes:
+  pg-data:
+  app-storage:

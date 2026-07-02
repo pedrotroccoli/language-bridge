@@ -1,7 +1,10 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# Create/migrate the database on boot when running the rails server. Gated by
+# RUN_DB_PREPARE (default true) so orchestrators that migrate via a dedicated
+# one-shot Job/init step (e.g. Kubernetes) can set RUN_DB_PREPARE=false and avoid
+# every replica racing to migrate.
+if [ "${RUN_DB_PREPARE:-true}" == "true" ] && [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
 fi
 

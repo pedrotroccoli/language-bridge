@@ -5,8 +5,18 @@ class Setting < ApplicationRecord
   CACHE_KEY = "app_setting".freeze
 
   validates :delivery_compression, inclusion: { in: DeliveryCompression::MODES }
+  validates :delivery_base_url,
+    allow_blank: true,
+    format: { with: %r{\Ahttps?://[^\s/]+(/[^\s]*)?\z}i, message: "must start with http:// or https://" }
 
   after_commit :reset_cache
+
+  # Public origin (scheme + host[:port], no trailing slash) shown in delivery
+  # previews so users see the real CDN/ingress URL instead of the request host.
+  # Blank = fall back to the incoming request's base URL.
+  def delivery_base_url=(value)
+    super(value.to_s.strip.chomp("/"))
+  end
 
   def self.current
     Rails.cache.fetch(CACHE_KEY) { first || create! }

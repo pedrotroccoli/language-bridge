@@ -26,6 +26,7 @@ class WorkspaceController < ApplicationController
         :delivery_rate_limit, :delivery_rate_period,
         :upload_max_bytes,
         :delivery_compression,
+        :delivery_base_url,
         :allowed_origins_text,
         { upload_allowed_formats: [] }
       ])

@@ -1,0 +1,17 @@
+# Stable in-cluster endpoint for the web pods. The ingress targets this Service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: language-bridge-web
+  labels:
+    app: language-bridge
+    component: web
+spec:
+  type: ClusterIP
+  selector:
+    app: language-bridge
+    component: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

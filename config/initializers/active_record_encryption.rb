@@ -7,7 +7,10 @@
 Rails.application.configure do
   enc = config.active_record.encryption
 
-  if Rails.env.local?
+  # `SECRET_KEY_BASE_DUMMY` marks a throwaway boot (e.g. `assets:precompile`
+  # during the Docker build) where no real secrets exist and nothing is actually
+  # encrypted — derive keys there too so the build doesn't need production keys.
+  if Rails.env.local? || ENV["SECRET_KEY_BASE_DUMMY"].present?
     generator = ActiveSupport::KeyGenerator.new(Rails.application.secret_key_base, hash_digest_class: OpenSSL::Digest::SHA256)
     enc.primary_key         = ENV["AR_ENCRYPTION_PRIMARY_KEY"]         || generator.generate_key("ar-encryption-primary", 32)
     enc.deterministic_key   = ENV["AR_ENCRYPTION_DETERMINISTIC_KEY"]   || generator.generate_key("ar-encryption-deterministic", 32)
