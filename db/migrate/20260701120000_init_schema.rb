@@ -13,8 +13,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "name", null: false
       t.uuid "record_id", null: false
       t.string "record_type", null: false
-      t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
-      t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+      t.index [ "blob_id" ], name: "index_active_storage_attachments_on_blob_id"
+      t.index [ "record_type", "record_id", "name", "blob_id" ], name: "index_active_storage_attachments_uniqueness", unique: true
     end
 
     create_table "active_storage_blobs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -26,13 +26,13 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "key", null: false
       t.text "metadata"
       t.string "service_name", null: false
-      t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+      t.index [ "key" ], name: "index_active_storage_blobs_on_key", unique: true
     end
 
     create_table "active_storage_variant_records", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
       t.uuid "blob_id", null: false
       t.string "variation_digest", null: false
-      t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+      t.index [ "blob_id", "variation_digest" ], name: "index_active_storage_variant_records_uniqueness", unique: true
     end
 
     create_table "api_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -45,9 +45,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "scope", null: false
       t.string "token_digest", null: false
       t.datetime "updated_at", null: false
-      t.index ["creator_id"], name: "index_api_tokens_on_creator_id"
-      t.index ["project_id"], name: "index_api_tokens_on_project_id"
-      t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+      t.index [ "creator_id" ], name: "index_api_tokens_on_creator_id"
+      t.index [ "project_id" ], name: "index_api_tokens_on_project_id"
+      t.index [ "token_digest" ], name: "index_api_tokens_on_token_digest", unique: true
     end
 
     create_table "events", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -58,9 +58,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "eventable_type", null: false
       t.jsonb "metadata", default: {}, null: false
       t.datetime "updated_at", null: false
-      t.index ["created_at"], name: "index_events_on_created_at"
-      t.index ["creator_id", "created_at"], name: "index_events_on_creator_id_and_created_at"
-      t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+      t.index [ "created_at" ], name: "index_events_on_created_at"
+      t.index [ "creator_id", "created_at" ], name: "index_events_on_creator_id_and_created_at"
+      t.index [ "eventable_type", "eventable_id" ], name: "index_events_on_eventable_type_and_eventable_id"
     end
 
     create_table "invitations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -72,9 +72,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "role", null: false
       t.string "token", null: false
       t.datetime "updated_at", null: false
-      t.index ["email"], name: "index_invitations_on_email", unique: true, where: "(accepted_at IS NULL)"
-      t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
-      t.index ["token"], name: "index_invitations_on_token", unique: true
+      t.index [ "email" ], name: "index_invitations_on_email", unique: true, where: "(accepted_at IS NULL)"
+      t.index [ "inviter_id" ], name: "index_invitations_on_inviter_id"
+      t.index [ "token" ], name: "index_invitations_on_token", unique: true
     end
 
     create_table "locales", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -84,9 +84,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "project_id", null: false
       t.integer "translations_count", default: 0, null: false
       t.datetime "updated_at", null: false
-      t.index ["project_id", "code"], name: "index_locales_on_project_id_and_code", unique: true
-      t.index ["project_id"], name: "index_locales_on_one_source_per_project", unique: true, where: "is_source"
-      t.index ["project_id"], name: "index_locales_on_project_id"
+      t.index [ "project_id", "code" ], name: "index_locales_on_project_id_and_code", unique: true
+      t.index [ "project_id" ], name: "index_locales_on_one_source_per_project", unique: true, where: "is_source"
+      t.index [ "project_id" ], name: "index_locales_on_project_id"
     end
 
     create_table "missing_key_reports", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -99,9 +99,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "namespace", null: false
       t.uuid "project_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["project_id", "last_reported_at"], name: "index_missing_key_reports_on_project_id_and_last_reported_at"
-      t.index ["project_id", "namespace", "key"], name: "index_missing_key_reports_on_project_id_and_namespace_and_key", unique: true
-      t.index ["project_id"], name: "index_missing_key_reports_on_project_id"
+      t.index [ "project_id", "last_reported_at" ], name: "index_missing_key_reports_on_project_id_and_last_reported_at"
+      t.index [ "project_id", "namespace", "key" ], name: "index_missing_key_reports_on_project_id_and_namespace_and_key", unique: true
+      t.index [ "project_id" ], name: "index_missing_key_reports_on_project_id"
     end
 
     create_table "namespaces", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -110,7 +110,7 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "project_id", null: false
       t.integer "translation_keys_count", default: 0, null: false
       t.datetime "updated_at", null: false
-      t.index ["project_id", "name"], name: "index_namespaces_on_project_id_and_name", unique: true
+      t.index [ "project_id", "name" ], name: "index_namespaces_on_project_id_and_name", unique: true
     end
 
     create_table "personal_access_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -119,8 +119,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "token_digest", null: false
       t.datetime "updated_at", null: false
       t.uuid "user_id", null: false
-      t.index ["token_digest"], name: "index_personal_access_tokens_on_token_digest", unique: true
-      t.index ["user_id"], name: "index_personal_access_tokens_on_user_id", unique: true
+      t.index [ "token_digest" ], name: "index_personal_access_tokens_on_token_digest", unique: true
+      t.index [ "user_id" ], name: "index_personal_access_tokens_on_user_id", unique: true
     end
 
     create_table "project_backups", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -132,8 +132,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "source", default: "manual", null: false
       t.integer "translations_count", default: 0, null: false
       t.datetime "updated_at", null: false
-      t.index ["project_id", "created_at"], name: "index_project_backups_on_project_id_and_created_at"
-      t.index ["project_id"], name: "index_project_backups_on_project_id"
+      t.index [ "project_id", "created_at" ], name: "index_project_backups_on_project_id_and_created_at"
+      t.index [ "project_id" ], name: "index_project_backups_on_project_id"
     end
 
     create_table "projects", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -158,8 +158,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.bigint "upload_max_bytes"
       t.boolean "upload_override", default: false, null: false
       t.string "upload_path", default: "", null: false
-      t.index ["slug"], name: "index_projects_on_slug", unique: true
-      t.index ["storage_connection_id"], name: "index_projects_on_storage_connection_id"
+      t.index [ "slug" ], name: "index_projects_on_slug", unique: true
+      t.index [ "storage_connection_id" ], name: "index_projects_on_storage_connection_id"
     end
 
     create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -169,8 +169,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.datetime "updated_at", null: false
       t.string "user_agent"
       t.uuid "user_id", null: false
-      t.index ["token"], name: "index_sessions_on_token", unique: true
-      t.index ["user_id"], name: "index_sessions_on_user_id"
+      t.index [ "token" ], name: "index_sessions_on_token", unique: true
+      t.index [ "user_id" ], name: "index_sessions_on_user_id"
     end
 
     create_table "settings", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -184,7 +184,7 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.integer "missing_rate_period", default: 60, null: false
       t.boolean "rate_limiting_enabled", default: true, null: false
       t.datetime "updated_at", null: false
-      t.string "upload_allowed_formats", default: ["json", "csv", "xliff"], null: false, array: true
+      t.string "upload_allowed_formats", default: [ "json", "csv", "xliff" ], null: false, array: true
       t.bigint "upload_max_bytes", default: 5242880, null: false
     end
 
@@ -194,8 +194,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "token", null: false
       t.datetime "updated_at", null: false
       t.uuid "user_id", null: false
-      t.index ["token"], name: "index_sign_in_tokens_on_token", unique: true
-      t.index ["user_id"], name: "index_sign_in_tokens_on_user_id"
+      t.index [ "token" ], name: "index_sign_in_tokens_on_token", unique: true
+      t.index [ "user_id" ], name: "index_sign_in_tokens_on_user_id"
     end
 
     create_table "storage_connections", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -218,8 +218,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.datetime "created_at", null: false
       t.uuid "translation_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["approver_id"], name: "index_translation_approvals_on_approver_id"
-      t.index ["translation_id"], name: "index_translation_approvals_on_translation_id", unique: true
+      t.index [ "approver_id" ], name: "index_translation_approvals_on_approver_id"
+      t.index [ "translation_id" ], name: "index_translation_approvals_on_translation_id", unique: true
     end
 
     create_table "translation_artifacts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -231,10 +231,10 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "namespace_id", null: false
       t.uuid "project_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["locale_id"], name: "index_translation_artifacts_on_locale_id"
-      t.index ["namespace_id", "locale_id"], name: "index_translation_artifacts_on_namespace_id_and_locale_id", unique: true
-      t.index ["namespace_id"], name: "index_translation_artifacts_on_namespace_id"
-      t.index ["project_id"], name: "index_translation_artifacts_on_project_id"
+      t.index [ "locale_id" ], name: "index_translation_artifacts_on_locale_id"
+      t.index [ "namespace_id", "locale_id" ], name: "index_translation_artifacts_on_namespace_id_and_locale_id", unique: true
+      t.index [ "namespace_id" ], name: "index_translation_artifacts_on_namespace_id"
+      t.index [ "project_id" ], name: "index_translation_artifacts_on_project_id"
     end
 
     create_table "translation_keys", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -245,9 +245,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "project_id", null: false
       t.integer "translations_count", default: 0, null: false
       t.datetime "updated_at", null: false
-      t.index ["namespace_id"], name: "index_translation_keys_on_namespace_id"
-      t.index ["project_id", "namespace_id", "key"], name: "index_translation_keys_on_project_id_and_namespace_id_and_key", unique: true
-      t.index ["project_id"], name: "index_translation_keys_on_project_id"
+      t.index [ "namespace_id" ], name: "index_translation_keys_on_namespace_id"
+      t.index [ "project_id", "namespace_id", "key" ], name: "index_translation_keys_on_project_id_and_namespace_id_and_key", unique: true
+      t.index [ "project_id" ], name: "index_translation_keys_on_project_id"
     end
 
     create_table "translation_publications", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -255,8 +255,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "publisher_id"
       t.uuid "translation_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["publisher_id"], name: "index_translation_publications_on_publisher_id"
-      t.index ["translation_id"], name: "index_translation_publications_on_translation_id", unique: true
+      t.index [ "publisher_id" ], name: "index_translation_publications_on_publisher_id"
+      t.index [ "translation_id" ], name: "index_translation_publications_on_translation_id", unique: true
     end
 
     create_table "translation_reviews", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -264,8 +264,8 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "requester_id", null: false
       t.uuid "translation_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["requester_id"], name: "index_translation_reviews_on_requester_id"
-      t.index ["translation_id"], name: "index_translation_reviews_on_translation_id", unique: true
+      t.index [ "requester_id" ], name: "index_translation_reviews_on_requester_id"
+      t.index [ "translation_id" ], name: "index_translation_reviews_on_translation_id", unique: true
     end
 
     create_table "translation_versions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -274,9 +274,9 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "translation_id", null: false
       t.datetime "updated_at", null: false
       t.text "value"
-      t.index ["author_id"], name: "index_translation_versions_on_author_id"
-      t.index ["translation_id", "created_at"], name: "index_translation_versions_on_translation_id_and_created_at"
-      t.index ["translation_id"], name: "index_translation_versions_on_translation_id"
+      t.index [ "author_id" ], name: "index_translation_versions_on_author_id"
+      t.index [ "translation_id", "created_at" ], name: "index_translation_versions_on_translation_id_and_created_at"
+      t.index [ "translation_id" ], name: "index_translation_versions_on_translation_id"
     end
 
     create_table "translations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -287,10 +287,10 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.uuid "translation_key_id", null: false
       t.datetime "updated_at", null: false
       t.text "value"
-      t.index ["author_id"], name: "index_translations_on_author_id"
-      t.index ["locale_id"], name: "index_translations_on_locale_id"
-      t.index ["project_id"], name: "index_translations_on_project_id"
-      t.index ["translation_key_id", "locale_id"], name: "index_translations_on_translation_key_id_and_locale_id", unique: true
+      t.index [ "author_id" ], name: "index_translations_on_author_id"
+      t.index [ "locale_id" ], name: "index_translations_on_locale_id"
+      t.index [ "project_id" ], name: "index_translations_on_project_id"
+      t.index [ "translation_key_id", "locale_id" ], name: "index_translations_on_translation_key_id_and_locale_id", unique: true
     end
 
     create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -299,7 +299,7 @@ class InitSchema < ActiveRecord::Migration[8.1]
       t.string "name"
       t.string "role", default: "translator", null: false
       t.datetime "updated_at", null: false
-      t.index ["email"], name: "index_users_on_email", unique: true
+      t.index [ "email" ], name: "index_users_on_email", unique: true
     end
 
     add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
