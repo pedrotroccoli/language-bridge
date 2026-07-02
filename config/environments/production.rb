@@ -67,13 +67,16 @@ Rails.application.configure do
   # SMTP_PASSWORD is unset, delivery errors are swallowed so the app still boots.
   config.action_mailer.raise_delivery_errors = ENV["SMTP_PASSWORD"].present?
   config.action_mailer.delivery_method = :smtp
+  # tls/authentication default to the Resend-style secure setup, but are
+  # overridable so a plain test relay (e.g. Mailhog on :1025) can be used:
+  # SMTP_TLS=false and SMTP_AUTHENTICATION= (empty) disable both.
   config.action_mailer.smtp_settings = {
     address:        ENV.fetch("SMTP_HOST", "smtp.resend.com"),
     port:           ENV.fetch("SMTP_PORT", 465).to_i,
     user_name:      ENV.fetch("SMTP_USERNAME", "resend"),
     password:       ENV["SMTP_PASSWORD"],
-    authentication: :plain,
-    tls:            true
+    authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain").presence&.to_sym,
+    tls:            ActiveModel::Type::Boolean.new.cast(ENV.fetch("SMTP_TLS", "true"))
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
