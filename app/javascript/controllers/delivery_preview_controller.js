@@ -1,11 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Live preview of the delivery path template. As the operator edits the
-// template, render the resulting object keys for a few sample (namespace,
-// locale) pairs supplied via the `samples` value.
+// template, render the resulting full delivery URLs (base URL + object key) for
+// a few sample (namespace, locale) pairs supplied via the `samples` value.
 export default class extends Controller {
   static targets = ["input", "output"]
-  static values = { samples: Array }
+  static values = { samples: Array, baseUrl: String }
 
   connect() {
     this.render()
@@ -15,6 +15,8 @@ export default class extends Controller {
     const template = this.inputTarget.value
     this.outputTarget.innerHTML = ""
 
+    const base = this.baseUrlValue.replace(/\/+$/, "")
+
     for (const s of this.samplesValue) {
       const key = template
         .replaceAll("{project_slug}", s.project_slug)
@@ -23,7 +25,7 @@ export default class extends Controller {
 
       const row = document.createElement("div")
       row.className = "font-mono text-[12px] text-ink-3 truncate"
-      row.textContent = key
+      row.textContent = base ? `${base}/${key}` : key
       this.outputTarget.appendChild(row)
     }
   }

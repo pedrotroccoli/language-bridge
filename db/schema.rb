@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_30_220653) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -183,6 +183,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_220653) do
   create_table "settings", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "allowed_origins", default: [], null: false, array: true
     t.datetime "created_at", null: false
+    t.string "delivery_base_url", default: "", null: false
     t.string "delivery_compression", default: "gzip", null: false
     t.integer "delivery_rate_limit", default: 300, null: false
     t.integer "delivery_rate_period", default: 60, null: false

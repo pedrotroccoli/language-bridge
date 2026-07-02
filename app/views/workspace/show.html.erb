@@ -81,6 +81,28 @@
     <% end %>
   </div>
 
+  <%# ---- Public delivery base URL ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "link", size: 19, css: "text-ink-3" %>Public delivery URL</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">Base URL used to preview delivery endpoints (<span class="font-mono text-[12px]">/cdn/*</span>) in project settings — set this to your public CDN or ingress origin, e.g. <span class="font-mono text-[12px]">https://cdn.example.com</span>. Leave empty to use the domain of the current request.</div>
+
+    <%= form_with model: @setting, url: workspace_path, method: :patch, local: true do |form| %>
+      <% if @setting.errors[:delivery_base_url].any? %>
+        <ul class="mb-4 text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
+          <% @setting.errors[:delivery_base_url].each do |msg| %><li>Base URL <%= msg %></li><% end %>
+        </ul>
+      <% end %>
+      <div class="flex flex-col gap-[7px]">
+        <%= form.label :delivery_base_url, "Base URL", class: "text-[12.5px] font-medium text-ink-2" %>
+        <%= form.text_field :delivery_base_url, placeholder: "https://cdn.example.com",
+              autocomplete: "off", autocapitalize: "none", spellcheck: "false", inputmode: "url", class: "font-mono text-[13px]" %>
+      </div>
+      <div class="flex justify-end mt-[18px]">
+        <%= loading_submit form, "Save changes" %>
+      </div>
+    <% end %>
+  </div>
+
   <%# ---- Delivery compression ---- %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
     <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "compress", size: 19, css: "text-ink-3" %>Delivery compression</div>

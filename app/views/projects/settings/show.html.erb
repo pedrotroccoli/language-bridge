@@ -171,12 +171,16 @@
       <%= loading_button_to "Sync all to storage", project_delivery_sync_path(@project), method: :post, icon: "sync", class: "btn-secondary flex-none",
             data: { turbo_confirm: "Re-materialize every published namespace/locale to #{@project.effective_storage_connection&.name || "local storage"}?" } %>
     </div>
+    <% delivery_base_url = Setting.current.delivery_base_url.presence || request.base_url %>
     <div class="bg-[#0d0d0d] rounded-[9px] px-[18px] py-4 font-mono text-[12.5px] leading-[2] text-[#e4e4e4] overflow-x-auto">
-      <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/{locale}/{namespace}</div>
+      <div><span class="text-[#5e5e5e]">GET</span> <%= delivery_base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/{locale}/{namespace}</div>
       <% sample_locale = @project.locales.alphabetically.first&.code || "en" %>
       <% sample_ns = @project.namespaces.alphabetically.first&.name || "common" %>
-      <div><span class="text-[#5e5e5e]">GET</span> <%= request.base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/<%= sample_locale %>/<%= sample_ns %></div>
+      <div><span class="text-[#5e5e5e]">GET</span> <%= delivery_base_url %>/cdn/<span class="text-[#6bd08f]"><%= @project.slug %></span>/<%= sample_locale %>/<%= sample_ns %></div>
     </div>
+    <% if Setting.current.delivery_base_url.blank? %>
+      <div class="text-[12px] text-mut mt-[8px]">Showing this request's host. Set a <%= link_to "public delivery URL", workspace_path, class: "text-ink-2 underline underline-offset-2" %> in workspace settings to preview your CDN origin.</div>
+    <% end %>
 
     <%# ---- Storage path template (issue #77): deterministic Active Storage key ---- %>
     <%
@@ -185,7 +189,7 @@
       delivery_samples = ns_names.product(loc_codes).first(3).map { |n, l| { project_slug: @project.slug, namespace: n, locale: l } }
     %>
     <%= form_with model: @project, local: true,
-          data: { controller: "delivery-preview", "delivery-preview-samples-value": delivery_samples.to_json } do |form| %>
+          data: { controller: "delivery-preview", "delivery-preview-samples-value": delivery_samples.to_json, "delivery-preview-base-url-value": delivery_base_url } do |form| %>
       <% if @project.errors[:delivery_path_template].any? %>
         <ul class="mt-4 mb-2 text-[13px] text-danger-ink bg-danger-soft border border-danger-border rounded-[9px] px-4 py-3 list-disc list-inside">
           <% @project.errors[:delivery_path_template].each do |msg| %><li>Path template <%= msg %></li><% end %>
