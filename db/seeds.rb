@@ -1,5 +1,10 @@
 # Minimal data for local development. Idempotent (find_or_create_by!) so it is
 # safe to run repeatedly. Single-tenant: one admin, one project.
+#
+# Dev/test only: db:prepare runs seeds when it creates the database, including in
+# production. This demo data (fake admin, sample project) must never land in a
+# real deploy, so bail out unless we're in a local environment.
+return unless Rails.env.local?
 
 admin = User.find_or_create_by!(email: "admin@example.com") { |u| u.role = "admin" }
 
