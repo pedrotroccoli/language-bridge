@@ -1,0 +1,115 @@
+# LOCAL / TEST all-in-one stack: builds the app image, runs a bundled Postgres +
+# Mailhog, migrates once, then serves. One step to run, zero setup:
+#
+#   docker compose -f docker-compose.local.yml up --build
+#
+# App on http://localhost:8080 (health: /up); Mailhog inbox on http://localhost:8025.
+# No .env needed — the secrets below default to LOCAL-ONLY values baked into this
+# file. This file is NOT for production; it runs RAILS_ENV=production only to mirror
+# the real image, with throwaway secrets and mail routed to Mailhog.
+#
+# For a real single-node deploy use docker-compose.prod.yml (published image,
+# explicit secrets, external SMTP). For the dev sandbox (Postgres + Mailhog only,
+# app on the host) use compose.yml.
+
+# Shared environment. `<<: *app-env` merges this into each service's own
+# environment map (YAML's merge key does NOT deep-merge nested maps, so services
+# reference it explicitly rather than relying on `<<: *app` alone).
+x-app-env: &app-env
+  RAILS_ENV: production
+  # Talk to the bundled Postgres over the compose network.
+  DB_HOST: db
+  DB_PORT: "5432"
+  # ── LOCAL-ONLY secret defaults ───────────────────────────────────────────────
+  # Override every one of these in a real deploy. Safe to commit: they only unlock
+  # a throwaway local stack. `${VAR:-default}` = env/.env still wins.
+  SECRET_KEY_BASE: ${SECRET_KEY_BASE:-b8e2613ecb4918232c830b2fa0d531c0d9faa894bf2cf22bf1ae3ef00684cce2aa992b55e30f8b7acbfaaa5544822db49eecb146b3c19c2c7b448164bd1f271e}
+  AR_ENCRYPTION_PRIMARY_KEY: ${AR_ENCRYPTION_PRIMARY_KEY:-CU2Hst4GvcWhJDhioo5FwNZO75XXD491}
+  AR_ENCRYPTION_DETERMINISTIC_KEY: ${AR_ENCRYPTION_DETERMINISTIC_KEY:-ERJOo4jA5M21hDtTrBhqj2nRHNG9P230}
+  AR_ENCRYPTION_KEY_DERIVATION_SALT: ${AR_ENCRYPTION_KEY_DERIVATION_SALT:-IMuTIcy0rcOtodfDICtsKGYe7ehcNQMl}
+  BACK_DATABASE_PASSWORD: ${BACK_DATABASE_PASSWORD:-back}
+
+x-app: &app
+  # Build the image locally and tag it. (Swap for `image: <registry>/...` to run
+  # a pre-published image instead.)
+  build:
+    context: .
+  image: language-bridge:local
+  # .env is optional: if present it overrides the defaults above.
+  env_file:
+    - path: .env
+      required: false
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      # Production connects as role "back" (see config/database.yml). Its
+      # password comes from BACK_DATABASE_PASSWORD in your .env.
+      POSTGRES_USER: back
+      # Defaults to "back" for the local stack; override via env/.env in a real deploy.
+      POSTGRES_PASSWORD: ${BACK_DATABASE_PASSWORD:-back}
+      POSTGRES_DB: back_production
+    volumes:
+      # PG18 stores data in a version subdir; mount the parent (not .../data).
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U back -d back_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: creates the 4 Solid databases (primary/cache/queue/cable) and migrates.
+  migrate:
+    <<: *app
+    command: ["./bin/rails", "db:prepare"]
+    environment:
+      <<: *app-env
+      RUN_DB_PREPARE: "false"
+    restart: "no"
+
+  web:
+    <<: *app
+    command: ["./bin/thrust", "./bin/rails", "server"]
+    environment:
+      <<: *app-env
+      # Migration handled by the `migrate` service; don't race on boot.
+      RUN_DB_PREPARE: "false"
+      # Run the Solid Queue supervisor inside Puma (single-node = one process).
+      SOLID_QUEUE_IN_PUMA: "true"
+      # ── TEST MAIL: route all outgoing mail to the bundled Mailhog ──────────────
+      # Plain SMTP, no TLS/auth. Inbox UI at http://localhost:8025.
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_TLS: ${SMTP_TLS:-false}
+      SMTP_AUTHENTICATION: ${SMTP_AUTHENTICATION:-}
+      # Non-empty so raise_delivery_errors is on (surfaces mail failures in tests).
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-test}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailhog:
+        condition: service_started
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Persist Active Storage blobs (imports/exports, backups) on local disk.
+    volumes:
+      - app-storage:/rails/storage
+
+  # Test-only mail catcher. Captures every outgoing email; nothing leaves the host.
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # web UI
+
+volumes:
+  pg-data:
+  app-storage:
