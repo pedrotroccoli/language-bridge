@@ -22,16 +22,19 @@ Rails.application.configure do
   # config.asset_host = "http://assets.example.com"
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
+  # Delivery/storage targets are configured at runtime via the UI (StorageConnection).
   config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Assume access is through an SSL-terminating reverse proxy (ingress / load
+  # balancer). Enabled by default; set RAILS_ASSUME_SSL=false to opt out.
+  config.assume_ssl = ENV.fetch("RAILS_ASSUME_SSL", "true") == "true"
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  # Force all access over SSL, use HSTS, and secure cookies. On by default; set
+  # RAILS_FORCE_SSL=false when TLS is not terminated in front of the app.
+  config.force_ssl = ENV.fetch("RAILS_FORCE_SSL", "true") == "true"
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Skip http-to-https redirect for the default health check endpoint so probes work.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -57,17 +60,21 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  # Host used by links generated in mailer templates (set APP_HOST=your.domain).
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com") }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Outgoing SMTP server, configured entirely from the environment. When
+  # SMTP_PASSWORD is unset, delivery errors are swallowed so the app still boots.
+  config.action_mailer.raise_delivery_errors = ENV["SMTP_PASSWORD"].present?
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address:        ENV.fetch("SMTP_HOST", "smtp.resend.com"),
+    port:           ENV.fetch("SMTP_PORT", 465).to_i,
+    user_name:      ENV.fetch("SMTP_USERNAME", "resend"),
+    password:       ENV["SMTP_PASSWORD"],
+    authentication: :plain,
+    tls:            true
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -79,12 +86,13 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # DNS rebinding / Host-header protection. Populate from RAILS_HOSTS (comma
+  # separated, e.g. "app.example.com,.example.com"). A leading "." is expanded to
+  # a subdomain wildcard regexp. Empty = allow all hosts (fine behind a trusted
+  # ingress that already routes by host).
+  if (hosts = ENV.fetch("RAILS_HOSTS", "").split(",").map(&:strip).reject(&:empty?)).any?
+    config.hosts = hosts.map { |h| h.start_with?(".") ? /.*#{Regexp.escape(h)}\z/ : h }
+    # Skip DNS rebinding protection for the default health check endpoint.
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  end
 end

@@ -1,0 +1,38 @@
+# Non-secret runtime configuration. Edit values, then `kubectl apply -f`.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: language-bridge-config
+  labels:
+    app: language-bridge
+data:
+  RAILS_ENV: "production"
+  RAILS_LOG_LEVEL: "info"
+  PORT: "80"
+  WEB_CONCURRENCY: "2"
+  RAILS_MAX_THREADS: "3"
+
+  # HTTP / TLS / host — TLS terminated at the ingress.
+  APP_HOST: "app.example.com"
+  RAILS_HOSTS: "app.example.com"
+  RAILS_ASSUME_SSL: "true"
+  RAILS_FORCE_SSL: "true"
+
+  # External Postgres. The app uses 4 DBs on this host (primary + Solid
+  # cache/queue/cable); the migrate Job creates them. Password is a Secret.
+  DB_HOST: "your-postgres-host"
+  DB_PORT: "5432"
+
+  # Jobs run in a dedicated Deployment (jobs-deployment.yaml), so keep them out
+  # of Puma here. Set to "true" and delete jobs-deployment.yaml for the simple
+  # single-Deployment setup.
+  SOLID_QUEUE_IN_PUMA: "false"
+  JOB_CONCURRENCY: "1"
+
+  # Mailer
+  SMTP_HOST: "smtp.resend.com"
+  SMTP_PORT: "465"
+  SMTP_USERNAME: "resend"
+  MAIL_FROM: "Language Bridge <onboarding@resend.dev>"
+
+  MT_PROVIDER: "stub"

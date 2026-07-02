@@ -1,0 +1,74 @@
+# Dedicated Solid Queue worker Deployment (bin/jobs). Keep this when
+# SOLID_QUEUE_IN_PUMA=false in the ConfigMap.
+#
+# Simpler alternative: delete this file and set SOLID_QUEUE_IN_PUMA=true so the
+# web pods run jobs in-process. Do that only for small/single deployments.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: language-bridge-jobs
+  labels:
+    app: language-bridge
+    component: jobs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: language-bridge
+      component: jobs
+  template:
+    metadata:
+      labels:
+        app: language-bridge
+        component: jobs
+    spec:
+      initContainers:
+        - name: wait-for-migrations
+          image: belzkai/language-bridge:0.0.1
+          command:
+            - sh
+            - -c
+            - |
+              until ./bin/rails db:abort_if_pending_migrations >/dev/null 2>&1; do
+                echo "waiting for database migrations..."; sleep 3;
+              done
+          envFrom:
+            - configMapRef:
+                name: language-bridge-config
+            - secretRef:
+                name: language-bridge-secrets
+      containers:
+        - name: jobs
+          image: belzkai/language-bridge:0.0.1
+          command: ["./bin/jobs"]
+          envFrom:
+            - configMapRef:
+                name: language-bridge-config
+            - secretRef:
+                name: language-bridge-secrets
+          env:
+            - name: RUN_DB_PREPARE
+              value: "false"
+            - name: SOLID_QUEUE_IN_PUMA
+              value: "false"
+          volumeMounts:
+            # Active Storage blobs (backups written by jobs). Shared with web.
+            - name: storage
+              mountPath: /rails/storage
+          # No HTTP port. Liveness = process is up (Solid Queue supervisor).
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f solid_queue || pgrep -f bin/jobs"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: language-bridge-storage

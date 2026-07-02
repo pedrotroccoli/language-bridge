@@ -49,3 +49,8 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+/compose*.yml
+/docker-compose*.yml
+
+# Ignore Kubernetes manifests.
+/k8s/
