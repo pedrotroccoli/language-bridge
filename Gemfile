@@ -43,7 +43,7 @@ gem "image_processing", "~> 2.0"
 # Cloud storage adapters for Active Storage. Each is only loaded when a storage
 # connection of that service type is actually built (see StorageConnection#build_service).
 gem "aws-sdk-s3", require: false             # S3 + S3-compatible (R2, MinIO, Spaces)
-gem "google-cloud-storage", "~> 1.11", require: false
+gem "google-cloud-storage", "~> 1.62", require: false
 gem "azure-storage-blob", "~> 2.0", require: false
 
 # Snapshot import/export formats (no longer default gems on Ruby 3.4+).

@@ -197,7 +197,7 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-cloud-errors (1.6.0)
-    google-cloud-storage (1.61.0)
+    google-cloud-storage (1.62.0)
       addressable (~> 2.8)
       digest-crc (~> 0.4)
       google-apis-core (>= 0.18, < 2)
@@ -519,7 +519,7 @@ DEPENDENCIES
   csv
   debug
   dotenv-rails
-  google-cloud-storage (~> 1.11)
+  google-cloud-storage (~> 1.62)
   image_processing (~> 2.0)
   importmap-rails
   jbuilder
