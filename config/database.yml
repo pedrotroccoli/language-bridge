@@ -91,6 +91,6 @@ test:
 production:
   primary:
     <<: *default
-    database: back_production
-    username: back
+    database: <%= ENV.fetch("DB_NAME", "language_bridge_production") %>
+    username: <%= ENV.fetch("DB_USERNAME", "language_bridge_admin") %>
     password: <%= ENV["BACK_DATABASE_PASSWORD"] %>
