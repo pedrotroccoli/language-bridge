@@ -7,6 +7,23 @@ class InitSchema < ActiveRecord::Migration[8.1]
     # These are extensions that must be enabled in order to support this database
     enable_extension "pg_catalog.plpgsql"
 
+    # UUID v7 (time-ordered) primary keys. RDS runs Postgres < 18, which lacks the
+    # native uuidv7() function, so define a pure-SQL equivalent (no extension, works
+    # on any Postgres >= 13). Must exist before any table that defaults to it.
+    execute <<~SQL
+      CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
+        SELECT encode(
+          set_bit(
+            set_bit(
+              overlay(uuid_send(gen_random_uuid())
+                      placing substring(int8send(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint) FROM 3)
+                      FROM 1 FOR 6),
+              52, 1),
+            53, 1),
+          'hex')::uuid;
+      $$ LANGUAGE sql VOLATILE;
+    SQL
+
     create_table "active_storage_attachments", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
       t.uuid "blob_id", null: false
       t.datetime "created_at", null: false
