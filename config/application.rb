@@ -20,6 +20,12 @@ module Back
     # never runs before the records it depends on are visible.
     config.active_job.enqueue_after_transaction_commit = true
 
+    # Dump the schema as SQL (db/structure.sql) instead of Ruby. The schema relies
+    # on a custom uuidv7() PL/pgSQL function for UUID v7 primary keys; pg_dump emits
+    # that function ahead of the tables that reference it, which the Ruby schema
+    # dumper cannot express.
+    config.active_record.schema_format = :sql
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
