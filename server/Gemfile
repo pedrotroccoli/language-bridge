@@ -39,6 +39,10 @@ gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
+# Active Storage's default variant processor is libvips; Rails 8.1.3.1 loads the
+# vips backend eagerly at boot, so its Ruby binding must be present (libvips is
+# installed in the Docker image and CI).
+gem "ruby-vips", "~> 2.0"
 
 # Cloud storage adapters for Active Storage. Each is only loaded when a storage
 # connection of that service type is actually built (see StorageConnection#build_service).

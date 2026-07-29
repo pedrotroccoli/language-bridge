@@ -12,7 +12,7 @@ x-app: &app
   # Uses the published image by default. Uncomment `build` to build locally
   # instead (the built image is tagged with the same name).
   # build:
-  #   context: .
+  #   context: ./server
   image: belzkai/language-bridge:0.0.1
   env_file: .env
   environment:

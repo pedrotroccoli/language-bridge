@@ -33,7 +33,7 @@ x-app: &app
   # Build the image locally and tag it. (Swap for `image: <registry>/...` to run
   # a pre-published image instead.)
   build:
-    context: .
+    context: ./server
   image: language-bridge:local
   # .env is optional: if present it overrides the defaults above.
   env_file:
