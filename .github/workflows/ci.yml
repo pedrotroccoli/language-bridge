@@ -101,6 +101,8 @@ jobs:
 
     steps:
       - name: Install packages
+        # Runs before checkout, so it can't use the job's server/ working-directory.
+        working-directory: ${{ github.workspace }}
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips
 
       - name: Checkout code
@@ -144,6 +146,8 @@ jobs:
 
     steps:
       - name: Install packages
+        # Runs before checkout, so it can't use the job's server/ working-directory.
+        working-directory: ${{ github.workspace }}
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips
 
       - name: Checkout code
