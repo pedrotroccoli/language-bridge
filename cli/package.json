@@ -1,0 +1,57 @@
+{
+  "name": "@language-bridge/cli",
+  "version": "0.1.0",
+  "description": "Pull translations from a Language Bridge server and generate typed i18next resources (keys + interpolation params).",
+  "keywords": [
+    "i18next",
+    "i18n",
+    "typescript",
+    "codegen",
+    "translations",
+    "language-bridge"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "lb": "dist/index.js"
+  },
+  "exports": {
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "cosmiconfig": "^9.0.0"
+  },
+  "peerDependencies": {
+    "i18next": ">=23"
+  },
+  "peerDependenciesMeta": {
+    "i18next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "i18next": "^23.16.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
