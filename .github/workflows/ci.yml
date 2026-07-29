@@ -35,6 +35,11 @@ jobs:
         working-directory: server
 
     steps:
+      - name: Install packages
+        # importmap audit boots the app, which eager-loads the libvips backend.
+        working-directory: ${{ github.workspace }}
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
+
       - name: Checkout code
         uses: actions/checkout@v7
 
