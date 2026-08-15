@@ -1,13 +1,5 @@
-// Turns the pulled namespaces into a TypeScript declaration file:
-//
-//   Layer 1 — `Resources` mirrors the key tree (string leaves) and augments
-//             i18next's CustomTypeOptions, so t('ns:key') is autocompleted and
-//             unknown keys are compile errors. (What i18next-resources-for-ts does.)
-//
-//   Layer 2 — `TranslationParams` maps every fully-qualified key to the object of
-//             interpolation params it requires, parsed from the placeholder
-//             dialects. Consumers wrap i18next's t with createTypedT to get
-//             param typing i18next cannot infer from string values.
+// Emits the .d.ts: Layer 1 = `Resources` key tree augmenting i18next (typed
+// keys); Layer 2 = `TranslationParams` (interpolation params i18next can't infer).
 import { extractParams } from "./placeholders.js";
 import { pluralBase } from "./plurals.js";
 import type { Namespaces, TranslationTree } from "./types.js";

@@ -1,7 +1,5 @@
-// i18next pluralisation is a key-suffix convention: `item_one` / `item_other`
-// (also _zero/_two/_few/_many) are variants of one logical key `item`, selected
-// at runtime by a `count`. For param typing we collapse the variants to their
-// base key and require a numeric `count`.
+// i18next plural suffixes (_one/_other/…) are variants of one base key selected
+// by `count`; we collapse them to the base and require a numeric `count`.
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 
 // The base key for a plural variant, or null when the segment is not a variant.

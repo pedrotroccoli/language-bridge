@@ -1,8 +1,5 @@
-// Resolves effective config from three sources, highest precedence first:
-//   1. CLI flags
-//   2. environment (LB_TOKEN, LB_URL, LB_PROJECT)
-//   3. a config file found by cosmiconfig (language-bridge.json, .language-bridgerc,
-//      or a "languageBridge" key in package.json)
+// Resolves config with precedence: CLI flags > env (LB_*) > cosmiconfig file
+// (language-bridge.json / .language-bridgerc / "languageBridge" in package.json).
 import { cosmiconfig } from "cosmiconfig";
 
 const DEFAULT_URL = "http://localhost:3000";

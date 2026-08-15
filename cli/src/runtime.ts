@@ -1,26 +1,11 @@
-// Runtime helper shipped with the package so consumers get typed interpolation
-// params — something i18next's own types cannot infer from string values.
-//
-// Usage in a consumer app:
-//
-//   import i18next from "i18next";
-//   import { createTypedT } from "@language-bridge/cli/runtime";
-//   import type { TranslationParams } from "./@types/resources";
-//
-//   const tt = createTypedT<TranslationParams>(i18next.t);
-//   tt("common:common.welcome", { name: "Ada" }); // params required + typed
-//   tt("auth:auth.signin");                        // no params -> no 2nd arg
-//
-// The generated `TranslationParams` interface (from `lb sync`) is the type
-// argument; this helper stays generic so it has no build-time dependency on it.
+// Shipped helper for typed interpolation params (i18next can't infer them).
+// Usage: const tt = createTypedT<TranslationParams>(i18next.t); tt("k", { name }).
 
 // Map of fully-qualified key -> its required interpolation params.
 export type ParamsMap = Record<string, Record<string, unknown>>;
 
-// Minimal shape of i18next's `t`. The key/options params are intentionally
-// `any`: i18next's real `TFunction` narrows `key` to a literal union, and a
-// stricter signature here would (by parameter contravariance) reject it. Safety
-// is restored on the returned TypedT, which is fully generic over M.
+// i18next `t` shape. key/options are `any` on purpose: TFunction's literal-union
+// key would be rejected by a stricter signature (contravariance). TypedT restores safety.
 export type TranslateFn = (key: any, options?: any) => string;
 
 // A key requires an argument unless its params object is empty (Record<string, never>).

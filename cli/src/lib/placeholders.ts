@@ -1,15 +1,5 @@
-// Interpolation-variable extraction, mirroring the server's QA regex
-// (app/models/translation/qa.rb PLACEHOLDER). Three dialects coexist in
-// Language Bridge values:
-//
-//   i18next double-brace : "Hi {{name}}"        -> name
-//   single-brace         : "Hi {name}"          -> name
-//   Rails percent-brace  : "Hi %{name}"         -> name
-//
-// i18next extras we normalise away so the variable name is clean:
-//   formatting  : "{{count, number}}"           -> count
-//   unescaped   : "{{- html}}"                  -> html
-//   nesting/ctx : "{{val, currency}}"           -> val   (never "$t(...)" — see below)
+// Extract interpolation variables from the 3 dialects {{x}}/{x}/%{x} (mirrors
+// server qa.rb PLACEHOLDER), stripping i18next formatting/unescape/nesting.
 const PLACEHOLDER = /\{\{[^}]+\}\}|\{[^}]+\}|%\{[^}]+\}/g;
 
 // Strip the surrounding delimiters of a single matched token.
