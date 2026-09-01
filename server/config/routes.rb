@@ -37,6 +37,10 @@ Rails.application.routes.draw do
     resources :missing, only: %i[ index destroy ], controller: "projects/missing" do
       resource :promotion, only: :create, controller: "projects/missing/promotions"
     end
+    # AI/CLI translation proposals awaiting human review. destroy = reject.
+    resources :proposals, only: %i[ index destroy ], controller: "projects/proposals" do
+      resource :acceptance, only: :create, controller: "projects/proposals/acceptances"
+    end
     resources :backups, only: %i[ index create destroy ], controller: "projects/backups" do
       resource :restoration, only: :create, controller: "projects/backups/restorations"
     end
@@ -70,6 +74,8 @@ Rails.application.routes.draw do
       # Bearer-token JSON export consumed by the CLI type generator: all
       # namespaces for one locale, compiled into i18next-shaped nested objects.
       get "projects/:project_slug/export", to: "exports#show"
+      # Push counterpart: proposes source-locale values as reviewable drafts.
+      post "projects/:project_slug/import", to: "imports#create"
     end
   end
 

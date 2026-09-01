@@ -42,6 +42,12 @@ module Api
         render_error(:forbidden, "Token lacks the required scope")
       end
 
+      # The human a token acts on behalf of: a personal access token authenticates
+      # as its user; a per-project ApiToken has only a creator (may be nil).
+      def token_user
+        @api_token.respond_to?(:user) ? @api_token.user : @api_token.try(:creator)
+      end
+
       def render_error(status, message)
         render json: { error: message }, status: status
       end

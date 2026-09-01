@@ -18,4 +18,18 @@ module TranslationTree
     end
     node[leaf] = value
   end
+
+  # Inverse of #nest: collapse a nested hash back to { "dotted.key" => value },
+  # stringifying leaves and skipping blank ones. The push/import counterpart.
+  def flatten(object, prefix = nil, out = {})
+    object.each do |key, value|
+      path = prefix ? "#{prefix}.#{key}" : key.to_s
+      if value.is_a?(Hash)
+        flatten(value, path, out)
+      elsif value.present?
+        out[path] = value.to_s
+      end
+    end
+    out
+  end
 end

@@ -806,6 +806,24 @@ CREATE TABLE public.translation_keys (
 
 
 --
+-- Name: translation_proposals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_proposals (
+    id uuid DEFAULT public.uuidv7() NOT NULL,
+    project_id uuid NOT NULL,
+    namespace_id uuid NOT NULL,
+    locale_id uuid NOT NULL,
+    author_id uuid NOT NULL,
+    key character varying NOT NULL,
+    value text NOT NULL,
+    session character varying DEFAULT ''::character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: translation_publications; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1236,6 +1254,14 @@ ALTER TABLE ONLY public.translation_artifacts
 
 ALTER TABLE ONLY public.translation_keys
     ADD CONSTRAINT translation_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: translation_proposals translation_proposals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_proposals
+    ADD CONSTRAINT translation_proposals_pkey PRIMARY KEY (id);
 
 
 --
@@ -1783,6 +1809,27 @@ CREATE UNIQUE INDEX index_translation_keys_on_project_id_and_namespace_id_and_ke
 
 
 --
+-- Name: index_translation_proposals_on_author_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_proposals_on_author_id ON public.translation_proposals USING btree (author_id);
+
+
+--
+-- Name: index_translation_proposals_on_namespace_key_locale_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_translation_proposals_on_namespace_key_locale_session ON public.translation_proposals USING btree (namespace_id, key, locale_id, session);
+
+
+--
+-- Name: index_translation_proposals_on_project_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_proposals_on_project_id ON public.translation_proposals USING btree (project_id);
+
+
+--
 -- Name: index_translation_publications_on_publisher_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2083,6 +2130,14 @@ ALTER TABLE ONLY public.solid_queue_claimed_executions
 
 
 --
+-- Name: translation_proposals fk_rails_a11f5c10ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_proposals
+    ADD CONSTRAINT fk_rails_a11f5c10ad FOREIGN KEY (locale_id) REFERENCES public.locales(id);
+
+
+--
 -- Name: sign_in_tokens fk_rails_a9860dd74e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2155,11 +2210,35 @@ ALTER TABLE ONLY public.translation_artifacts
 
 
 --
+-- Name: translation_proposals fk_rails_e0be39dbdf; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_proposals
+    ADD CONSTRAINT fk_rails_e0be39dbdf FOREIGN KEY (project_id) REFERENCES public.projects(id);
+
+
+--
+-- Name: translation_proposals fk_rails_e549889d01; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_proposals
+    ADD CONSTRAINT fk_rails_e549889d01 FOREIGN KEY (author_id) REFERENCES public.users(id);
+
+
+--
 -- Name: api_tokens fk_rails_f1ad9e0a88; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_tokens
     ADD CONSTRAINT fk_rails_f1ad9e0a88 FOREIGN KEY (creator_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: translation_proposals fk_rails_fea4fda41c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_proposals
+    ADD CONSTRAINT fk_rails_fea4fda41c FOREIGN KEY (namespace_id) REFERENCES public.namespaces(id);
 
 
 --
@@ -2169,6 +2248,7 @@ ALTER TABLE ONLY public.api_tokens
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260901120000'),
 ('20260701120001'),
 ('20260701120000');
 

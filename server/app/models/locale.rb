@@ -3,6 +3,7 @@ class Locale < ApplicationRecord
 
   has_many :translations, dependent: :destroy
   has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy
+  has_many :translation_proposals, class_name: "Translation::Proposal", dependent: :destroy
 
   # IETF-ish language tag: 2–3 letter primary subtag, optional 2–8 alnum subtags.
   # Mirrors the combobox client pattern so server and UI agree.
