@@ -32,8 +32,9 @@ export interface ResolvedConfig {
   keepJson: boolean;
 }
 
+// A config file must never carry the token — it is commonly committed, so the
+// token comes only from --token or LB_TOKEN.
 interface FileConfig {
-  token?: string;
   url?: string;
   project?: string;
   locale?: string;
@@ -59,7 +60,7 @@ export async function resolveConfig(options: CliOptions): Promise<ResolvedConfig
   const file = await loadFile();
   const env = process.env;
 
-  const token = firstDefined(options.token, env.LB_TOKEN, file.token);
+  const token = firstDefined(options.token, env.LB_TOKEN);
   const project = firstDefined(options.project, env.LB_PROJECT, file.project);
 
   if (!token) throw new ConfigError("Missing token. Pass --token or set LB_TOKEN.");
