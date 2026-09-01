@@ -61,6 +61,16 @@ erDiagram
         string checksum
         string content_encoding
     }
+    TranslationProposal {
+        uuid id
+        uuid project_id
+        uuid namespace_id
+        uuid locale_id
+        uuid author_id
+        string key
+        text value
+        string session
+    }
 
     %% ── Access / auth ─────────────────────────────────────────────────────
     User {
@@ -143,11 +153,15 @@ erDiagram
     Project ||--o{ TranslationKey : "has many"
     Project ||--o{ Translation : "has many"
     Project ||--o{ TranslationArtifact : "has many"
+    Project ||--o{ TranslationProposal : "has many"
     Namespace ||--o{ TranslationKey : "has many"
     Namespace ||--o{ TranslationArtifact : "has many"
+    Namespace ||--o{ TranslationProposal : "staged"
     Locale ||--o{ Translation : "has many"
     Locale ||--o{ TranslationArtifact : "has many"
+    Locale ||--o{ TranslationProposal : "staged"
     TranslationKey ||--o{ Translation : "has many"
+    User ||--o{ TranslationProposal : "proposed"
     Translation |o--o| TranslationPublication : "state record"
     Translation |o--o| TranslationReview : "state record"
     Translation |o--o| TranslationApproval : "state record"

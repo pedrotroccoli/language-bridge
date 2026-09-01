@@ -27,7 +27,29 @@ LB_TOKEN=lb_pat_… lb sync --project my-app --url https://lb.example.com
 # equivalent explicit two-step flow
 lb pull      --project my-app        # writes raw JSON to --json-dir
 lb generate  --out src/@types/resources.d.ts
+
+# push local source-locale edits as reviewable proposals (nothing goes live)
+lb push      --project my-app        # POST /import — a human accepts/rejects in the UI
+
+# emit AI-agent rules for this project (stdout, or into AGENTS.md)
+lb ai-instructions --project my-app --write
 ```
+
+### Authoring flow (AI-driven)
+
+`lb push` is the write counterpart of `lb pull`. It uploads the local source-locale
+JSON as **proposals**: staged values a human reviews on the platform (Proposals tab)
+before anything is applied or published. An automated push can never clobber a live
+string. Proposals target the source locale only — the platform translates the rest.
+
+Each push carries a **session** (defaults to the current git branch, override with
+`--session` / `LB_SESSION`). Proposals are grouped by session on the platform, so two
+branches or AI chats can propose the *same* key without overwriting each other —
+re-pushing the same session updates its own proposals in place.
+
+`lb ai-instructions` prints project-specific rules (which locale to edit, how to push,
+what never to do) an AI agent can follow; `--write` splices them into `AGENTS.md`
+between `<!-- lb:start -->`/`<!-- lb:end -->` markers (idempotent).
 
 ### Options
 
