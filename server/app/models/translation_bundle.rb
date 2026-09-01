@@ -13,9 +13,7 @@ class TranslationBundle
   end
 
   def to_h
-    published.each_with_object({}) do |translation, tree|
-      insert(tree, translation.translation_key.key.split("."), translation.value)
-    end
+    TranslationTree.nest(published)
   end
 
   def to_json(*)
@@ -34,14 +32,5 @@ class TranslationBundle
         .where(translation_keys: { namespace_id: @namespace.id })
         .where.not(value: [ nil, "" ])
         .includes(:translation_key)
-    end
-
-    def insert(tree, segments, value)
-      leaf = segments.pop
-      node = segments.reduce(tree) do |hash, segment|
-        hash[segment] = {} unless hash[segment].is_a?(Hash)
-        hash[segment]
-      end
-      node[leaf] = value
     end
 end

@@ -1,4 +1,5 @@
 erDiagram
+    %% ── Translation domain ────────────────────────────────────────────────
     Project {
         uuid id
         string name
@@ -60,12 +61,83 @@ erDiagram
         string checksum
         string content_encoding
     }
+
+    %% ── Access / auth ─────────────────────────────────────────────────────
     User {
         uuid id
         string email
         string name
         string role
     }
+    ApiToken {
+        uuid id
+        uuid project_id
+        uuid creator_id
+        string name
+        string scope
+        string token_digest
+    }
+    PersonalAccessToken {
+        uuid id
+        uuid user_id
+        string token_digest
+    }
+    Session {
+        uuid id
+        uuid user_id
+        string user_agent
+        string ip_address
+    }
+    SignInToken {
+        uuid id
+        uuid user_id
+        string token
+        datetime expires_at
+    }
+    Invitation {
+        uuid id
+        uuid inviter_id
+        string email
+        string role
+        string token
+        datetime accepted_at
+    }
+
+    %% ── Support / infra ───────────────────────────────────────────────────
+    StorageConnection {
+        uuid id
+        string service
+        string name
+        string bucket
+        boolean is_default
+    }
+    MissingKeyReport {
+        uuid id
+        uuid project_id
+        string namespace
+        string key
+        jsonb locales
+        integer hits
+    }
+    ProjectBackup {
+        uuid id
+        uuid project_id
+        string format
+    }
+    Event {
+        uuid id
+        string eventable_type
+        uuid eventable_id
+        uuid creator_id
+        string action
+    }
+    Setting {
+        uuid id
+        integer missing_rate_limit
+        integer delivery_rate_limit
+    }
+
+    %% ── Translation-domain relations ──────────────────────────────────────
     Project ||--o{ Locale : "has many"
     Project ||--o{ Namespace : "has many"
     Project ||--o{ TranslationKey : "has many"
@@ -81,3 +153,18 @@ erDiagram
     Translation |o--o| TranslationApproval : "state record"
     Translation ||--o{ TranslationVersion : "history"
     User ||--o{ Translation : "authored"
+
+    %% ── Access / auth relations ───────────────────────────────────────────
+    Project ||--o{ ApiToken : "has many"
+    User ||--o{ ApiToken : "created"
+    User ||--o{ PersonalAccessToken : "owns"
+    User ||--o{ Session : "has many"
+    User ||--o{ SignInToken : "has many"
+    User ||--o{ Invitation : "invited by"
+
+    %% ── Support / infra relations ─────────────────────────────────────────
+    StorageConnection ||--o{ Project : "backs"
+    Project ||--o{ MissingKeyReport : "has many"
+    Project ||--o{ ProjectBackup : "has many"
+    User ||--o{ Event : "created"
+    Event }o--|| Project : "eventable (polymorphic: Project / Translation / TranslationKey)"

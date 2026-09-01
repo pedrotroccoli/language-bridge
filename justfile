@@ -1,5 +1,4 @@
 # Language Bridge monorepo task runner. `just` = list recipes.
-# The Rails app lives in server/; cli/ is a reserved placeholder (see README).
 
 default:
     @just --list
@@ -21,3 +20,17 @@ server-test:
 # Lint Ruby.
 server-lint:
     cd server && bin/rubocop
+
+# ── cli (@language-bridge/cli) ───────────────────────────────────────────────
+
+# Install CLI deps.
+cli-install:
+    cd cli && npm install
+
+# Build the CLI to cli/dist.
+cli-build:
+    cd cli && npm run build
+
+# Run CLI unit tests.
+cli-test:
+    cd cli && npm test

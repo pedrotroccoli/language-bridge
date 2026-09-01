@@ -67,6 +67,9 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post "projects/:project_slug/missing", to: "missing_translations#create"
+      # Bearer-token JSON export consumed by the CLI type generator: all
+      # namespaces for one locale, compiled into i18next-shaped nested objects.
+      get "projects/:project_slug/export", to: "exports#show"
     end
   end
 
