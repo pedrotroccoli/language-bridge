@@ -9,11 +9,13 @@
 
   <nav class="flex items-center gap-[22px] h-full text-[13px] ml-[6px]">
     <% reported = project.missing_key_reports.count %>
+    <% proposed = project.translation_proposals.count %>
     <% tabs = [
-         { key: :overview, label: "Overview", icon: "dashboard",  url: project_path(project) },
-         { key: :editor,   label: "Editor",   icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : project_path(project, new: "namespace", anchor: "namespaces")) },
-         { key: :missing,  label: "Missing",  icon: "inbox",      url: project_missing_index_path(project), badge: (reported.positive? ? reported : nil) },
-         { key: :activity, label: "Activity", icon: "history",    url: project_activity_path(project) }
+         { key: :overview,  label: "Overview",  icon: "dashboard",  url: project_path(project) },
+         { key: :editor,    label: "Editor",    icon: "table_rows", url: (editor_ns ? project_namespace_path(project, editor_ns) : project_path(project, new: "namespace", anchor: "namespaces")) },
+         { key: :proposals, label: "Proposals", icon: "smart_toy",  url: project_proposals_path(project), badge: (proposed.positive? ? proposed : nil) },
+         { key: :missing,   label: "Missing",   icon: "inbox",      url: project_missing_index_path(project), badge: (reported.positive? ? reported : nil) },
+         { key: :activity,  label: "Activity",  icon: "history",    url: project_activity_path(project) }
        ] %>
     <% if current_user.admin? %>
       <% tabs << { key: :backups,  label: "Backups",  icon: "backup",   url: project_backups_path(project) } %>
