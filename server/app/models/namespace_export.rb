@@ -98,17 +98,8 @@ class NamespaceExport
     # Expand dotted keys into nested objects (inverse of TranslationImport#flatten).
     def nest(values)
       values.each_with_object({}) do |(key, value), tree|
-        insert(tree, key.split("."), value)
+        TranslationTree.insert(tree, key.split("."), value)
       end
-    end
-
-    def insert(tree, segments, value)
-      leaf = segments.pop
-      node = segments.reduce(tree) do |hash, segment|
-        hash[segment] = {} unless hash[segment].is_a?(Hash)
-        hash[segment]
-      end
-      node[leaf] = value
     end
 
     def csv(values)
