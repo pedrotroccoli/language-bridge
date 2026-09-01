@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { Command } from "commander";
+import { DEFAULT_INSTRUCTIONS_FILE, renderInstructions, writeInstructions } from "./commands/ai-instructions.js";
 import { generate } from "./commands/generate.js";
 import { pull } from "./commands/pull.js";
+import { push } from "./commands/push.js";
 import { sync } from "./commands/sync.js";
 import { type CliOptions, ConfigError, resolveConfig } from "./lib/config.js";
 
@@ -76,6 +78,33 @@ withCommonOptions(program.command("sync", { isDefault: true }))
       console.error(
         `Wrote ${result.out} (${result.namespaces.length} namespace(s), locale ${result.locale})`,
       );
+    }, options),
+  );
+
+withCommonOptions(program.command("push"))
+  .description("Push local source-locale JSON as proposals for human review")
+  .option("-s, --session <id>", "grouping label for the push (or env LB_SESSION; default: git branch)")
+  .action((options: CliOptions) =>
+    run(async (config) => {
+      const result = await push(config);
+      const scope = result.session ? ` (session ${result.session})` : "";
+      console.error(`Pushed ${result.proposed} proposal(s) for locale ${result.locale}${scope}`);
+    }, options),
+  );
+
+withCommonOptions(program.command("ai-instructions"))
+  .description("Print AI agent rules for this project (or write them to a file)")
+  .option("-w, --write [file]", `write to a file (default ${DEFAULT_INSTRUCTIONS_FILE}), wrapping in lb markers`)
+  .action((options: CliOptions) =>
+    run(async (config) => {
+      const block = await renderInstructions(config);
+      if (options.write === undefined) {
+        process.stdout.write(`${block}\n`);
+        return;
+      }
+      const file = typeof options.write === "string" ? options.write : DEFAULT_INSTRUCTIONS_FILE;
+      await writeInstructions(file, block);
+      console.error(`Wrote AI instructions to ${file}`);
     }, options),
   );
 

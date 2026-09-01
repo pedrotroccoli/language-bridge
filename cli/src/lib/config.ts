@@ -17,6 +17,8 @@ export interface CliOptions {
   includeDrafts?: boolean;
   params?: boolean;
   keepJson?: boolean;
+  write?: string | boolean;
+  session?: string;
 }
 
 export interface ResolvedConfig {
@@ -30,6 +32,7 @@ export interface ResolvedConfig {
   includeDrafts: boolean;
   params: boolean;
   keepJson: boolean;
+  session?: string;
 }
 
 // A config file must never carry the token — it is commonly committed, so the
@@ -43,6 +46,7 @@ interface FileConfig {
   jsonDir?: string;
   includeDrafts?: boolean;
   params?: boolean;
+  session?: string;
 }
 
 async function loadFile(): Promise<FileConfig> {
@@ -79,6 +83,7 @@ export async function resolveConfig(options: CliOptions): Promise<ResolvedConfig
     includeDrafts: firstDefined(options.includeDrafts, file.includeDrafts) ?? false,
     params: firstDefined(options.params, file.params) ?? true,
     keepJson: options.keepJson ?? false,
+    session: firstDefined(options.session, env.LB_SESSION, file.session),
   };
 }
 

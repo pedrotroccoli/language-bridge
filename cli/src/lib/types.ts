@@ -14,3 +14,11 @@ export interface ExportResponse {
   available_locales: string[];
   source_locale: string | null;
 }
+
+// Shape of POST /api/v1/projects/:slug/import.
+export interface ImportResponse {
+  status: string;
+  locale: string;
+  session: string;
+  proposed: number;
+}
