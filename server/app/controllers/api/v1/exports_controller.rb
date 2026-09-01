@@ -12,11 +12,13 @@ module Api
     #     "namespaces": { "common": { "common": { "welcome": "Welcome" } } },
     #     "available_locales": ["en", "pt-BR", "es"], "source_locale": "en" }
     #
-    # Any valid token reads — reading published strings is the lowest privilege, so
-    # we intentionally do NOT `require_scope!` (which only knows save_missing/admin
-    # and would reject read-only PATs). By default only published values are
-    # returned (matching live delivery); ?include_drafts=1 includes drafts.
+    # Published strings are already served unauthenticated at /cdn, so any valid
+    # token may read them (no scope required). Drafts are NOT public, so
+    # ?include_drafts=1 additionally requires an editor-equivalent scope
+    # (save_missing or admin — mirrors the web export's can_edit_translations?).
     class ExportsController < Api::BaseController
+      before_action -> { require_scope!(:save_missing) }, if: :include_drafts?
+
       def show
         locale = resolve_locale
         return render_error(:not_found, "Locale not found") if locale.nil?
@@ -37,21 +39,43 @@ module Api
           code ? @project.locales.find_by(code: code) : @project.source_locale
         end
 
-        # { namespace_name => nested i18next tree }. Skips namespaces with no
-        # values for this locale so the client never types empty branches.
+        # { namespace_name => nested i18next tree }, skipping namespaces with no
+        # values for this locale. One query for the whole locale (grouped by
+        # namespace in memory) rather than a bundle query per namespace.
         def compile(locale)
+          by_namespace = translations_for(locale).group_by { |t| t.translation_key.namespace_id }
+
           @project.namespaces.order(:name).each_with_object({}) do |namespace, out|
-            tree = tree_for(namespace, locale)
-            out[namespace.name] = tree unless tree.empty?
+            rows = by_namespace[namespace.id]
+            out[namespace.name] = nest(rows) if rows.present?
           end
         end
 
-        def tree_for(namespace, locale)
-          if include_drafts?
-            JSON.parse(NamespaceExport.new(namespace, locales: [ locale ], include_drafts: true).content(locale, "json"))
-          else
-            TranslationBundle.new(namespace: namespace, locale: locale).to_h
+        # Non-empty values for the locale across the project; published only unless
+        # drafts were explicitly (and authorizedly) requested.
+        def translations_for(locale)
+          scope = @project.translations
+            .where(locale: locale)
+            .where.not(value: [ nil, "" ])
+            .includes(:translation_key)
+          include_drafts? ? scope : scope.published
+        end
+
+        # Expand dotted keys ("home.title") into nested objects, matching
+        # TranslationBundle / NamespaceExport delivery shape.
+        def nest(translations)
+          translations.each_with_object({}) do |translation, tree|
+            insert(tree, translation.translation_key.key.split("."), translation.value)
           end
+        end
+
+        def insert(tree, segments, value)
+          leaf = segments.pop
+          node = segments.reduce(tree) do |hash, segment|
+            hash[segment] = {} unless hash[segment].is_a?(Hash)
+            hash[segment]
+          end
+          node[leaf] = value
         end
 
         def include_drafts?

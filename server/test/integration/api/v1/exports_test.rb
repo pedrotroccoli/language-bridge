@@ -45,10 +45,22 @@ class Api::V1::ExportsTest < ActionDispatch::IntegrationTest
     assert_equal({}, response.parsed_body["namespaces"])
   end
 
-  test "include_drafts returns unpublished values" do
-    get_export(locale: "pt-BR", include_drafts: "1")
+  test "include_drafts returns unpublished values for an editor-scoped token" do
+    get_export(headers: { "Authorization" => "Bearer test-save-missing-token" },
+               locale: "pt-BR", include_drafts: "1")
     assert_response :success
     assert_equal({ "common" => { "greeting" => "Olá" } }, response.parsed_body["namespaces"])
+  end
+
+  test "include_drafts is forbidden for a read-only token" do
+    get_export(locale: "pt-BR", include_drafts: "1") # @auth is the read-only token
+    assert_response :forbidden
+  end
+
+  test "a viewer's PAT cannot read drafts" do
+    raw = PersonalAccessToken.regenerate_for(users(:viewer))
+    get_export(headers: { "Authorization" => "Bearer #{raw}" }, locale: "en", include_drafts: "1")
+    assert_response :forbidden
   end
 
   test "a personal access token authenticates against an accessible project" do
