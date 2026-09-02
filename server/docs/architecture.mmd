@@ -90,7 +90,16 @@ erDiagram
     PersonalAccessToken {
         uuid id
         uuid user_id
+        string name
         string token_digest
+    }
+    CliAuthCode {
+        uuid id
+        uuid user_id
+        string code_digest
+        string name
+        datetime expires_at
+        datetime used_at
     }
     Session {
         uuid id
@@ -145,6 +154,7 @@ erDiagram
         uuid id
         integer missing_rate_limit
         integer delivery_rate_limit
+        integer cli_token_limit
     }
 
     %% ── Translation-domain relations ──────────────────────────────────────
@@ -172,6 +182,7 @@ erDiagram
     Project ||--o{ ApiToken : "has many"
     User ||--o{ ApiToken : "created"
     User ||--o{ PersonalAccessToken : "owns"
+    User ||--o{ CliAuthCode : "login codes"
     User ||--o{ Session : "has many"
     User ||--o{ SignInToken : "has many"
     User ||--o{ Invitation : "invited by"
