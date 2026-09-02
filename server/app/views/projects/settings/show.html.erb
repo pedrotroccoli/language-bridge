@@ -231,7 +231,7 @@
           <div class="flex items-center gap-2 px-4 py-[10px] border-b border-line-3 last:border-b-0">
             <%= mi "key", size: 18, css: "text-faint" %>
             <span class="text-[13px] text-ink truncate min-w-0"><%= token.name %></span>
-            <span class="font-mono text-[11px] text-ink-3 bg-surface-2 rounded px-[6px] py-px"><%= token.scope %></span>
+            <span class="font-mono text-[11px] text-ink-3 bg-surface-2 rounded px-[6px] py-px"><%= token.scopes.join(" · ") %></span>
             <span class="text-[12px] text-mut ml-auto"><%= token.last_used_at ? "used #{time_ago_in_words(token.last_used_at)} ago" : "never used" %></span>
             <%= button_to project_api_token_path(@project, token), method: :delete, class: "btn-secondary btn-danger", form_class: "inline",
                   "aria-label": "Revoke token #{token.name}",
@@ -251,11 +251,33 @@
         <%= text_field_tag "api_token[name]", nil, placeholder: "e.g. Web client", required: true, class: "text-[14px]" %>
       </div>
       <div class="flex flex-col gap-[7px]">
-        <label class="text-[12.5px] font-medium text-ink-2">Scope</label>
-        <%= select_tag "api_token[scope]", options_for_select(ApiToken::SCOPES, "save_missing"), class: "text-[14px]" %>
+        <label class="text-[12.5px] font-medium text-ink-2">Capabilities</label>
+        <div class="flex items-center gap-[14px] h-[38px]">
+          <% TokenScopes::CAPABILITIES.each do |capability| %>
+            <label class="flex items-center gap-[6px] text-[12.5px] text-ink-2 cursor-pointer">
+              <%= check_box_tag "api_token[scopes][]", capability, capability == "write", class: "w-4 h-4 accent-accent" %>
+              <%= capability_label(capability) %>
+            </label>
+          <% end %>
+        </div>
       </div>
       <%= submit_tag "Create token", class: "btn" %>
     <% end %>
+  </div>
+
+  <%# ---- Command line ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "terminal", size: 19, css: "text-ink-3" %>Command line</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-4">Pull, edit, and propose translations from your terminal (or an AI agent). Pushes land as drafts for review — nothing publishes without a human.</div>
+
+    <div class="border border-line rounded-[9px] bg-surface-2 px-[14px] py-[12px] font-mono text-[12.5px] text-ink flex flex-col gap-[3px]">
+      <div><span class="text-faint select-none">$ </span>npm i -g @language-bridge/cli</div>
+      <div><span class="text-faint select-none">$ </span>lb login --url <%= request.base_url %></div>
+      <div><span class="text-faint select-none">$ </span>lb init<span class="text-mut"> &nbsp;# scaffolds language-bridge.json for <%= @project.slug %></span></div>
+      <div><span class="text-faint select-none">$ </span>lb pull<span class="text-mut"> &nbsp;# download translations as JSON</span></div>
+      <div><span class="text-faint select-none">$ </span>lb push<span class="text-mut"> &nbsp;# propose edits as reviewable drafts</span></div>
+    </div>
+    <div class="text-[12px] text-mut mt-[7px]">Run <code class="font-mono">lb help</code> for everything else — typed i18next resources (<code class="font-mono">lb sync</code>), review deep links (<code class="font-mono">lb review</code>), and the CI guard (<code class="font-mono">lb check</code>).</div>
   </div>
 
   <%# ---- Rate limit override ---- %>

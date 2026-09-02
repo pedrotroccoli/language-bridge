@@ -10,6 +10,18 @@ module ApplicationHelper
   end
   alias_method :mi, :material_icon
 
+  # Human label for a token capability (TokenScopes::CAPABILITIES).
+  CAPABILITY_LABELS = {
+    "read" => "Read published",
+    "read_drafts" => "Read drafts",
+    "write" => "Write drafts",
+    "admin" => "Admin"
+  }.freeze
+
+  def capability_label(capability)
+    CAPABILITY_LABELS.fetch(capability, capability.to_s.humanize)
+  end
+
   # Initials from a name or email, for avatar chips.
   def initials_for(value)
     source = value.to_s.strip

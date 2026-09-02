@@ -58,13 +58,13 @@ class Api::V1::ExportsTest < ActionDispatch::IntegrationTest
   end
 
   test "a viewer's PAT cannot read drafts" do
-    raw = PersonalAccessToken.regenerate_for(users(:viewer))
+    raw = PersonalAccessToken.issue(user: users(:viewer), name: "test")
     get_export(headers: { "Authorization" => "Bearer #{raw}" }, locale: "en", include_drafts: "1")
     assert_response :forbidden
   end
 
   test "a personal access token authenticates against an accessible project" do
-    raw = PersonalAccessToken.regenerate_for(users(:viewer)) # even a viewer may read
+    raw = PersonalAccessToken.issue(user: users(:viewer), name: "test") # even a viewer may read
     get_export(headers: { "Authorization" => "Bearer #{raw}" }, locale: "en")
     assert_response :success
   end

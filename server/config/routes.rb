@@ -6,6 +6,11 @@ Rails.application.routes.draw do
   get    "sign_in/:token", to: "sessions#show", as: :sign_in_with_token
   delete "sign_out",       to: "sessions#destroy", as: :sign_out
 
+  # `lb login` device flow: a signed-in user authorises a machine, which then
+  # exchanges a one-time code (see api/v1/cli/token) for a personal access token.
+  get  "cli/authorize", to: "cli/authorizations#new",    as: :cli_authorize
+  post "cli/authorize", to: "cli/authorizations#create", as: :cli_authorization
+
   resources :invitations, only: %i[ index new create destroy ] do
     member { post :resend }
   end
@@ -25,7 +30,7 @@ Rails.application.routes.draw do
   resource :account, only: %i[ show update ], controller: "account"
   namespace :account do
     resource :sessions, only: :destroy # revoke all sessions but the current one
-    resource :personal_access_token, only: %i[ create destroy ] # generate/regenerate + revoke
+    resources :personal_access_tokens, only: %i[ create destroy ] # issue named tokens + revoke
   end
 
   resources :projects, only: %i[ index new create show edit update destroy ] do
@@ -37,6 +42,9 @@ Rails.application.routes.draw do
     resources :missing, only: %i[ index destroy ], controller: "projects/missing" do
       resource :promotion, only: :create, controller: "projects/missing/promotions"
     end
+    # Cross-namespace review of the draft translations a CLI push wrote, filtered
+    # by ?session= (see `lb review`). Rows publish through the usual endpoints.
+    resource :review, only: :show, controller: "projects/review"
     resources :backups, only: %i[ index create destroy ], controller: "projects/backups" do
       resource :restoration, only: :create, controller: "projects/backups/restorations"
     end
@@ -70,6 +78,11 @@ Rails.application.routes.draw do
       # Bearer-token JSON export consumed by the CLI type generator: all
       # namespaces for one locale, compiled into i18next-shaped nested objects.
       get "projects/:project_slug/export", to: "exports#show"
+      # Push counterpart: proposes source-locale values as reviewable drafts.
+      post "projects/:project_slug/import", to: "imports#create"
+      # CLI device login: exchange a one-time code for a token, and identity.
+      post "cli/token", to: "cli/tokens#create"
+      get  "user",      to: "user#show"
     end
   end
 

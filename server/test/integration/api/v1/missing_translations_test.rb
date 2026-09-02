@@ -26,7 +26,7 @@ class Api::V1::MissingTranslationsTest < ActionDispatch::IntegrationTest
   end
 
   test "a personal access token authenticates against an accessible project" do
-    raw = PersonalAccessToken.regenerate_for(users(:admin))
+    raw = PersonalAccessToken.issue(user: users(:admin), name: "test")
 
     assert_difference -> { MissingKeyReport.count }, 1 do
       post_missing(headers: { "Authorization" => "Bearer #{raw}" },
@@ -36,7 +36,7 @@ class Api::V1::MissingTranslationsTest < ActionDispatch::IntegrationTest
   end
 
   test "a translator's PAT carries the save_missing scope" do
-    raw = PersonalAccessToken.regenerate_for(users(:translator))
+    raw = PersonalAccessToken.issue(user: users(:translator), name: "test")
 
     assert_difference -> { MissingKeyReport.count }, 1 do
       post_missing(headers: { "Authorization" => "Bearer #{raw}" },
@@ -46,7 +46,7 @@ class Api::V1::MissingTranslationsTest < ActionDispatch::IntegrationTest
   end
 
   test "a viewer's PAT lacks the save_missing scope" do
-    raw = PersonalAccessToken.regenerate_for(users(:viewer))
+    raw = PersonalAccessToken.issue(user: users(:viewer), name: "test")
 
     assert_no_difference -> { MissingKeyReport.count } do
       post_missing(headers: { "Authorization" => "Bearer #{raw}" },

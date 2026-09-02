@@ -61,6 +61,16 @@ erDiagram
         string checksum
         string content_encoding
     }
+    TranslationProposal {
+        uuid id
+        uuid project_id
+        uuid namespace_id
+        uuid locale_id
+        uuid author_id
+        string key
+        text value
+        string session
+    }
 
     %% ── Access / auth ─────────────────────────────────────────────────────
     User {
@@ -80,7 +90,16 @@ erDiagram
     PersonalAccessToken {
         uuid id
         uuid user_id
+        string name
         string token_digest
+    }
+    CliAuthCode {
+        uuid id
+        uuid user_id
+        string code_digest
+        string name
+        datetime expires_at
+        datetime used_at
     }
     Session {
         uuid id
@@ -135,6 +154,7 @@ erDiagram
         uuid id
         integer missing_rate_limit
         integer delivery_rate_limit
+        integer cli_token_limit
     }
 
     %% ── Translation-domain relations ──────────────────────────────────────
@@ -143,11 +163,15 @@ erDiagram
     Project ||--o{ TranslationKey : "has many"
     Project ||--o{ Translation : "has many"
     Project ||--o{ TranslationArtifact : "has many"
+    Project ||--o{ TranslationProposal : "has many"
     Namespace ||--o{ TranslationKey : "has many"
     Namespace ||--o{ TranslationArtifact : "has many"
+    Namespace ||--o{ TranslationProposal : "staged"
     Locale ||--o{ Translation : "has many"
     Locale ||--o{ TranslationArtifact : "has many"
+    Locale ||--o{ TranslationProposal : "staged"
     TranslationKey ||--o{ Translation : "has many"
+    User ||--o{ TranslationProposal : "proposed"
     Translation |o--o| TranslationPublication : "state record"
     Translation |o--o| TranslationReview : "state record"
     Translation |o--o| TranslationApproval : "state record"
@@ -158,6 +182,7 @@ erDiagram
     Project ||--o{ ApiToken : "has many"
     User ||--o{ ApiToken : "created"
     User ||--o{ PersonalAccessToken : "owns"
+    User ||--o{ CliAuthCode : "login codes"
     User ||--o{ Session : "has many"
     User ||--o{ SignInToken : "has many"
     User ||--o{ Invitation : "invited by"

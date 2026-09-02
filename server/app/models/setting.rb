@@ -4,6 +4,7 @@
 class Setting < ApplicationRecord
   CACHE_KEY = "app_setting".freeze
 
+  validates :cli_token_limit, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 50 }
   validates :delivery_compression, inclusion: { in: DeliveryCompression::MODES }
   validates :delivery_base_url,
     allow_blank: true,

@@ -75,6 +75,19 @@ class TranslationKeysControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to project_namespace_path(@project, @namespace)
   end
 
+  test "create and destroy return to the referer so search and filters survive" do
+    sign_in_as(users(:admin))
+    filtered = project_namespace_path(@project, @namespace, q: "gree", status: "drafts")
+
+    post project_namespace_translation_keys_path(@project, @namespace),
+         params: { translation_key: { key: "kept.filters" } }, headers: { "HTTP_REFERER" => filtered }
+    assert_redirected_to filtered
+
+    key = @namespace.translation_keys.find_by!(key: "kept.filters")
+    delete project_namespace_translation_key_path(@project, @namespace, key), headers: { "HTTP_REFERER" => filtered }
+    assert_redirected_to filtered
+  end
+
   test "destroying a published key rebuilds its artifact without the key" do
     sign_in_as(users(:admin))
     greeting = translations(:greeting_en) # key "greeting", value "Hello"

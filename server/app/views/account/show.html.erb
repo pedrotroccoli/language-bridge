@@ -41,10 +41,12 @@
     <p class="text-[12.5px] text-mut mt-[16px] mb-0">Sign-in is passwordless — a one-time link is emailed to <span class="font-mono text-ink-2"><%= current_user.email %></span>. To change your email, ask an admin to re-invite you.</p>
   </div>
 
-  <%# ---- Personal access token ---- %>
+  <%# ---- Personal access tokens ---- %>
+  <% tokens = current_user.personal_access_tokens.recent.to_a %>
+  <% limit = Setting.current.cli_token_limit %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
-    <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink mb-1"><%= mi "key", size: 19, css: "text-ink-3" %>Personal access token</div>
-    <div class="text-[13px] text-mut mb-4">A bearer token for the personal API and CLI, scoped to the projects you can access. The raw value is shown once — store it securely.</div>
+    <div class="flex items-center gap-[9px] text-[16px] font-semibold text-ink mb-1"><%= mi "key", size: 19, css: "text-ink-3" %>Personal access tokens</div>
+    <div class="text-[13px] text-mut mb-4">Bearer tokens for the personal API and CLI, scoped to the projects you can access. Name one per machine, or run <span class="font-mono text-ink-2">lb login</span>. The raw value is shown once — store it securely. Limit: <%= tokens.size %>/<%= limit %>.</div>
 
     <% if flash[:pat_created].present? %>
       <div class="mb-4 border border-accent rounded-[9px] bg-accent-soft px-4 py-3">
@@ -53,18 +55,39 @@
       </div>
     <% end %>
 
-    <% if (pat = current_user.personal_access_token) %>
-      <div class="flex items-center gap-3 flex-wrap border border-line rounded-[9px] px-4 py-[12px]">
-        <%= mi "key", size: 18, css: "text-faint" %>
-        <code class="font-mono text-[13px] text-ink-2"><%= pat.masked %></code>
-        <span class="text-[12px] text-mut ml-auto"><%= pat.last_used_at ? "used #{time_ago_in_words(pat.last_used_at)} ago" : "never used" %></span>
-        <%= button_to "Regenerate", account_personal_access_token_path, method: :post, class: "btn-secondary",
-              form_class: "inline", data: { turbo_confirm: "Regenerate your token? The current one stops working immediately." } %>
-        <%= button_to "Revoke", account_personal_access_token_path, method: :delete, class: "btn-secondary btn-danger",
-              form_class: "inline", data: { turbo_confirm: "Revoke your personal access token?" } %>
+    <% if tokens.any? %>
+      <div class="flex flex-col gap-[8px] mb-4">
+        <% tokens.each do |pat| %>
+          <div class="flex items-center gap-3 flex-wrap border border-line rounded-[9px] px-4 py-[12px]">
+            <%= mi "key", size: 18, css: "text-faint" %>
+            <span class="text-[13px] text-ink font-medium"><%= pat.name %></span>
+            <span class="font-mono text-[10px] uppercase tracking-[0.04em] text-ink-3 bg-line-3 rounded-[5px] px-[7px] py-[2px]"><%= pat.scopes.join(" · ").tr("_", " ") %></span>
+            <code class="font-mono text-[12px] text-mut"><%= pat.masked %></code>
+            <span class="text-[12px] text-mut ml-auto"><%= pat.last_used_at ? "used #{time_ago_in_words(pat.last_used_at)} ago" : "never used" %></span>
+            <%= button_to "Revoke", account_personal_access_token_path(pat), method: :delete, class: "btn-secondary btn-danger",
+                  form_class: "inline", data: { turbo_confirm: "Revoke \"#{pat.name}\"? Any machine using it stops working immediately." } %>
+          </div>
+        <% end %>
       </div>
+    <% end %>
+
+    <% if tokens.size < limit %>
+      <%= form_with url: account_personal_access_tokens_path, method: :post, class: "flex flex-col gap-[10px]" do |form| %>
+        <%= form.text_field :name, placeholder: "Token name (e.g. laptop)", required: true,
+              class: "border border-line rounded-[8px] px-3 py-[8px] text-[13px] bg-surface text-ink" %>
+        <div class="flex items-center gap-[14px] flex-wrap">
+          <span class="text-[12px] text-mut">Capabilities:</span>
+          <% PersonalAccessToken.grantable_scopes(current_user).each do |capability| %>
+            <label class="flex items-center gap-[6px] text-[12.5px] text-ink-2 cursor-pointer">
+              <%= check_box_tag "scopes[]", capability, PersonalAccessToken::DEFAULT_SCOPES.include?(capability), class: "w-4 h-4 accent-accent" %>
+              <%= capability_label(capability) %>
+            </label>
+          <% end %>
+          <%= form.submit "Generate token", class: "btn ml-auto" %>
+        </div>
+      <% end %>
     <% else %>
-      <%= button_to "Generate token", account_personal_access_token_path, method: :post, class: "btn" %>
+      <div class="text-[12.5px] text-mut">Token limit reached. Revoke one to add another<%= current_user.admin? ? ", or raise the limit in Workspace settings." : "." %></div>
     <% end %>
   </div>
 

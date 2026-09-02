@@ -30,7 +30,13 @@ class TranslationKeysController < ApplicationController
       @translation_key.save!
       create_source_value(namespace)
     end
-    redirect_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
+    # Back to where the user was (search/filters intact) unless the key went
+    # into a different namespace — then land there so it's visible.
+    if namespace == @namespace
+      redirect_back_or_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
+    else
+      redirect_to project_namespace_path(@project, namespace), notice: "Key created.", status: :see_other
+    end
   rescue ActiveRecord::RecordInvalid
     redirect_with_alert(@translation_key)
   end
@@ -42,7 +48,7 @@ class TranslationKeysController < ApplicationController
       if turbo_frame_request?
         redirect_to project_namespace_translation_key_path(@project, @namespace, @translation_key), notice: "Key updated.", status: :see_other
       else
-        redirect_to namespace_path, notice: "Key updated.", status: :see_other
+        redirect_back_or_to namespace_path, notice: "Key updated.", status: :see_other
       end
     else
       redirect_with_alert(@translation_key)
@@ -56,7 +62,7 @@ class TranslationKeysController < ApplicationController
     @translation_key.destroy!
     affected_locale_ids.each { |locale_id| Translation::Artifact.rebuild(@namespace.id, locale_id) }
 
-    redirect_to namespace_path, notice: "Key deleted.", status: :see_other
+    redirect_back_or_to namespace_path, notice: "Key deleted.", status: :see_other
   end
 
   private
@@ -99,6 +105,6 @@ class TranslationKeysController < ApplicationController
 
     def redirect_with_alert(record)
       flash[:invalid_translation_key] = translation_key_params[:key]
-      redirect_to namespace_path, alert: record.errors.full_messages.to_sentence, status: :see_other
+      redirect_back_or_to namespace_path, alert: record.errors.full_messages.to_sentence, status: :see_other
     end
 end

@@ -20,13 +20,26 @@ module Project::Storage
     connection.service_key if connection&.usable?
   end
 
-  # Clean object key under the connection prefix + project upload_path.
+  # The resolved Active Storage service object writes route through — for code
+  # that writes objects directly (session/playground artifacts) without a blob.
+  def storage_service
+    if (name = storage_service_name)
+      ActiveStorage::Blob.services.fetch(name)
+    else
+      ActiveStorage::Blob.service
+    end
+  end
+
+  # Clean object key under the connection prefix + project upload_path. Dot-only
+  # segments are dropped so no caller-supplied part can traverse out of the
+  # storage root (defense in depth — artifact callers sanitize their own input).
   def storage_key(*parts)
     parts = [ upload_path, *parts ]
-    if (connection = effective_storage_connection)
+    key = if (connection = effective_storage_connection)
       connection.key_for(*parts)
     else
-      parts.compact_blank.join("/").gsub(%r{/+}, "/").delete_prefix("/")
+      parts.compact_blank.join("/")
     end
+    key.split("/").reject { |part| part.blank? || part.match?(/\A\.+\z/) }.join("/")
   end
 end

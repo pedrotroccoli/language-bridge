@@ -7,7 +7,7 @@ class Projects::ApiTokensController < ApplicationController
     _record, raw = ApiToken.generate(
       project: @project,
       name:    token_params[:name].presence || "API token",
-      scope:   token_params[:scope].presence || "save_missing",
+      scopes:  Array(token_params[:scopes]),
       creator: current_user
     )
     # The raw token is shown exactly once, via flash, on the settings page.
@@ -24,6 +24,6 @@ class Projects::ApiTokensController < ApplicationController
 
   private
     def token_params
-      params.expect(api_token: %i[ name scope ])
+      params.expect(api_token: [ :name, { scopes: [] } ])
     end
 end

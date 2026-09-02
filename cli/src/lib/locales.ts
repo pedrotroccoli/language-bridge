@@ -1,17 +1,13 @@
 // Filesystem + selection helpers shared by the pull/generate/sync commands.
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { pick } from "1o1-utils";
 import type { Namespaces, TranslationTree } from "./types.js";
 
 // Keep only the requested namespaces (all of them when `only` is empty).
 export function selectNamespaces(all: Namespaces, only?: string[]): Namespaces {
   if (!only || only.length === 0) return all;
-  const wanted = new Set(only);
-  const out: Namespaces = {};
-  for (const ns of Object.keys(all)) {
-    if (wanted.has(ns)) out[ns] = all[ns]!;
-  }
-  return out;
+  return pick({ obj: all, keys: only }) as Namespaces;
 }
 
 // Write each namespace tree as <dir>/<ns>.json (i18next per-namespace layout).
