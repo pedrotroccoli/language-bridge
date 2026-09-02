@@ -201,4 +201,16 @@ class TranslationTest < ActiveSupport::TestCase
     assert_not translation.reload.under_review?
     assert_not translation.approved?
   end
+
+  test "translation and key writes touch the project (last-activity stamp)" do
+    project = projects(:main_app)
+
+    project.update_column(:updated_at, 1.day.ago)
+    translations(:greeting_en).update!(value: "Fresh edit")
+    assert_in_delta Time.current, project.reload.updated_at, 5.seconds
+
+    project.update_column(:updated_at, 1.day.ago)
+    namespaces(:main_app_common).translation_keys.create!(project: project, key: "touch.check")
+    assert_in_delta Time.current, project.reload.updated_at, 5.seconds
+  end
 end
