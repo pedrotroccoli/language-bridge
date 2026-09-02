@@ -15,6 +15,18 @@ class Cli::AuthorizationsTest < ActionDispatch::IntegrationTest
     assert_select "form"
   end
 
+  test "shows the requested capabilities and mints a code carrying them" do
+    sign_in_as(users(:admin))
+    get cli_authorize_path(redirect_uri: LOOPBACK, state: "s", name: "laptop", scopes: %w[ read write ])
+    assert_response :success
+    assert_includes response.body, "Read published"
+
+    assert_difference -> { CliAuthCode.count }, 1 do
+      post cli_authorization_path, params: { redirect_uri: LOOPBACK, state: "s", name: "laptop", scopes: %w[ read write ] }
+    end
+    assert_equal %w[ read write ], CliAuthCode.last.scopes
+  end
+
   test "flags a non-loopback callback" do
     sign_in_as(users(:admin))
     get cli_authorize_path(redirect_uri: "https://evil.example.com/steal", state: "s")

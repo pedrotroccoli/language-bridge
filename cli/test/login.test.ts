@@ -25,13 +25,23 @@ vi.mock("../src/lib/api.js", () => ({
 import { login } from "../src/commands/login.js";
 import { loadToken } from "../src/lib/credentials.js";
 
+let wasTty: boolean | undefined;
+let wasCi: string | undefined;
+
 beforeEach(async () => {
   const dir = await mkdtemp(join(tmpdir(), "lb-login-"));
   process.env.LB_CREDENTIALS_FILE = join(dir, "credentials.json");
+  // login refuses to run headless; the suite itself is headless, so fake a TTY.
+  wasTty = process.stderr.isTTY;
+  wasCi = process.env.CI;
+  process.stderr.isTTY = true;
+  delete process.env.CI;
 });
 
 afterEach(() => {
   delete process.env.LB_CREDENTIALS_FILE;
+  process.stderr.isTTY = wasTty as boolean;
+  if (wasCi !== undefined) process.env.CI = wasCi;
   vi.clearAllMocks();
 });
 
@@ -41,5 +51,15 @@ describe("login", () => {
 
     expect(result.user).toBe("ada@example.com");
     expect(await loadToken("http://server.test")).toBe("lb_pat_minted");
+  });
+
+  it("fails fast in CI instead of waiting on a browser", async () => {
+    process.env.CI = "true";
+    await expect(login({ url: "http://server.test" })).rejects.toThrow(/LB_TOKEN/);
+  });
+
+  it("fails fast without a TTY", async () => {
+    process.stderr.isTTY = false as never;
+    await expect(login({ url: "http://server.test" })).rejects.toThrow(/interactive terminal/);
   });
 });
