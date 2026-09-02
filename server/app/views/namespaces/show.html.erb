@@ -225,9 +225,6 @@
                 action="<%= project_namespace_path(@project, @namespace) %>"
                 data-controller="auto-submit locale-filter" data-auto-submit-delay-value="300"
                 data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys">
-            <%# session carried by the session dropdown's radios below; hidden
-                fallback only when no dropdown renders (session set, no drafts) %>
-            <% if @session && @draft_sessions.empty? %><input type="hidden" name="session" value="<%= @session %>"><% end %>
             <div class="h-9 flex-1 flex items-center gap-[10px] px-[13px] border border-line rounded-[9px] focus-within:border-ink transition-colors">
               <%= mi "search", size: 18, css: "text-mut-2" %>
               <input type="search" name="q" value="<%= @query %>" placeholder="Search keys or values…" aria-label="Search keys or values"
