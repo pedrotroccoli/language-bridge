@@ -40,9 +40,9 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 - Namespaces: ${namespaces.map((name) => `\`${name}\``).join(", ") || "—"}
 
 ## Commands
-- \`lb pull\`      fetch current translations to disk
-- \`lb push\`      upload source-locale edits as proposals
-- \`lb generate\`  regenerate TypeScript types after a pull
+Run \`lb help\` (or \`lb help <command>\`) to discover commands.
+Typical flow: \`lb pull\` → edit source JSON → \`lb push\` → a human reviews via \`lb review\`.
+CI guard: \`lb check\` exits non-zero while any key exists only in the playground (unpublished).
 
 ## Never
 - Touch a non-source locale.
