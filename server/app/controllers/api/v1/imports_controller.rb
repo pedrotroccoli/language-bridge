@@ -39,16 +39,7 @@ module Api
         # Materialize the session's preview JSON in the connected storage so a
         # frontend can point at the push at a stable path before anything publishes.
         preview_paths = Translation::SessionArtifact.materialize_session(@project, session)
-        playground_paths = entries.map { |entry| entry[:namespace] }.uniq.filter_map do |name|
-          namespace = @project.namespaces.find_by(name: name)
-          next if namespace.nil?
-
-          key = Translation::PlaygroundArtifact.storage_key(@project, namespace, locale)
-          # The batch above only rewrites pairs whose values changed; an idempotent
-          # re-push against empty storage still needs the file to exist.
-          Translation::PlaygroundArtifact.materialize(namespace: namespace, locale: locale) unless @project.storage_service.exist?(key)
-          key
-        end
+        playground_paths = Translation::PlaygroundArtifact.ensure_materialized(@project, entries.map { |entry| entry[:namespace] }.uniq, locale)
         render json: { status: "ok", locale: locale.code, session: session, written: written,
                        preview_paths: preview_paths, playground_paths: playground_paths }
       rescue ActiveRecord::RecordInvalid => e

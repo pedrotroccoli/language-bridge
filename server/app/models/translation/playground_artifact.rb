@@ -38,6 +38,20 @@ class Translation::PlaygroundArtifact
       nil
     end
 
+    # Make sure the playground file exists for each named namespace, writing it
+    # only when absent — value-change callbacks keep existing files fresh, but a
+    # cold start (or idempotent re-push) never fires them. Returns the keys.
+    def ensure_materialized(project, namespace_names, locale)
+      namespace_names.filter_map do |name|
+        namespace = project.namespaces.find_by(name: name)
+        next if namespace.nil?
+
+        key = storage_key(project, namespace, locale)
+        materialize(namespace: namespace, locale: locale) unless project.storage_service.exist?(key)
+        key
+      end
+    end
+
     # Returns the storage key written.
     def materialize(namespace:, locale:)
       project = namespace.project
