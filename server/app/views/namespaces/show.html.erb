@@ -225,6 +225,8 @@
                 action="<%= project_namespace_path(@project, @namespace) %>"
                 data-controller="auto-submit locale-filter" data-auto-submit-delay-value="300"
                 data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys">
+            <%# carry the review session across searches/filters %>
+            <% if @session %><input type="hidden" name="session" value="<%= @session %>"><% end %>
             <div class="h-9 flex-1 flex items-center gap-[10px] px-[13px] border border-line rounded-[9px] focus-within:border-ink transition-colors">
               <%= mi "search", size: 18, css: "text-mut-2" %>
               <input type="search" name="q" value="<%= @query %>" placeholder="Search keys or values…" aria-label="Search keys or values"
@@ -286,6 +288,14 @@
 
         <div class="flex-1 overflow-auto min-h-0">
           <%= turbo_frame_tag "translation_keys" do %>
+            <% if @session %>
+              <div class="mx-4 mt-[11px] flex items-center gap-[8px] px-[12px] py-[8px] rounded-[8px] bg-accent-soft border border-line text-[12px]">
+                <%= mi "commit", size: 14, css: "text-accent" %>
+                <span class="text-ink-2">Reviewing push session</span>
+                <span class="font-mono text-accent font-semibold"><%= @session %></span>
+                <%= link_to "Clear", project_namespace_path(@project, @namespace, status: @status), class: "ml-auto text-mut-2 hover:text-ink no-underline" %>
+              </div>
+            <% end %>
             <p class="key-meta font-mono text-[11.5px] text-ink-3 px-4 pt-[11px] pb-1">
               <% if @query.present? %>
                 <%= @match_count %> <%= "key".pluralize(@match_count) %> match “<%= @query %>”<%= " · showing first #{@page_limit}" if @match_count > @page_limit %>

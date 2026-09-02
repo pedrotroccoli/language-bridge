@@ -86,9 +86,9 @@ CREATE TABLE public.api_tokens (
     name character varying NOT NULL,
     project_id uuid NOT NULL,
     revoked_at timestamp(6) without time zone,
-    scope character varying NOT NULL,
     token_digest character varying NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -101,6 +101,23 @@ CREATE TABLE public.ar_internal_metadata (
     value character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: cli_auth_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cli_auth_codes (
+    id uuid DEFAULT public.uuidv7() NOT NULL,
+    user_id uuid NOT NULL,
+    code_digest character varying NOT NULL,
+    name character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -194,7 +211,9 @@ CREATE TABLE public.personal_access_tokens (
     last_used_at timestamp(6) without time zone,
     token_digest character varying NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    name character varying DEFAULT ''::character varying NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -286,7 +305,8 @@ CREATE TABLE public.settings (
     rate_limiting_enabled boolean DEFAULT true NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     upload_allowed_formats character varying[] DEFAULT '{json,csv,xliff}'::character varying[] NOT NULL,
-    upload_max_bytes bigint DEFAULT 5242880 NOT NULL
+    upload_max_bytes bigint DEFAULT 5242880 NOT NULL,
+    cli_token_limit integer DEFAULT 3 NOT NULL
 );
 
 
@@ -806,24 +826,6 @@ CREATE TABLE public.translation_keys (
 
 
 --
--- Name: translation_proposals; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.translation_proposals (
-    id uuid DEFAULT public.uuidv7() NOT NULL,
-    project_id uuid NOT NULL,
-    namespace_id uuid NOT NULL,
-    locale_id uuid NOT NULL,
-    author_id uuid NOT NULL,
-    key character varying NOT NULL,
-    value text NOT NULL,
-    session character varying DEFAULT ''::character varying NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: translation_publications; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -875,7 +877,8 @@ CREATE TABLE public.translations (
     project_id uuid NOT NULL,
     translation_key_id uuid NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    value text
+    value text,
+    session character varying
 );
 
 
@@ -1022,6 +1025,14 @@ ALTER TABLE ONLY public.api_tokens
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: cli_auth_codes cli_auth_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cli_auth_codes
+    ADD CONSTRAINT cli_auth_codes_pkey PRIMARY KEY (id);
 
 
 --
@@ -1257,14 +1268,6 @@ ALTER TABLE ONLY public.translation_keys
 
 
 --
--- Name: translation_proposals translation_proposals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.translation_proposals
-    ADD CONSTRAINT translation_proposals_pkey PRIMARY KEY (id);
-
-
---
 -- Name: translation_publications translation_publications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1351,6 +1354,20 @@ CREATE INDEX index_api_tokens_on_project_id ON public.api_tokens USING btree (pr
 --
 
 CREATE UNIQUE INDEX index_api_tokens_on_token_digest ON public.api_tokens USING btree (token_digest);
+
+
+--
+-- Name: index_cli_auth_codes_on_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cli_auth_codes_on_code_digest ON public.cli_auth_codes USING btree (code_digest);
+
+
+--
+-- Name: index_cli_auth_codes_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cli_auth_codes_on_user_id ON public.cli_auth_codes USING btree (user_id);
 
 
 --
@@ -1455,7 +1472,7 @@ CREATE UNIQUE INDEX index_personal_access_tokens_on_token_digest ON public.perso
 -- Name: index_personal_access_tokens_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_personal_access_tokens_on_user_id ON public.personal_access_tokens USING btree (user_id);
+CREATE INDEX index_personal_access_tokens_on_user_id ON public.personal_access_tokens USING btree (user_id);
 
 
 --
@@ -1809,27 +1826,6 @@ CREATE UNIQUE INDEX index_translation_keys_on_project_id_and_namespace_id_and_ke
 
 
 --
--- Name: index_translation_proposals_on_author_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_translation_proposals_on_author_id ON public.translation_proposals USING btree (author_id);
-
-
---
--- Name: index_translation_proposals_on_namespace_key_locale_session; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_translation_proposals_on_namespace_key_locale_session ON public.translation_proposals USING btree (namespace_id, key, locale_id, session);
-
-
---
--- Name: index_translation_proposals_on_project_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_translation_proposals_on_project_id ON public.translation_proposals USING btree (project_id);
-
-
---
 -- Name: index_translation_publications_on_publisher_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1897,6 +1893,13 @@ CREATE INDEX index_translations_on_locale_id ON public.translations USING btree 
 --
 
 CREATE INDEX index_translations_on_project_id ON public.translations USING btree (project_id);
+
+
+--
+-- Name: index_translations_on_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translations_on_session ON public.translations USING btree (session);
 
 
 --
@@ -2130,11 +2133,11 @@ ALTER TABLE ONLY public.solid_queue_claimed_executions
 
 
 --
--- Name: translation_proposals fk_rails_a11f5c10ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: cli_auth_codes fk_rails_a757445e44; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.translation_proposals
-    ADD CONSTRAINT fk_rails_a11f5c10ad FOREIGN KEY (locale_id) REFERENCES public.locales(id);
+ALTER TABLE ONLY public.cli_auth_codes
+    ADD CONSTRAINT fk_rails_a757445e44 FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -2210,35 +2213,11 @@ ALTER TABLE ONLY public.translation_artifacts
 
 
 --
--- Name: translation_proposals fk_rails_e0be39dbdf; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.translation_proposals
-    ADD CONSTRAINT fk_rails_e0be39dbdf FOREIGN KEY (project_id) REFERENCES public.projects(id);
-
-
---
--- Name: translation_proposals fk_rails_e549889d01; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.translation_proposals
-    ADD CONSTRAINT fk_rails_e549889d01 FOREIGN KEY (author_id) REFERENCES public.users(id);
-
-
---
 -- Name: api_tokens fk_rails_f1ad9e0a88; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_tokens
     ADD CONSTRAINT fk_rails_f1ad9e0a88 FOREIGN KEY (creator_id) REFERENCES public.users(id) ON DELETE SET NULL;
-
-
---
--- Name: translation_proposals fk_rails_fea4fda41c; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.translation_proposals
-    ADD CONSTRAINT fk_rails_fea4fda41c FOREIGN KEY (namespace_id) REFERENCES public.namespaces(id);
 
 
 --
@@ -2248,6 +2227,11 @@ ALTER TABLE ONLY public.translation_proposals
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260901170000'),
+('20260901160000'),
+('20260901150000'),
+('20260901140000'),
+('20260901130000'),
 ('20260901120000'),
 ('20260701120001'),
 ('20260701120000');

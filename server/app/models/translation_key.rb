@@ -24,10 +24,11 @@ class TranslationKey < ApplicationRecord
 
   # Upsert the translation for a locale (creates missing keys' rows, overwrites
   # existing — snapshotting a Version and dropping any publication via the
-  # Translation callbacks).
-  def set_translation(locale:, value:, author: Current.user)
+  # Translation callbacks). `session` tags the draft with the CLI push that wrote
+  # it (nil for ordinary editor edits).
+  def set_translation(locale:, value:, author: Current.user, session: nil)
     translations.find_or_initialize_by(locale: locale).tap do |translation|
-      translation.update!(value: value, author: author)
+      translation.update!(value: value, author: author, session: session)
     end
   end
 end

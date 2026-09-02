@@ -13,7 +13,6 @@ class Project < ApplicationRecord
   has_many :translation_keys, dependent: :destroy
   has_many :translations, dependent: :destroy
   has_many :translation_artifacts, class_name: "Translation::Artifact", dependent: :destroy
-  has_many :translation_proposals, class_name: "Translation::Proposal", dependent: :destroy
   has_many :api_tokens, dependent: :destroy
   has_many :missing_key_reports, dependent: :destroy
 

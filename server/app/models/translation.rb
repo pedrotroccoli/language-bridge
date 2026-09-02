@@ -27,6 +27,9 @@ class Translation < ApplicationRecord
   scope :drafts_in_namespace, ->(namespace) {
     drafts.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
   }
+  # Drafts written by one CLI push session (see TranslationKey#set_translation).
+  scope :in_session, ->(session) { where(session: session) }
+  scope :drafts_in_session, ->(session) { drafts.in_session(session) }
   scope :under_review_in_namespace, ->(namespace) {
     under_review.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
   }
