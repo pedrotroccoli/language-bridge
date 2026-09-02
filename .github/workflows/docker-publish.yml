@@ -1,10 +1,13 @@
 name: Build & publish image
 
 # Builds the production Docker image and pushes it to GitHub Container Registry
-# (ghcr.io/<owner>/<repo>). Triggers on version tags (v1.2.3) and manual runs.
+# (ghcr.io/<owner>/<repo>). Version tags (v1.2.3) cut releases; pushes to
+# development produce a moving :development tag for staging. Every build also
+# gets an immutable :sha-<commit> tag.
 on:
   push:
     tags: [ "v*" ]
+    branches: [ development ]
   workflow_dispatch:
 
 jobs:
@@ -35,6 +38,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=tag
+            type=ref,event=branch
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
