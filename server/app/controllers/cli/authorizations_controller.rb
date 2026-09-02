@@ -3,32 +3,31 @@
 # CLI's loopback server with a one-time code. Cookie-authenticated (inherits
 # ApplicationController) so it's the logged-in human granting access, not a token.
 class Cli::AuthorizationsController < ApplicationController
+  before_action :set_grant
+
   def new
-    @name = device_name
-    @redirect_uri = params[:redirect_uri].to_s
-    @state = params[:state].to_s
-    @scopes = requested_scopes
     @invalid = !loopback?(@redirect_uri)
     render :new, status: (@invalid ? :unprocessable_entity : :ok)
   end
 
   def create
-    @redirect_uri = params[:redirect_uri].to_s
-    @name = device_name
-    @state = params[:state].to_s
-    @scopes = requested_scopes
     if !loopback?(@redirect_uri)
       @invalid = true
       return render :new, status: :unprocessable_entity
     end
 
-    code = CliAuthCode.issue(user: current_user, name: device_name, scopes: @scopes)
+    code = CliAuthCode.issue(user: current_user, name: @name, scopes: @scopes)
     redirect_to callback_url(@redirect_uri, code: code, state: @state), allow_other_host: true
   end
 
   private
-    def device_name
-      params[:name].to_s.presence&.slice(0, 60) || "cli"
+    # Both actions render the same approval context (create re-renders it on an
+    # invalid redirect), so it's assembled in one place.
+    def set_grant
+      @name = params[:name].to_s.presence&.slice(0, 60) || "cli"
+      @redirect_uri = params[:redirect_uri].to_s
+      @state = params[:state].to_s
+      @scopes = requested_scopes
     end
 
     # What the token will actually be granted: the CLI's request, clamped to the

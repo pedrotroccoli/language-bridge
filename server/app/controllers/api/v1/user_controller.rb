@@ -6,6 +6,8 @@ module Api
     #
     #   GET /api/v1/user  ->  { user: { email, name }, projects: ["main-app", …] }
     class UserController < ActionController::API
+      include ActionController::HttpAuthentication::Token::ControllerMethods
+
       before_action :authenticate_personal_access_token!
 
       def show
@@ -17,9 +19,7 @@ module Api
 
       private
         def authenticate_personal_access_token!
-          header = request.authorization
-          raw = header&.start_with?("Bearer ") ? header.split(" ", 2).last : nil
-          @pat = PersonalAccessToken.authenticate(raw)
+          @pat = authenticate_with_http_token { |token, _options| PersonalAccessToken.authenticate(token) }
           render json: { error: "Invalid or missing token" }, status: :unauthorized if @pat.nil?
         end
     end
