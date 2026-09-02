@@ -1,0 +1,31 @@
+<% content_for :title, "Authorize CLI" %>
+
+<div class="mx-auto w-full max-w-[460px] px-6 py-16">
+  <div class="border border-line rounded-[13px] px-[26px] py-8 bg-surface">
+    <div class="flex items-center gap-[10px] mb-5">
+      <div class="w-[40px] h-[40px] border-[1.5px] border-line rounded-[10px] flex items-center justify-center text-ink-3 bg-surface-2"><%= mi "terminal", size: 22 %></div>
+      <div>
+        <h1 class="m-0 text-[18px] font-semibold text-ink">Authorize the CLI</h1>
+        <div class="text-[12.5px] text-mut">Signed in as <%= current_user.email %></div>
+      </div>
+    </div>
+
+    <% if @invalid %>
+      <div class="border border-danger-border bg-danger-soft rounded-[9px] px-4 py-3 text-[13px] text-danger-ink">
+        Invalid request: the callback address must be a local loopback URL. Re-run <span class="font-mono">lb login</span>.
+      </div>
+    <% else %>
+      <p class="m-0 mb-5 text-[13.5px] text-mut leading-[1.55]">A command-line client on <span class="font-mono text-ink-2"><%= @name %></span> is requesting a personal access token scoped to your access. Only approve if you just started <span class="font-mono text-ink-2">lb login</span>.</p>
+
+      <%= form_with url: cli_authorization_path, method: :post, class: "flex flex-col gap-3" do |form| %>
+        <%= form.hidden_field :redirect_uri, value: @redirect_uri %>
+        <%= form.hidden_field :state, value: @state %>
+        <%= form.hidden_field :name, value: @name %>
+        <div class="flex items-center gap-[8px]">
+          <%= form.submit "Authorize", class: "btn" %>
+          <%= link_to "Cancel", root_path, class: "btn-secondary no-underline" %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
