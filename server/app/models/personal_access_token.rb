@@ -51,6 +51,9 @@ class PersonalAccessToken < ApplicationRecord
   # raises LimitReached when full.
   def self.issue(user:, name:, scopes: DEFAULT_SCOPES)
     transaction do
+      # Serialize concurrent issues for one user so the count cap can't be
+      # raced past by parallel logins.
+      user.lock!
       if user.personal_access_tokens.count >= Setting.current.cli_token_limit
         raise LimitReached, "You already have the maximum of #{Setting.current.cli_token_limit} tokens."
       end
