@@ -43,6 +43,12 @@ class Translation < ApplicationRecord
   before_update :snapshot_version, if: -> { value_changed? }
   after_update :invalidate_on_value_change, if: -> { saved_change_to_value? }
   after_commit :rebuild_artifact_after_discard, on: :update
+  # The playground artifact (published + all drafts) tracks every value change,
+  # not just publication changes. Deferred to after_commit — it uploads an object.
+  # One declaration for all three actions: registering the same method under
+  # both after_commit and after_destroy_commit would silently drop the first.
+  after_commit :rebuild_playground, on: %i[ create update destroy ],
+    if: -> { destroyed? || saved_change_to_value? }
 
   def draft?
     value.present? && publication.nil?
@@ -153,6 +159,12 @@ class Translation < ApplicationRecord
 
       @publication_discarded = false
       Translation::Artifact.touch_for(self)
+    end
+
+    def rebuild_playground
+      Translation::PlaygroundArtifact.touch_for(self)
+    rescue ActiveRecord::RecordNotFound
+      # Parent namespace/locale destroyed in the same cascade; nothing to rebuild.
     end
 
     # Editing the value invalidates prior review/approval — the reviewed content

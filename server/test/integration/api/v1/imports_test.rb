@@ -31,6 +31,36 @@ class Api::V1::ImportsTest < ActionDispatch::IntegrationTest
     assert translation.draft?, "pushed values land as unpublished drafts"
   end
 
+  test "materializes the session's playground JSON in storage and returns its path" do
+    post_import(locale: "en", session: "feat/x", namespaces: { "common" => { "welcome" => "Hi" } })
+    assert_response :success
+
+    paths = response.parsed_body["preview_paths"]
+    assert_equal 1, paths.size
+    assert_includes paths.first, "sessions/feat/x/"
+
+    json = JSON.parse(ActiveStorage::Blob.service.download(paths.first))
+    assert_equal "Hi", json["welcome"]
+  end
+
+  test "a sessionless push materializes no preview" do
+    post_import(locale: "en", namespaces: { "common" => { "welcome" => "Hi" } })
+    assert_response :success
+    assert_equal [], response.parsed_body["preview_paths"]
+  end
+
+  test "every push materializes the playground (published + all drafts)" do
+    post_import(locale: "en", namespaces: { "common" => { "welcome" => "Hi" } })
+    assert_response :success
+
+    paths = response.parsed_body["playground_paths"]
+    assert_equal 1, paths.size
+    assert_includes paths.first, "playground/"
+
+    json = JSON.parse(ActiveStorage::Blob.service.download(paths.first))
+    assert_equal "Hi", json["welcome"]
+  end
+
   test "flattens nested keys into dotted keys" do
     post_import(locale: "en", namespaces: { "common" => { "home" => { "title" => "Welcome" } } })
     assert_response :success

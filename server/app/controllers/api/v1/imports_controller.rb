@@ -33,8 +33,24 @@ module Api
         return render_error(:unprocessable_entity, "too many keys (max #{MAX_KEYS})") if entries.size > MAX_KEYS
 
         session = params[:session].to_s
-        written = write_drafts(entries, locale, author, session)
-        render json: { status: "ok", locale: locale.code, session: session, written: written }
+        # Coalesce the per-row playground rebuilds a bulk push would trigger into
+        # one write per (namespace, locale).
+        written = Translation::PlaygroundArtifact.batch { write_drafts(entries, locale, author, session) }
+        # Materialize the session's preview JSON in the connected storage so a
+        # frontend can point at the push at a stable path before anything publishes.
+        preview_paths = Translation::SessionArtifact.materialize_session(@project, session)
+        playground_paths = entries.map { |entry| entry[:namespace] }.uniq.filter_map do |name|
+          namespace = @project.namespaces.find_by(name: name)
+          next if namespace.nil?
+
+          key = Translation::PlaygroundArtifact.storage_key(@project, namespace, locale)
+          # The batch above only rewrites pairs whose values changed; an idempotent
+          # re-push against empty storage still needs the file to exist.
+          Translation::PlaygroundArtifact.materialize(namespace: namespace, locale: locale) unless @project.storage_service.exist?(key)
+          key
+        end
+        render json: { status: "ok", locale: locale.code, session: session, written: written,
+                       preview_paths: preview_paths, playground_paths: playground_paths }
       rescue ActiveRecord::RecordInvalid => e
         render_error(:unprocessable_entity, e.message)
       end
