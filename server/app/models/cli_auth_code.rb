@@ -28,9 +28,10 @@ class CliAuthCode < ApplicationRecord
     raw
   end
 
-  # Redeem a raw code once: mint a personal access token (with the code's scope,
-  # clamped to the user's role) and mark the code used. Returns a Redemption, or
-  # nil for an unknown/expired/used code. Propagates PersonalAccessToken::LimitReached.
+  # Redeem a raw code once: mint a personal access token (with the code's
+  # capabilities, clamped to the user's role) and mark the code used. Returns a
+  # Redemption, or nil for an unknown/expired/used code. Propagates
+  # PersonalAccessToken::LimitReached.
   def self.redeem(raw)
     return if raw.blank?
 

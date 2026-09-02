@@ -256,7 +256,7 @@
           <% TokenScopes::CAPABILITIES.each do |capability| %>
             <label class="flex items-center gap-[6px] text-[12.5px] text-ink-2 cursor-pointer">
               <%= check_box_tag "api_token[scopes][]", capability, capability == "write", class: "w-4 h-4 accent-accent" %>
-              <%= TokenScopes::LABELS[capability] %>
+              <%= capability_label(capability) %>
             </label>
           <% end %>
         </div>

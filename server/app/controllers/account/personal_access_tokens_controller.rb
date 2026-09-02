@@ -7,6 +7,8 @@ class Account::PersonalAccessTokensController < ApplicationController
     redirect_to account_path, flash: { pat_created: raw }
   rescue PersonalAccessToken::LimitReached => e
     redirect_to account_path, alert: e.message
+  rescue ActiveRecord::RecordInvalid
+    redirect_to account_path, alert: "Pick at least one capability for the token."
   end
 
   def destroy

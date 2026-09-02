@@ -9,14 +9,6 @@ module TokenScopes
   # the set is not hierarchical).
   CAPABILITIES = %w[ read read_drafts write admin ].freeze
 
-  # Human labels for the UI.
-  LABELS = {
-    "read" => "Read published",
-    "read_drafts" => "Read drafts",
-    "write" => "Write drafts",
-    "admin" => "Admin"
-  }.freeze
-
   included do
     validate :scopes_are_known
   end

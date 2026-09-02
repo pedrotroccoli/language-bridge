@@ -19,7 +19,7 @@ class Projects::ReviewController < ApplicationController
     def namespace_to_open(session)
       drafts = @project.translations.drafts
       drafts = drafts.in_session(session) if session
-      namespace_id = drafts.joins(:translation_key).order("translation_keys.namespace_id").limit(1).pick("translation_keys.namespace_id")
+      namespace_id = drafts.joins(translation_key: :namespace).order("namespaces.name").limit(1).pick("translation_keys.namespace_id")
 
       @project.namespaces.find_by(id: namespace_id) || @project.namespaces.alphabetically.first
     end

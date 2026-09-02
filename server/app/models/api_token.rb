@@ -17,11 +17,11 @@ class ApiToken < ApplicationRecord
 
   # Build a token, returning [record, raw_token]. Persist the digest; hand the
   # caller the raw value to display once. A project admin may grant any
-  # capabilities (unknown ones are dropped).
+  # capabilities (unknown ones are dropped); an empty set fails the presence
+  # validation rather than being silently widened.
   def self.generate(project:, name:, scopes:, creator: Current.user)
     raw = SecureRandom.urlsafe_base64(27) # ~36 url-safe chars
-    kept = CAPABILITIES & Array(scopes).map(&:to_s)
-    record = create!(project:, name:, scopes: kept.presence || [ "read" ], creator:, token_digest: digest(raw))
+    record = create!(project:, name:, scopes: CAPABILITIES & Array(scopes).map(&:to_s), creator:, token_digest: digest(raw))
     [ record, raw ]
   end
 

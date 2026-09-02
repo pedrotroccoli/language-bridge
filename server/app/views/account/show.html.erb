@@ -80,7 +80,7 @@
           <% PersonalAccessToken.grantable_scopes(current_user).each do |capability| %>
             <label class="flex items-center gap-[6px] text-[12.5px] text-ink-2 cursor-pointer">
               <%= check_box_tag "scopes[]", capability, PersonalAccessToken::DEFAULT_SCOPES.include?(capability), class: "w-4 h-4 accent-accent" %>
-              <%= TokenScopes::LABELS[capability] %>
+              <%= capability_label(capability) %>
             </label>
           <% end %>
           <%= form.submit "Generate token", class: "btn ml-auto" %>

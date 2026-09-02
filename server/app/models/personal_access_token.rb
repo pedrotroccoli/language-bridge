@@ -29,6 +29,7 @@ class PersonalAccessToken < ApplicationRecord
   belongs_to :user
 
   validates :name, presence: true
+  validates :scopes, presence: true
   validates :token_digest, presence: true, uniqueness: true
 
   scope :recent, -> { order(created_at: :desc) }
@@ -38,11 +39,11 @@ class PersonalAccessToken < ApplicationRecord
     ROLE_CAPABILITIES.fetch(user.role, %w[ read ])
   end
 
-  # Keep only requested capabilities the user may grant, in canonical order.
+  # Keep only requested capabilities the user may grant, in canonical order. An
+  # empty result stays empty and fails the presence validation on issue, rather
+  # than silently granting read.
   def self.clamp_scopes(user, requested)
-    allowed = grantable_scopes(user)
-    kept = CAPABILITIES & Array(requested).map(&:to_s) & allowed
-    kept.presence || [ "read" ]
+    CAPABILITIES & Array(requested).map(&:to_s) & grantable_scopes(user)
   end
 
   # Issue a new named token for the user, returning the raw value to show once.
