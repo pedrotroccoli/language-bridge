@@ -34,8 +34,12 @@ module Api
 
         session = params[:session].to_s
         # Coalesce the per-row playground rebuilds a bulk push would trigger into
-        # one write per (namespace, locale).
-        written = Translation::PlaygroundArtifact.batch { write_drafts(entries, locale, author, session) }
+        # one write per (namespace, locale), and the per-row project touches
+        # (last-activity stamp) into a single touch.
+        written = Project.no_touching do
+          Translation::PlaygroundArtifact.batch { write_drafts(entries, locale, author, session) }
+        end
+        @project.touch
         # Materialize the session's preview JSON in the connected storage so a
         # frontend can point at the push at a stable path before anything publishes.
         preview_paths = Translation::SessionArtifact.materialize_session(@project, session)

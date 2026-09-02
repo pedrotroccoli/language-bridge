@@ -1,7 +1,9 @@
 class Translation < ApplicationRecord
   include Eventable
 
-  belongs_to :project
+  # touch: the project's updated_at doubles as its last-activity stamp
+  # (project cards show it); any translation write counts as activity.
+  belongs_to :project, touch: true
   belongs_to :translation_key, counter_cache: true
   belongs_to :locale, counter_cache: true
   belongs_to :author, class_name: "User", optional: true

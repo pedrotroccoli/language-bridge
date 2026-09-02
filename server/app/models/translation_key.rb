@@ -1,7 +1,7 @@
 class TranslationKey < ApplicationRecord
   include Eventable
 
-  belongs_to :project, counter_cache: true
+  belongs_to :project, counter_cache: true, touch: true
   belongs_to :namespace, counter_cache: true
 
   has_many :translations, dependent: :destroy
