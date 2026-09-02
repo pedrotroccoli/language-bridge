@@ -24,8 +24,11 @@ class NamespacesController < ApplicationController
     @status = params[:status].to_s.presence_in(%w[ drafts review ])
 
     # Session filter: ?session=feat/x narrows to keys a CLI push drafted (see
-    # `lb review`), so a reviewer sees only that push's work.
+    # `lb review`), so a reviewer sees only that push's work. @draft_sessions
+    # feeds the editor's session dropdown (always include the active one).
     @session = params[:session].to_s.presence
+    @draft_sessions = @project.translations.draft_sessions
+    @draft_sessions |= [ @session ] if @session
 
     keys = @query.present? ? @namespace.translation_keys.search(@query) : @namespace.translation_keys.order(:key)
     keys = filter_by_status(keys, @status)

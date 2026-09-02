@@ -225,8 +225,9 @@
                 action="<%= project_namespace_path(@project, @namespace) %>"
                 data-controller="auto-submit locale-filter" data-auto-submit-delay-value="300"
                 data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys">
-            <%# carry the review session across searches/filters %>
-            <% if @session %><input type="hidden" name="session" value="<%= @session %>"><% end %>
+            <%# session carried by the session dropdown's radios below; hidden
+                fallback only when no dropdown renders (session set, no drafts) %>
+            <% if @session && @draft_sessions.empty? %><input type="hidden" name="session" value="<%= @session %>"><% end %>
             <div class="h-9 flex-1 flex items-center gap-[10px] px-[13px] border border-line rounded-[9px] focus-within:border-ink transition-colors">
               <%= mi "search", size: 18, css: "text-mut-2" %>
               <input type="search" name="q" value="<%= @query %>" placeholder="Search keys or values…" aria-label="Search keys or values"
@@ -249,6 +250,45 @@
                 </label>
               <% end %>
             </div>
+
+            <%# session filter: pick which CLI push to review %>
+            <% if @draft_sessions.any? %>
+              <%# The button label is kept in sync client-side (session-filter
+                  controller) because it sits outside the table frame; the active
+                  border/badge styling is driven by the checked radio (group-has),
+                  so both stay correct after a turbo-frame refresh. %>
+              <details class="group relative [&_summary::-webkit-details-marker]:hidden flex-none"
+                       data-controller="session-filter">
+                <summary class="list-none cursor-pointer h-9 flex items-center gap-[9px] px-[12px] border border-line group-has-[.session-opt:checked]:border-ink rounded-[9px] text-[13px] text-mut-2 whitespace-nowrap hover:border-ink">
+                  <%= mi "commit", size: 17, css: "text-mut-2" %>
+                  <span data-session-filter-target="label"
+                        class="text-ink-2 truncate max-w-[150px]
+                               group-has-[.session-opt:checked]:font-mono group-has-[.session-opt:checked]:text-[11px] group-has-[.session-opt:checked]:font-semibold group-has-[.session-opt:checked]:text-accent group-has-[.session-opt:checked]:bg-accent-soft group-has-[.session-opt:checked]:rounded-[5px] group-has-[.session-opt:checked]:px-[6px] group-has-[.session-opt:checked]:py-px"><%= @session || "Sessions" %></span>
+                  <%= mi "expand_more", size: 18, css: "text-faint" %>
+                </summary>
+                <div class="absolute top-[calc(100%+6px)] right-0 w-[262px] bg-surface border border-line rounded-[10px] shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)] z-40 overflow-hidden">
+                  <div class="px-[14px] py-[10px] border-b border-line-3 eyebrow">Filter by push session</div>
+                  <div class="max-h-[280px] overflow-y-auto p-[5px]">
+                    <label class="flex items-center gap-[11px] px-[9px] py-2 rounded-[7px] cursor-pointer hover:bg-surface-2">
+                      <input type="radio" name="session" value="" <%= "checked" unless @session %>
+                             class="w-4 h-4 accent-accent flex-none"
+                             data-session-filter-target="radio"
+                             data-action="change->auto-submit#submit change->session-filter#update">
+                      <span class="text-[12.5px] text-ink">All sessions</span>
+                    </label>
+                    <% @draft_sessions.each do |s| %>
+                      <label class="flex items-center gap-[11px] px-[9px] py-2 rounded-[7px] cursor-pointer hover:bg-surface-2">
+                        <input type="radio" name="session" value="<%= s %>" <%= "checked" if @session == s %>
+                               class="session-opt w-4 h-4 accent-accent flex-none"
+                               data-session-filter-target="radio"
+                               data-action="change->auto-submit#submit change->session-filter#update">
+                        <span class="font-mono text-[12.5px] text-ink truncate"><%= s %></span>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+              </details>
+            <% end %>
 
             <% if @total_keys > @page_limit %>
               <span class="font-mono text-[11.5px] text-mut-2 whitespace-nowrap hidden lg:inline">showing first <%= @page_limit %></span>
