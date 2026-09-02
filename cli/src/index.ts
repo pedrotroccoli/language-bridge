@@ -3,10 +3,15 @@ import { createRequire } from "node:module";
 import { Command } from "commander";
 import { DEFAULT_INSTRUCTIONS_FILE, renderInstructions, writeInstructions } from "./commands/ai-instructions.js";
 import { generate } from "./commands/generate.js";
+import { login } from "./commands/login.js";
+import { logout } from "./commands/logout.js";
 import { pull } from "./commands/pull.js";
 import { push } from "./commands/push.js";
+import { review } from "./commands/review.js";
 import { sync } from "./commands/sync.js";
-import { type CliOptions, ConfigError, resolveConfig } from "./lib/config.js";
+import { validate } from "./commands/validate.js";
+import { whoami } from "./commands/whoami.js";
+import { type CliOptions, ConfigError, resolveConfigs, resolveServer } from "./lib/config.js";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { version: string };
@@ -35,14 +40,39 @@ function withCommonOptions(command: Command): Command {
     .option("--json-dir <dir>", "directory for raw JSON (pull/generate)");
 }
 
-async function run(fn: (config: Awaited<ReturnType<typeof resolveConfig>>) => Promise<void>, options: CliOptions) {
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// Resolve every configured project and run the command for each. Config errors
+// abort up front; a per-project failure is reported and the rest continue.
+async function run(fn: (config: Awaited<ReturnType<typeof resolveConfigs>>[number]) => Promise<void>, options: CliOptions) {
+  let configs: Awaited<ReturnType<typeof resolveConfigs>>;
   try {
-    const config = await resolveConfig(options);
-    await fn(config);
+    configs = await resolveConfigs(options);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     process.exitCode = error instanceof ConfigError ? 2 : 1;
-    console.error(`lb: ${message}`);
+    console.error(`lb: ${message(error)}`);
+    return;
+  }
+
+  for (const config of configs) {
+    try {
+      await fn(config);
+    } catch (error) {
+      process.exitCode = 1;
+      console.error(`lb: ${config.project}: ${message(error)}`);
+    }
+  }
+}
+
+// For commands that need only the server URL (+ maybe a stored token), not a project.
+async function runServer(fn: (server: Awaited<ReturnType<typeof resolveServer>>) => Promise<void>, options: CliOptions) {
+  try {
+    await fn(await resolveServer(options));
+  } catch (error) {
+    process.exitCode = 1;
+    console.error(`lb: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -88,7 +118,17 @@ withCommonOptions(program.command("push"))
     run(async (config) => {
       const result = await push(config);
       const scope = result.session ? ` (session ${result.session})` : "";
-      console.error(`Pushed ${result.proposed} proposal(s) for locale ${result.locale}${scope}`);
+      console.error(`${config.project}: pushed ${result.written} draft(s) for locale ${result.locale}${scope} — review with \`lb review\``);
+    }, options),
+  );
+
+withCommonOptions(program.command("review"))
+  .description("Open the review page (editor filtered to this push session) in your browser")
+  .option("-s, --session <id>", "session to review (or env LB_SESSION; default: git branch)")
+  .action((options: CliOptions) =>
+    run(async (config) => {
+      const url = await review(config);
+      console.error(`${config.project}: opening ${url}`);
     }, options),
   );
 
@@ -105,6 +145,54 @@ withCommonOptions(program.command("ai-instructions"))
       const file = typeof options.write === "string" ? options.write : DEFAULT_INSTRUCTIONS_FILE;
       await writeInstructions(file, block);
       console.error(`Wrote AI instructions to ${file}`);
+    }, options),
+  );
+
+withCommonOptions(program.command("validate"))
+  .alias("valid")
+  .description("Check the config is valid and every project exists and is reachable")
+  .action(async (options: CliOptions) => {
+    try {
+      const results = await validate(await resolveConfigs(options));
+      for (const result of results) {
+        if (result.ok) {
+          console.error(`✓ ${result.project}`);
+        } else {
+          process.exitCode = 1;
+          console.error(`✗ ${result.project}\n    ${result.problems.join("\n    ")}`);
+        }
+      }
+    } catch (error) {
+      process.exitCode = error instanceof ConfigError ? 2 : 1;
+      console.error(`lb: ${message(error)}`);
+    }
+  });
+
+withCommonOptions(program.command("login"))
+  .description("Authorize this machine in your browser and store a token")
+  .option("--name <name>", "token/device name shown on the platform (default: hostname)")
+  .action((options: CliOptions) =>
+    runServer(async (server) => {
+      const result = await login(server, options.name);
+      console.error(`Logged in${result.user ? ` as ${result.user}` : ""}. Token stored for ${result.url}.`);
+    }, options),
+  );
+
+withCommonOptions(program.command("logout"))
+  .description("Remove the stored token for this server")
+  .action((options: CliOptions) =>
+    runServer(async (server) => {
+      const removed = await logout(server);
+      console.error(removed ? `Logged out of ${server.url}.` : `No stored token for ${server.url}.`);
+    }, options),
+  );
+
+withCommonOptions(program.command("whoami"))
+  .description("Show the user and projects the current token can reach")
+  .action((options: CliOptions) =>
+    runServer(async (server) => {
+      const { user, projects } = await whoami(server);
+      console.error(`${user.name ? `${user.name} <${user.email}>` : user.email} — ${projects.length} project(s): ${projects.join(", ")}`);
     }, options),
   );
 

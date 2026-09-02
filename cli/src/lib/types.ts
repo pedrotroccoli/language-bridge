@@ -20,5 +20,17 @@ export interface ImportResponse {
   status: string;
   locale: string;
   session: string;
-  proposed: number;
+  written: number;
+}
+
+// Shape of POST /api/v1/cli/token (login code exchange).
+export interface ExchangeResponse {
+  token: string;
+  user?: { email: string; name?: string };
+}
+
+// Shape of GET /api/v1/user (lb whoami).
+export interface WhoamiResponse {
+  user: { email: string; name?: string };
+  projects: string[];
 }

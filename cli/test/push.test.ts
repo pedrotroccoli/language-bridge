@@ -32,14 +32,14 @@ afterEach(() => vi.unstubAllGlobals());
 describe("push", () => {
   it("POSTs the local namespaces to the import endpoint with bearer auth", async () => {
     const fetchMock = vi.fn(
-      async () => new Response(JSON.stringify({ status: "ok", locale: "en", proposed: 1 }), { status: 200 }),
+      async () => new Response(JSON.stringify({ status: "ok", locale: "en", written: 1 }), { status: 200 }),
     );
     vi.stubGlobal("fetch", fetchMock);
 
     const jsonDir = await jsonDirWith({ common: { home: { title: "Welcome" } } });
     const result = await push(config({ jsonDir, locale: "en", session: "feat/x" }));
 
-    expect(result.proposed).toBe(1);
+    expect(result.written).toBe(1);
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toBe("http://server/api/v1/projects/main-app/import");
     expect(init?.method).toBe("POST");
@@ -53,7 +53,7 @@ describe("push", () => {
 
   it("defaults the session to the current git branch", async () => {
     const fetchMock = vi.fn(
-      async () => new Response(JSON.stringify({ status: "ok", locale: "en", session: "", proposed: 1 }), { status: 200 }),
+      async () => new Response(JSON.stringify({ status: "ok", locale: "en", session: "", written: 1 }), { status: 200 }),
     );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -69,7 +69,7 @@ describe("push", () => {
       if (String(url).includes("/export")) {
         return new Response(JSON.stringify({ source_locale: "pt-BR", namespaces: {}, available_locales: [] }), { status: 200 });
       }
-      return new Response(JSON.stringify({ status: "ok", locale: "pt-BR", proposed: 0 }), { status: 200 });
+      return new Response(JSON.stringify({ status: "ok", locale: "pt-BR", written: 0 }), { status: 200 });
     });
     vi.stubGlobal("fetch", fetchMock);
 

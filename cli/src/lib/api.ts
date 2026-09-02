@@ -2,7 +2,7 @@
 //   GET  /api/v1/projects/:project/export?locale=&include_drafts=
 //   POST /api/v1/projects/:project/import   { locale, namespaces }
 import type { ResolvedConfig } from "./config.js";
-import type { ExportResponse, ImportResponse, Namespaces } from "./types.js";
+import type { ExchangeResponse, ExportResponse, ImportResponse, Namespaces, WhoamiResponse } from "./types.js";
 
 export async function fetchExport(config: ResolvedConfig): Promise<ExportResponse> {
   const url = new URL(`/api/v1/projects/${encodeURIComponent(config.project)}/export`, config.url);
@@ -45,4 +45,36 @@ async function ensureOk(response: Response, label: string): Promise<void> {
   const detail = await response.text().catch(() => "");
   const message = detail.trim() ? ` — ${detail.trim()}` : "";
   throw new Error(`${label} request failed: ${response.status} ${response.statusText}${message}`);
+}
+
+// Exchange a one-time login code (from the loopback callback) for a token.
+export async function exchangeCode(url: string, code: string): Promise<ExchangeResponse> {
+  const endpoint = new URL("/api/v1/cli/token", url);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ code }),
+    });
+  } catch (cause) {
+    throw new Error(`Could not reach ${url}: ${(cause as Error).message}`);
+  }
+  await ensureOk(response, "Token exchange");
+  return (await response.json()) as ExchangeResponse;
+}
+
+// Resolve a token to its user + accessible projects (`lb whoami`).
+export async function fetchUser(url: string, token: string): Promise<WhoamiResponse> {
+  const endpoint = new URL("/api/v1/user", url);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+  } catch (cause) {
+    throw new Error(`Could not reach ${url}: ${(cause as Error).message}`);
+  }
+  await ensureOk(response, "Whoami");
+  return (await response.json()) as WhoamiResponse;
 }
