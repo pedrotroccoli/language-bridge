@@ -31,14 +31,15 @@ class Translation < ApplicationRecord
   scope :in_session, ->(session) { where(session: session) }
   scope :drafts_in_session, ->(session) { drafts.in_session(session) }
 
+  scope :under_review_in_namespace, ->(namespace) {
+    under_review.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
+  }
+
   # Distinct push sessions that still have drafts — powers the editor's session
   # filter so a reviewer can pick which push to look at.
   def self.draft_sessions
     drafts.where.not(session: [ nil, "" ]).distinct.order(:session).pluck(:session)
   end
-  scope :under_review_in_namespace, ->(namespace) {
-    under_review.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
-  }
 
   before_update :snapshot_version, if: -> { value_changed? }
   after_update :invalidate_on_value_change, if: -> { saved_change_to_value? }
