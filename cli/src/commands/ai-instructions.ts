@@ -23,7 +23,8 @@ export async function renderInstructions(config: ResolvedConfig): Promise<string
 Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 
 ## Golden rules
-- Only edit the source locale (\`${source}\`). The platform translates the rest.
+- Edit the source locale (\`${source}\`) by default. Only touch another locale
+  when the human explicitly asks you to translate into it.
 - After editing, run \`lb push\` — it stages your edits as **proposals**.
 - NEVER publish. A human reviews each proposal and approves via the UI.
 - Run \`lb pull\` first so you never invent a key that already exists.
@@ -45,7 +46,7 @@ Typical flow: \`lb pull\` → edit source JSON → \`lb push\` → a human revie
 CI guard: \`lb check\` exits non-zero while any key exists only in the playground (unpublished).
 
 ## Never
-- Touch a non-source locale.
+- Touch a non-source locale unless explicitly asked.
 - Publish or mark anything live.
 - Change an existing placeholder's name.
 `;
