@@ -2,6 +2,7 @@
 //   GET  /api/v1/projects/:project/export?locale=&include_drafts=
 //   POST /api/v1/projects/:project/import   { locale, namespaces }
 import type { ResolvedConfig } from "./config.js";
+import { debug } from "./debug.js";
 import type { ExchangeResponse, ExportResponse, ImportResponse, Namespaces, WhoamiResponse } from "./types.js";
 
 export async function fetchExport(config: ResolvedConfig): Promise<ExportResponse> {
@@ -30,11 +31,14 @@ export async function pushProposals(config: ResolvedConfig, locale: string, sess
 
 // Shared request: bearer auth + a friendly network error.
 async function send(config: ResolvedConfig, url: URL, init: RequestInit): Promise<Response> {
+  debug(`${init.method ?? "GET"} ${url}`);
   try {
-    return await fetch(url, {
+    const response = await fetch(url, {
       ...init,
       headers: { Authorization: `Bearer ${config.token}`, Accept: "application/json", ...init.headers },
     });
+    debug(`${response.status} ${response.statusText} ${url.pathname}`);
+    return response;
   } catch (cause) {
     throw new Error(`Could not reach ${config.url}: ${(cause as Error).message}`);
   }
@@ -44,12 +48,15 @@ async function ensureOk(response: Response, label: string): Promise<void> {
   if (response.ok) return;
   const detail = await response.text().catch(() => "");
   const message = detail.trim() ? ` — ${detail.trim()}` : "";
-  throw new Error(`${label} request failed: ${response.status} ${response.statusText}${message}`);
+  // An invalid token is the one failure the user can always self-serve.
+  const hint = response.status === 401 ? " Token invalid or revoked — run `lb login`." : "";
+  throw new Error(`${label} request failed: ${response.status} ${response.statusText}${message}${hint}`);
 }
 
 // Exchange a one-time login code (from the loopback callback) for a token.
 export async function exchangeCode(url: string, code: string): Promise<ExchangeResponse> {
   const endpoint = new URL("/api/v1/cli/token", url);
+  debug(`POST ${endpoint}`);
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -67,6 +74,7 @@ export async function exchangeCode(url: string, code: string): Promise<ExchangeR
 // Resolve a token to its user + accessible projects (`lb whoami`).
 export async function fetchUser(url: string, token: string): Promise<WhoamiResponse> {
   const endpoint = new URL("/api/v1/user", url);
+  debug(`GET ${endpoint}`);
   let response: Response;
   try {
     response = await fetch(endpoint, {

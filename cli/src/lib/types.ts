@@ -21,6 +21,12 @@ export interface ImportResponse {
   locale: string;
   session: string;
   written: number;
+  // Storage keys of the session's materialized preview JSON (one per
+  // namespace), for pointing a frontend preview at the connected storage.
+  preview_paths?: string[];
+  // Storage keys of the playground JSON (published + every draft) — a dev
+  // environment points its i18n loadPath here; prod points at the published paths.
+  playground_paths?: string[];
 }
 
 // Shape of POST /api/v1/cli/token (login code exchange).
