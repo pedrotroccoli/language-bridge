@@ -100,9 +100,14 @@ class Api::V1::ImportsTest < ActionDispatch::IntegrationTest
     assert @common.translation_keys.exists?(key: "b")
   end
 
-  test "rejects a non-source locale" do
-    post_import(locale: "pt-BR", namespaces: { "common" => { "welcome" => "Oi" } })
-    assert_response :unprocessable_entity
+  test "writes non-source locale values as drafts too" do
+    post_import(locale: "pt-BR", session: "feat/x", namespaces: { "common" => { "welcome" => "Oi" } })
+    assert_response :success
+
+    translation = @common.translation_keys.find_by(key: "welcome")
+      .translations.find_by(locale: locales(:main_app_pt_br))
+    assert_equal "Oi", translation.value
+    assert translation.draft?, "non-source pushes stay unpublished until reviewed"
   end
 
   test "404 for an unknown locale" do

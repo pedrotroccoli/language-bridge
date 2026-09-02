@@ -12,8 +12,9 @@ module Api
     #     "namespaces": { "common": { "home": { "title": "Welcome" } } } }
     #
     # Editing an already-published key returns it to draft, exactly like an editor
-    # edit. Proposals target the source locale only — the platform translates the
-    # rest. Requires a user-scoped token (PAT) so the author is recorded.
+    # edit. Any of the project's locales accepts pushes — everything lands as a
+    # draft, so review-before-publish is the safety net, not the locale. Requires
+    # a user-scoped token (PAT) so the author is recorded.
     class ImportsController < Api::BaseController
       before_action -> { require_capability!(:write) }
 
@@ -26,7 +27,6 @@ module Api
 
         locale = @project.locales.find_by(code: params[:locale])
         return render_error(:not_found, "Locale not found") if locale.nil?
-        return render_error(:unprocessable_entity, "Only the source locale accepts pushes") unless locale.is_source
 
         entries = flatten_namespaces(params[:namespaces])
         return render_error(:unprocessable_entity, "namespaces must be a non-empty object") if entries.empty?
