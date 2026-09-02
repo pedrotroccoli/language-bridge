@@ -41,9 +41,14 @@ class Translation::SessionArtifact
 
     private
       # Sessions are user input (git branch, chat id); keep only path-safe
-      # characters so the object key stays clean.
+      # characters and drop dot-only segments so the object key can never
+      # traverse out of the storage root (the Disk service joins keys into
+      # filesystem paths).
       def slug(session)
-        session.gsub(%r{[^A-Za-z0-9/_\-.]}, "-").gsub(%r{/+}, "/").delete_prefix("/")
+        session.gsub(%r{[^A-Za-z0-9/_\-.]}, "-")
+          .split("/")
+          .reject { |part| part.blank? || part.match?(/\A\.+\z/) }
+          .join("/")
       end
   end
 end
