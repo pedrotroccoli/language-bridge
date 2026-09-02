@@ -35,10 +35,12 @@ class CliAuthCode < ApplicationRecord
   def self.redeem(raw)
     return if raw.blank?
 
-    code = usable.find_by(code_digest: digest(raw))
-    return if code.nil?
-
     transaction do
+      # Lock inside the transaction so two concurrent exchanges can't both find
+      # the code usable — one-time must hold under a race.
+      code = usable.lock.find_by(code_digest: digest(raw))
+      next if code.nil?
+
       code.update!(used_at: Time.current)
       token = PersonalAccessToken.issue(user: code.user, name: code.name, scopes: code.scopes)
       Redemption.new(token: token, user: code.user)
