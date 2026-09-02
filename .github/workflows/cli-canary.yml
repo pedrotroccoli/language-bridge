@@ -1,0 +1,55 @@
+name: Publish CLI canary
+
+# Publishes a canary build of @language-bridge/cli on every push to development
+# that touches cli/. The version is <package.json version>-canary.<short sha>
+# under the `canary` dist-tag, so `latest` stays untouched:
+#
+#   npm i @language-bridge/cli@canary
+on:
+  push:
+    branches: [ development ]
+    paths: [ "cli/**" ]
+  workflow_dispatch:
+
+# One canary at a time; a newer push supersedes an in-flight one.
+concurrency:
+  group: cli-canary
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: cli/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Stamp the canary version
+        run: |
+          version="$(node -p "require('./package.json').version")-canary.${GITHUB_SHA::7}"
+          npm version "$version" --no-git-tag-version
+          echo "Publishing $version"
+
+      # prepublishOnly runs build + tests; --provenance requires id-token: write.
+      - name: Publish
+        run: npm publish --access public --provenance --tag canary
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    permissions:
+      contents: read
+      id-token: write

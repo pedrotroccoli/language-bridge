@@ -4,22 +4,24 @@ require "digest"
 # APIs). Only the SHA-256 digest is stored — the raw token is shown to the user
 # exactly once at creation and is never recoverable afterward.
 class ApiToken < ApplicationRecord
-  SCOPES = %w[ save_missing read_only admin ].freeze
+  include TokenScopes
 
   belongs_to :project
   belongs_to :creator, class_name: "User", optional: true
 
   validates :name, presence: true
   validates :token_digest, presence: true, uniqueness: true
-  validates :scope, presence: true, inclusion: { in: SCOPES }
+  validates :scopes, presence: true
 
   scope :active, -> { where(revoked_at: nil) }
 
   # Build a token, returning [record, raw_token]. Persist the digest; hand the
-  # caller the raw value to display once.
-  def self.generate(project:, name:, scope:, creator: Current.user)
+  # caller the raw value to display once. A project admin may grant any
+  # capabilities (unknown ones are dropped); an empty set fails the presence
+  # validation rather than being silently widened.
+  def self.generate(project:, name:, scopes:, creator: Current.user)
     raw = SecureRandom.urlsafe_base64(27) # ~36 url-safe chars
-    record = create!(project:, name:, scope:, creator:, token_digest: digest(raw))
+    record = create!(project:, name:, scopes: CAPABILITIES & Array(scopes).map(&:to_s), creator:, token_digest: digest(raw))
     [ record, raw ]
   end
 

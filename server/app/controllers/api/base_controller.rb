@@ -34,12 +34,17 @@ module Api
         header.split(" ", 2).last
       end
 
-      # An `admin` token satisfies every scope.
-      def require_scope!(*scopes)
-        allowed = scopes.map(&:to_s)
-        return if allowed.include?(@api_token.scope) || @api_token.scope == "admin"
+      # Require every listed capability on the token (an `admin` token grants all).
+      def require_capability!(*capabilities)
+        return if capabilities.all? { |capability| @api_token.grants?(capability) }
 
-        render_error(:forbidden, "Token lacks the required scope")
+        render_error(:forbidden, "Token lacks the required capability")
+      end
+
+      # The human a token acts on behalf of: a personal access token authenticates
+      # as its user; a per-project ApiToken has only a creator (may be nil).
+      def token_user
+        @api_token.respond_to?(:user) ? @api_token.user : @api_token.try(:creator)
       end
 
       def render_error(status, message)

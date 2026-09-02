@@ -35,6 +35,26 @@ class TranslationBundleTest < ActiveSupport::TestCase
     assert_equal bundle.etag, bundle.etag
   end
 
+  test "include_drafts unions published rows with every draft" do
+    publish translations(:greeting_en)
+    key = @namespace.translation_keys.create!(project: @namespace.project, key: "cta")
+    Translation.create!(translation_key: key, locale: @locale, value: "Try it", session: "feat/x")
+
+    playground = TranslationBundle.new(namespace: @namespace, locale: @locale, include_drafts: true)
+    assert_equal({ "greeting" => "Hello", "cta" => "Try it" }, playground.to_h)
+  end
+
+  test "a session bundle unions published rows with that session's drafts" do
+    publish translations(:greeting_en) # published, no session
+    key = @namespace.translation_keys.create!(project: @namespace.project, key: "cta")
+    Translation.create!(translation_key: key, locale: @locale, value: "Try it", session: "feat/x")
+    other = @namespace.translation_keys.create!(project: @namespace.project, key: "other")
+    Translation.create!(translation_key: other, locale: @locale, value: "Nope", session: "feat/y")
+
+    session_bundle = TranslationBundle.new(namespace: @namespace, locale: @locale, session: "feat/x")
+    assert_equal({ "greeting" => "Hello", "cta" => "Try it" }, session_bundle.to_h)
+  end
+
   private
     def bundle
       TranslationBundle.new(namespace: @namespace, locale: @locale)

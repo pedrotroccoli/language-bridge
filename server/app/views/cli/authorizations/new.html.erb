@@ -1,0 +1,51 @@
+<% content_for :title, "Authorize CLI" %>
+
+<div class="mx-auto w-full max-w-[460px] px-6 py-16">
+  <div class="border border-line rounded-[13px] px-[26px] py-8 bg-surface">
+    <div class="flex items-center gap-[10px] mb-5">
+      <div class="w-[40px] h-[40px] border-[1.5px] border-line rounded-[10px] flex items-center justify-center text-ink-3 bg-surface-2"><%= mi "terminal", size: 22 %></div>
+      <div>
+        <h1 class="m-0 text-[18px] font-semibold text-ink">Authorize the CLI</h1>
+        <div class="text-[12.5px] text-mut">Signed in as <%= current_user.email %></div>
+      </div>
+    </div>
+
+    <% if @invalid %>
+      <div class="border border-danger-border bg-danger-soft rounded-[9px] px-4 py-3 text-[13px] text-danger-ink">
+        Invalid request: the callback address must be a local loopback URL. Re-run <span class="font-mono">lb login</span>.
+      </div>
+    <% else %>
+      <p class="m-0 mb-4 text-[13.5px] text-mut leading-[1.55]">A command-line client on <span class="font-mono text-ink-2"><%= @name %></span> is requesting a personal access token. Only approve if you just started <span class="font-mono text-ink-2">lb login</span>.</p>
+
+      <% capability_descriptions = {
+           "read" => "Read published translations",
+           "read_drafts" => "Read unpublished drafts",
+           "write" => "Create and edit draft translations",
+           "admin" => "Administer projects and settings"
+         } %>
+      <div class="mb-5 border border-line rounded-[9px] overflow-hidden">
+        <div class="px-[14px] py-[8px] bg-surface-2 border-b border-line text-[11px] uppercase tracking-[0.05em] text-faint font-mono">Will be able to</div>
+        <ul class="m-0 p-0 list-none">
+          <% @scopes.each do |capability| %>
+            <li class="flex items-center gap-[9px] px-[14px] py-[9px] border-b border-line-3 last:border-b-0">
+              <%= mi "check_circle", size: 16, css: "text-ok" %>
+              <span class="text-[13px] text-ink"><%= capability_descriptions[capability] %></span>
+              <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.04em] text-faint"><%= capability.tr("_", " ") %></span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <%= form_with url: cli_authorization_path, method: :post, class: "flex flex-col gap-3" do |form| %>
+        <%= form.hidden_field :redirect_uri, value: @redirect_uri %>
+        <%= form.hidden_field :state, value: @state %>
+        <%= form.hidden_field :name, value: @name %>
+        <% @scopes.each do |scope| %><%= hidden_field_tag "scopes[]", scope %><% end %>
+        <div class="flex items-center gap-[8px]">
+          <%= form.submit "Authorize", class: "btn" %>
+          <%= link_to "Cancel", root_path, class: "btn-secondary no-underline" %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

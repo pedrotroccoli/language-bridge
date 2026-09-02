@@ -6,11 +6,11 @@ class Projects::ApiTokensControllerTest < ActionDispatch::IntegrationTest
   test "admin creates a token and sees the raw value once" do
     sign_in_as(users(:admin))
     assert_difference -> { @project.api_tokens.count }, 1 do
-      post project_api_tokens_path(@project), params: { api_token: { name: "Web client", scope: "save_missing" } }
+      post project_api_tokens_path(@project), params: { api_token: { name: "Web client", scopes: [ "read", "write" ] } }
     end
     assert_redirected_to project_settings_path(@project)
     assert flash[:token_created].present?, "raw token should be flashed once"
-    assert_equal "save_missing", @project.api_tokens.order(:created_at).last.scope
+    assert_equal %w[ read write ], @project.api_tokens.order(:created_at).last.scopes
   end
 
   test "admin revokes a token" do
@@ -23,7 +23,7 @@ class Projects::ApiTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "non-admin cannot manage tokens" do
     sign_in_as(users(:translator))
-    post project_api_tokens_path(@project), params: { api_token: { name: "x", scope: "save_missing" } }
+    post project_api_tokens_path(@project), params: { api_token: { name: "x", scopes: [ "write" ] } }
     assert_response :forbidden
   end
 end

@@ -30,20 +30,48 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     assert user.reload.avatar.attached?
   end
 
-  test "generates and revokes a personal access token" do
+  test "generates and revokes a named personal access token" do
     user = users(:translator)
     sign_in_as(user)
 
     assert_difference -> { PersonalAccessToken.count }, 1 do
-      post account_personal_access_token_path
+      post account_personal_access_tokens_path, params: { name: "laptop", scopes: %w[ read write ] }
     end
     assert_redirected_to account_path
     assert flash[:pat_created].to_s.start_with?(PersonalAccessToken::PREFIX)
 
+    token = user.personal_access_tokens.sole
+    assert_equal "laptop", token.name
+    assert_equal %w[ read write ], token.scopes
+
     assert_difference -> { PersonalAccessToken.count }, -1 do
-      delete account_personal_access_token_path
+      delete account_personal_access_token_path(token)
     end
-    assert_nil user.reload.personal_access_token
+    assert_empty user.personal_access_tokens.reload
+  end
+
+  test "rejects a token past the workspace limit" do
+    user = users(:translator)
+    Setting.current.update!(cli_token_limit: 1)
+    PersonalAccessToken.issue(user: user, name: "existing")
+    sign_in_as(user)
+
+    assert_no_difference -> { PersonalAccessToken.count } do
+      post account_personal_access_tokens_path, params: { name: "second", scopes: %w[ read ] }
+    end
+    assert_redirected_to account_path
+    assert_not_nil flash[:alert]
+  end
+
+  test "rejects a token with no capabilities selected" do
+    user = users(:translator)
+    sign_in_as(user)
+
+    assert_no_difference -> { PersonalAccessToken.count } do
+      post account_personal_access_tokens_path, params: { name: "empty" }
+    end
+    assert_redirected_to account_path
+    assert_not_nil flash[:alert]
   end
 
   test "revokes all other sessions but keeps the current one" do

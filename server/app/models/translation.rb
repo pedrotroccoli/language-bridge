@@ -27,13 +27,29 @@ class Translation < ApplicationRecord
   scope :drafts_in_namespace, ->(namespace) {
     drafts.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
   }
+  # Drafts written by one CLI push session (see TranslationKey#set_translation).
+  scope :in_session, ->(session) { where(session: session) }
+  scope :drafts_in_session, ->(session) { drafts.in_session(session) }
+
   scope :under_review_in_namespace, ->(namespace) {
     under_review.joins(:translation_key).where(translation_keys: { namespace_id: namespace.id })
   }
 
+  # Distinct push sessions that still have drafts — powers the editor's session
+  # filter so a reviewer can pick which push to look at.
+  def self.draft_sessions
+    drafts.where.not(session: [ nil, "" ]).distinct.order(:session).pluck(:session)
+  end
+
   before_update :snapshot_version, if: -> { value_changed? }
   after_update :invalidate_on_value_change, if: -> { saved_change_to_value? }
   after_commit :rebuild_artifact_after_discard, on: :update
+  # The playground artifact (published + all drafts) tracks every value change,
+  # not just publication changes. Deferred to after_commit — it uploads an object.
+  # One declaration for all three actions: registering the same method under
+  # both after_commit and after_destroy_commit would silently drop the first.
+  after_commit :rebuild_playground, on: %i[ create update destroy ],
+    if: -> { destroyed? || saved_change_to_value? }
 
   def draft?
     value.present? && publication.nil?
@@ -144,6 +160,12 @@ class Translation < ApplicationRecord
 
       @publication_discarded = false
       Translation::Artifact.touch_for(self)
+    end
+
+    def rebuild_playground
+      Translation::PlaygroundArtifact.touch_for(self)
+    rescue ActiveRecord::RecordNotFound
+      # Parent namespace/locale destroyed in the same cascade; nothing to rebuild.
     end
 
     # Editing the value invalidates prior review/approval — the reviewed content

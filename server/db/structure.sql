@@ -86,9 +86,9 @@ CREATE TABLE public.api_tokens (
     name character varying NOT NULL,
     project_id uuid NOT NULL,
     revoked_at timestamp(6) without time zone,
-    scope character varying NOT NULL,
     token_digest character varying NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -101,6 +101,23 @@ CREATE TABLE public.ar_internal_metadata (
     value character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: cli_auth_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cli_auth_codes (
+    id uuid DEFAULT public.uuidv7() NOT NULL,
+    user_id uuid NOT NULL,
+    code_digest character varying NOT NULL,
+    name character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -194,7 +211,9 @@ CREATE TABLE public.personal_access_tokens (
     last_used_at timestamp(6) without time zone,
     token_digest character varying NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    name character varying DEFAULT ''::character varying NOT NULL,
+    scopes character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -286,7 +305,8 @@ CREATE TABLE public.settings (
     rate_limiting_enabled boolean DEFAULT true NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     upload_allowed_formats character varying[] DEFAULT '{json,csv,xliff}'::character varying[] NOT NULL,
-    upload_max_bytes bigint DEFAULT 5242880 NOT NULL
+    upload_max_bytes bigint DEFAULT 5242880 NOT NULL,
+    cli_token_limit integer DEFAULT 3 NOT NULL
 );
 
 
@@ -857,7 +877,8 @@ CREATE TABLE public.translations (
     project_id uuid NOT NULL,
     translation_key_id uuid NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    value text
+    value text,
+    session character varying
 );
 
 
@@ -1004,6 +1025,14 @@ ALTER TABLE ONLY public.api_tokens
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: cli_auth_codes cli_auth_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cli_auth_codes
+    ADD CONSTRAINT cli_auth_codes_pkey PRIMARY KEY (id);
 
 
 --
@@ -1328,6 +1357,20 @@ CREATE UNIQUE INDEX index_api_tokens_on_token_digest ON public.api_tokens USING 
 
 
 --
+-- Name: index_cli_auth_codes_on_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cli_auth_codes_on_code_digest ON public.cli_auth_codes USING btree (code_digest);
+
+
+--
+-- Name: index_cli_auth_codes_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cli_auth_codes_on_user_id ON public.cli_auth_codes USING btree (user_id);
+
+
+--
 -- Name: index_events_on_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1429,7 +1472,7 @@ CREATE UNIQUE INDEX index_personal_access_tokens_on_token_digest ON public.perso
 -- Name: index_personal_access_tokens_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_personal_access_tokens_on_user_id ON public.personal_access_tokens USING btree (user_id);
+CREATE INDEX index_personal_access_tokens_on_user_id ON public.personal_access_tokens USING btree (user_id);
 
 
 --
@@ -1853,6 +1896,13 @@ CREATE INDEX index_translations_on_project_id ON public.translations USING btree
 
 
 --
+-- Name: index_translations_on_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translations_on_session ON public.translations USING btree (session);
+
+
+--
 -- Name: index_translations_on_translation_key_id_and_locale_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2083,6 +2133,14 @@ ALTER TABLE ONLY public.solid_queue_claimed_executions
 
 
 --
+-- Name: cli_auth_codes fk_rails_a757445e44; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cli_auth_codes
+    ADD CONSTRAINT fk_rails_a757445e44 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: sign_in_tokens fk_rails_a9860dd74e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2169,6 +2227,11 @@ ALTER TABLE ONLY public.api_tokens
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260901170000'),
+('20260901160000'),
+('20260901150000'),
+('20260901140000'),
+('20260901130000'),
 ('20260701120001'),
 ('20260701120000');
 
