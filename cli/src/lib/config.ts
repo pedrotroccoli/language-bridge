@@ -1,6 +1,7 @@
 // Resolves config with precedence: CLI flags > env (LB_*) > cosmiconfig file
 // (language-bridge.json / .language-bridgerc / "languageBridge" in package.json).
 // The token additionally falls back to the stored `lb login` credential.
+import { memo } from "1o1-utils";
 import { cosmiconfig } from "cosmiconfig";
 import { loadToken } from "./credentials.js";
 
@@ -22,6 +23,8 @@ export interface CliOptions {
   write?: string | boolean;
   session?: string;
   name?: string;
+  verbose?: boolean;
+  json?: boolean;
 }
 
 export interface ResolvedConfig {
@@ -67,24 +70,32 @@ interface FileConfig {
   session?: string;
 }
 
-async function loadFile(): Promise<FileConfig> {
-  // Explicit searchPlaces so a bare `language-bridge.json` (the documented form)
-  // is discovered — cosmiconfig's defaults only cover the .rc / .config variants.
-  const explorer = cosmiconfig("language-bridge", {
-    searchPlaces: [
-      "package.json",
-      "language-bridge.json",
-      ".language-bridgerc",
-      ".language-bridgerc.json",
-      ".language-bridgerc.yaml",
-      ".language-bridgerc.yml",
-      "language-bridge.config.js",
-      "language-bridge.config.cjs",
-    ],
-  });
-  const result = await explorer.search();
-  return (result?.config as FileConfig | undefined) ?? {};
-}
+// Memoized per working directory: resolveConfigs consults the file both
+// directly and via resolveServer, and without the cache cosmiconfig would walk
+// the disk twice per command. Exported so tests that rewrite the config file
+// mid-process can loadFile.clear().
+export const loadFile: (() => Promise<FileConfig>) & { clear: () => void } = memo({
+  key: () => process.cwd(),
+  fn: async (): Promise<FileConfig> => {
+    // Explicit searchPlaces so a bare `language-bridge.json` (the documented
+    // form) is discovered — cosmiconfig's defaults only cover the .rc / .config
+    // variants.
+    const explorer = cosmiconfig("language-bridge", {
+      searchPlaces: [
+        "package.json",
+        "language-bridge.json",
+        ".language-bridgerc",
+        ".language-bridgerc.json",
+        ".language-bridgerc.yaml",
+        ".language-bridgerc.yml",
+        "language-bridge.config.js",
+        "language-bridge.config.cjs",
+      ],
+    });
+    const result = await explorer.search();
+    return (result?.config as FileConfig | undefined) ?? {};
+  },
+});
 
 function firstDefined<T>(...values: (T | undefined)[]): T | undefined {
   return values.find((value) => value !== undefined);

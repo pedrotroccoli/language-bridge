@@ -4,6 +4,7 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { safely } from "1o1-utils";
 
 interface Entry {
   token: string;
@@ -30,12 +31,10 @@ function key(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+// Missing or unreadable file just means "no stored credentials".
 async function loadStore(): Promise<Store> {
-  try {
-    return JSON.parse(await readFile(credentialsPath(), "utf8")) as Store;
-  } catch {
-    return {};
-  }
+  const [, store] = await safely(async () => JSON.parse(await readFile(credentialsPath(), "utf8")) as Store)();
+  return store ?? {};
 }
 
 async function writeStore(store: Store): Promise<void> {

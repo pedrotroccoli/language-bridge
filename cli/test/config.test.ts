@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ConfigError, resolveConfigs } from "../src/lib/config.js";
+import { ConfigError, loadFile, resolveConfigs } from "../src/lib/config.js";
 
 let cwd: string;
 let dir: string;
@@ -25,6 +25,7 @@ afterEach(() => {
 
 async function writeConfig(config: unknown): Promise<void> {
   await writeFile(join(dir, "language-bridge.json"), JSON.stringify(config));
+  loadFile.clear(); // config resolution memoizes the file read per cwd
 }
 
 describe("resolveConfigs", () => {
