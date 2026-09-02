@@ -11,7 +11,7 @@ export interface ProjectValidation {
 // project exists and is accessible, and any configured locale/namespaces are
 // real. One identity call proves the token, then one export per project checks
 // its parameters. Never throws per project — problems are collected and returned.
-export async function validate(configs: ResolvedConfig[]): Promise<ProjectValidation[]> {
+export async function validateConfig(configs: ResolvedConfig[]): Promise<ProjectValidation[]> {
   const { url, token } = configs[0]!;
   const { projects: accessible } = await fetchUser(url, token);
   const reachable = new Set(accessible);
