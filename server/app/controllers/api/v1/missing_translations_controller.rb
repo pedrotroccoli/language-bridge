@@ -10,7 +10,7 @@ module Api
     #   { "locale": "en", "namespace": "common",
     #     "keys": { "home.title": "Welcome", "nav.signup": "Sign up" } }
     class MissingTranslationsController < Api::BaseController
-      before_action -> { require_scope!(:save_missing) }
+      before_action -> { require_capability!(:write) }
 
       MAX_KEYS_PER_REQUEST = 500
 

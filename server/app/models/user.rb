@@ -8,7 +8,8 @@ class User < ApplicationRecord
   has_many :sign_in_tokens, dependent: :destroy
   has_many :sent_invitations, class_name: "Invitation", foreign_key: :inviter_id, dependent: :destroy
 
-  has_one :personal_access_token, dependent: :destroy
+  has_many :personal_access_tokens, dependent: :destroy
+  has_many :cli_auth_codes, dependent: :destroy
 
   # Served via Active Storage's default :redirect delivery (302 to the blob),
   # so bytes don't stream through the app. A downscaled, preprocessed :thumb

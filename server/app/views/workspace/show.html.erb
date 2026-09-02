@@ -81,6 +81,22 @@
     <% end %>
   </div>
 
+  <%# ---- CLI access ---- %>
+  <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
+    <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "terminal", size: 19, css: "text-ink-3" %>CLI access</div>
+    <div class="text-[13px] text-mut mt-[3px] mb-[18px]">How many personal access tokens each user may hold — one per machine when they run <span class="font-mono text-[12px]">lb login</span>. Raise it for users who work across many devices.</div>
+
+    <%= form_with model: @setting, url: workspace_path, method: :patch, local: true do |form| %>
+      <div class="max-w-[240px] flex items-end gap-[10px]">
+        <div class="flex-1">
+          <%= form.label :cli_token_limit, "Tokens per user", class: "block text-[12.5px] font-medium text-ink-2 mb-[7px]" %>
+          <%= form.number_field :cli_token_limit, min: 1, max: 50, class: "text-[14px]" %>
+        </div>
+        <%= loading_submit form, "Save" %>
+      </div>
+    <% end %>
+  </div>
+
   <%# ---- Public delivery base URL ---- %>
   <div class="border border-line rounded-[11px] px-[22px] py-5 mb-4">
     <div class="flex items-center gap-[9px] text-[15px] font-semibold text-ink"><%= mi "link", size: 19, css: "text-ink-3" %>Public delivery URL</div>

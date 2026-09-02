@@ -17,7 +17,8 @@ module Api
     # ?include_drafts=1 additionally requires an editor-equivalent scope
     # (save_missing or admin — mirrors the web export's can_edit_translations?).
     class ExportsController < Api::BaseController
-      before_action -> { require_scope!(:save_missing) }, if: :include_drafts?
+      before_action -> { require_capability!(:read) }
+      before_action -> { require_capability!(:read_drafts) }, if: :include_drafts?
 
       def show
         locale = resolve_locale

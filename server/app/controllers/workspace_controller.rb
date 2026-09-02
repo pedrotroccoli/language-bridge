@@ -25,6 +25,7 @@ class WorkspaceController < ApplicationController
         :missing_rate_limit, :missing_rate_period,
         :delivery_rate_limit, :delivery_rate_period,
         :upload_max_bytes,
+        :cli_token_limit,
         :delivery_compression,
         :delivery_base_url,
         :allowed_origins_text,
