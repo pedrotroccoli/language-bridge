@@ -221,10 +221,14 @@
         <div data-controller="modal" class="contents">
         <%# search row + locale-column filter %>
         <div class="px-4 py-3 border-b border-line-2 flex-none">
+          <%# turbo-action=advance promotes each frame refresh into the page URL,
+              so filters survive full navigations (key create/delete redirect
+              back here via redirect_back) and the state is shareable. %>
           <form class="flex items-center gap-3" role="search" method="get"
                 action="<%= project_namespace_path(@project, @namespace) %>"
                 data-controller="auto-submit locale-filter" data-auto-submit-delay-value="300"
-                data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys">
+                data-locale-filter-total-value="<%= @locales.size %>" data-turbo-frame="translation_keys"
+                data-turbo-action="advance">
             <div class="h-9 flex-1 flex items-center gap-[10px] px-[13px] border border-line rounded-[9px] focus-within:border-ink transition-colors">
               <%= mi "search", size: 18, css: "text-mut-2" %>
               <input type="search" name="q" value="<%= @query %>" placeholder="Search keys or values…" aria-label="Search keys or values"
