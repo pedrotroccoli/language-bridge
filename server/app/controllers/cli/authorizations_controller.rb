@@ -28,6 +28,17 @@ class Cli::AuthorizationsController < ApplicationController
       @redirect_uri = params[:redirect_uri].to_s
       @state = params[:state].to_s
       @scopes = requested_scopes
+      @verification_code = verification_code(@state)
+    end
+
+    # Human-checkable fingerprint of the request, derived from the CLI's
+    # `state` exactly as the CLI derives it (see login.ts). The terminal prints
+    # the same code, so the user can confirm the approval page belongs to their
+    # own `lb login` run before granting anything.
+    def verification_code(state)
+      return if state.blank?
+
+      Digest::SHA256.hexdigest(state).first(8).upcase.insert(4, "-")
     end
 
     # What the token will actually be granted: the CLI's request, clamped to the

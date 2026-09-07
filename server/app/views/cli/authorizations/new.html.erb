@@ -22,6 +22,17 @@
             <div class="text-[13px] text-mut mt-[3px]">A device is asking to act on your behalf.</div>
           </div>
         </div>
+
+        <% if @verification_code %>
+          <div class="flex items-center gap-3 mt-5 px-[15px] py-[13px] bg-surface-2 border border-line rounded-[10px]">
+            <%= mi "key", size: 20, css: "text-mut flex-none" %>
+            <div class="flex-1 min-w-0">
+              <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut">Verification code</div>
+              <div class="font-mono text-[19px] font-semibold tracking-[0.14em] text-ink mt-[3px]"><%= @verification_code %></div>
+            </div>
+            <div class="text-[12px] text-mut text-right leading-[1.5] flex-none">Must match<br>your terminal</div>
+          </div>
+        <% end %>
       </div>
 
       <div class="px-7 pt-[22px]">
