@@ -57,27 +57,21 @@
         <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mb-3">This will let the CLI</div>
         <div class="flex flex-col gap-[11px]">
           <% @scopes.each do |capability| %>
-            <div class="flex items-start gap-[11px]">
-              <%= mi "check", size: 17, weight: 500, css: "text-ok flex-none mt-px" %>
-              <div class="flex-1 min-w-0">
-                <div class="text-[13px] text-ink font-medium"><%= capability_rows[capability] %></div>
-                <div class="font-mono text-[11.5px] text-mut mt-[2px]"><%= capability %></div>
-              </div>
+            <div class="flex items-center gap-[11px]">
+              <%= mi "check", size: 17, weight: 500, css: "text-ok flex-none" %>
+              <div class="text-[13px] text-ink font-medium"><%= capability_rows[capability] %></div>
             </div>
           <% end %>
         </div>
 
         <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mt-5 mb-3">It will never be able to</div>
         <div class="flex flex-col gap-[11px]">
-          <% denied_rows = [ [ "Publish translations to production", "publish" ] ]
-             denied_rows << [ "Administer projects and settings", "admin" ] unless @scopes.include?("admin") %>
-          <% denied_rows.each do |label, scope| %>
-            <div class="flex items-start gap-[11px]">
-              <%= mi "block", size: 17, css: "text-faint-2 flex-none mt-px" %>
-              <div class="flex-1 min-w-0">
-                <div class="text-[13px] text-ink-2"><%= label %></div>
-                <div class="font-mono text-[11.5px] text-mut mt-[2px]"><%= scope %></div>
-              </div>
+          <% denied_rows = [ "Publish translations to production" ]
+             denied_rows << "Administer projects and settings" unless @scopes.include?("admin") %>
+          <% denied_rows.each do |label| %>
+            <div class="flex items-center gap-[11px]">
+              <%= mi "block", size: 17, css: "text-faint-2 flex-none" %>
+              <div class="text-[13px] text-ink-2"><%= label %></div>
             </div>
           <% end %>
         </div>
