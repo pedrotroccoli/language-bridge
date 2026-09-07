@@ -1,50 +1,92 @@
 <% content_for :title, "Authorize CLI" %>
 
-<div class="mx-auto w-full max-w-[460px] px-6 py-16">
-  <div class="border border-line rounded-[13px] px-[26px] py-8 bg-surface">
-    <div class="flex items-center gap-[10px] mb-5">
-      <div class="w-[40px] h-[40px] border-[1.5px] border-line rounded-[10px] flex items-center justify-center text-ink-3 bg-surface-2"><%= mi "terminal", size: 22 %></div>
-      <div>
-        <h1 class="m-0 text-[18px] font-semibold text-ink">Authorize the CLI</h1>
-        <div class="text-[12.5px] text-mut">Signed in as <%= current_user.email %></div>
-      </div>
-    </div>
+<div class="mx-auto w-full max-w-[520px] px-6 py-14">
+  <div class="bg-surface border border-line rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_12px_32px_-12px_rgba(15,23,42,.12)] overflow-hidden">
 
     <% if @invalid %>
-      <div class="border border-danger-border bg-danger-soft rounded-[9px] px-4 py-3 text-[13px] text-danger-ink">
-        Invalid request: the callback address must be a local loopback URL. Re-run <span class="font-mono">lb login</span>.
+      <div class="px-7 py-7">
+        <div class="flex items-center gap-[13px] mb-5">
+          <div class="w-[44px] h-[44px] rounded-[11px] bg-ink flex items-center justify-center flex-none"><%= mi "terminal", size: 23, css: "text-line" %></div>
+          <h1 class="m-0 text-[18px] font-semibold tracking-[-0.02em] text-ink">Authorize the Language Bridge CLI</h1>
+        </div>
+        <div class="border border-danger-border bg-danger-soft rounded-[9px] px-4 py-3 text-[13px] text-danger-ink">
+          Invalid request: the callback address must be a local loopback URL. Re-run <span class="font-mono">lb login</span>.
+        </div>
       </div>
     <% else %>
-      <p class="m-0 mb-4 text-[13.5px] text-mut leading-[1.55]">A command-line client on <span class="font-mono text-ink-2"><%= @name %></span> is requesting a personal access token. Only approve if you just started <span class="font-mono text-ink-2">lb login</span>.</p>
-
-      <% capability_descriptions = {
-           "read" => "Read published translations",
-           "read_drafts" => "Read unpublished drafts",
-           "write" => "Create and edit draft translations",
-           "admin" => "Administer projects and settings"
-         } %>
-      <div class="mb-5 border border-line rounded-[9px] overflow-hidden">
-        <div class="px-[14px] py-[8px] bg-surface-2 border-b border-line text-[11px] uppercase tracking-[0.05em] text-faint font-mono">Will be able to</div>
-        <ul class="m-0 p-0 list-none">
-          <% @scopes.each do |capability| %>
-            <li class="flex items-center gap-[9px] px-[14px] py-[9px] border-b border-line-3 last:border-b-0">
-              <%= mi "check_circle", size: 16, css: "text-ok" %>
-              <span class="text-[13px] text-ink"><%= capability_descriptions[capability] %></span>
-              <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.04em] text-faint"><%= capability.tr("_", " ") %></span>
-            </li>
-          <% end %>
-        </ul>
+      <div class="px-7 pt-[26px] pb-[22px] border-b border-line-3">
+        <div class="flex items-center gap-[13px]">
+          <div class="w-[44px] h-[44px] rounded-[11px] bg-ink flex items-center justify-center flex-none"><%= mi "terminal", size: 23, css: "text-line" %></div>
+          <div class="min-w-0">
+            <h1 class="m-0 text-[18px] font-semibold tracking-[-0.02em] text-ink">Authorize the Language Bridge CLI</h1>
+            <div class="text-[13px] text-mut mt-[3px]">A device is asking to act on your behalf.</div>
+          </div>
+        </div>
       </div>
 
-      <%= form_with url: cli_authorization_path, method: :post, class: "flex flex-col gap-3" do |form| %>
+      <div class="px-7 pt-[22px]">
+        <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mb-3">Requesting device</div>
+        <div class="grid grid-cols-[104px_1fr] gap-x-[14px] gap-y-[9px] text-[13px]">
+          <span class="text-mut">Machine</span><span class="text-ink font-mono text-[12.5px]"><%= @name %></span>
+          <span class="text-mut">Account</span>
+          <span class="flex items-center gap-[7px] text-ink">
+            <span class="w-[19px] h-[19px] rounded-full bg-accent-soft text-accent flex items-center justify-center font-mono text-[8.5px] font-semibold"><%= current_user.email.first(2).upcase %></span>
+            <%= current_user.email %>
+          </span>
+        </div>
+      </div>
+
+      <% capability_rows = {
+           "read"        => "Read published translations",
+           "read_drafts" => "Read unpublished drafts",
+           "write"       => "Push translations as unpublished drafts",
+           "admin"       => "Administer projects and settings"
+         } %>
+      <div class="px-7 pt-[22px] pb-1">
+        <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mb-3">This will let the CLI</div>
+        <div class="flex flex-col gap-[11px]">
+          <% @scopes.each do |capability| %>
+            <div class="flex items-start gap-[11px]">
+              <%= mi "check", size: 17, weight: 500, css: "text-ok flex-none mt-px" %>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] text-ink font-medium"><%= capability_rows[capability] %></div>
+                <div class="font-mono text-[11.5px] text-mut mt-[2px]"><%= capability %></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mt-5 mb-3">It will never be able to</div>
+        <div class="flex flex-col gap-[11px]">
+          <% denied_rows = [ [ "Publish translations to production", "publish" ] ]
+             denied_rows << [ "Administer projects and settings", "admin" ] unless @scopes.include?("admin") %>
+          <% denied_rows.each do |label, scope| %>
+            <div class="flex items-start gap-[11px]">
+              <%= mi "block", size: 17, css: "text-faint-2 flex-none mt-px" %>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] text-ink-2"><%= label %></div>
+                <div class="font-mono text-[11.5px] text-mut mt-[2px]"><%= scope %></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="text-[12.5px] text-mut mt-4 pt-[14px] leading-[1.55] border-t border-line-3">Everything pushed from the CLI lands as an <b class="font-semibold text-ink">unpublished draft</b> and still goes through review before it reaches production.</div>
+        <div class="flex items-center gap-2 mt-[14px] px-[13px] py-[11px] bg-banner border border-warn-soft rounded-[9px] text-[12.5px] text-banner-ink">
+          <%= mi "schedule", size: 17, css: "flex-none" %>
+          <span>Only approve this request if you just ran <span class="font-mono">lb login</span> on this machine.</span>
+        </div>
+      </div>
+
+      <%= form_with url: cli_authorization_path, method: :post, class: "flex gap-[10px] px-7 pt-[22px] pb-[26px]" do |form| %>
         <%= form.hidden_field :redirect_uri, value: @redirect_uri %>
         <%= form.hidden_field :state, value: @state %>
         <%= form.hidden_field :name, value: @name %>
         <% @scopes.each do |scope| %><%= hidden_field_tag "scopes[]", scope %><% end %>
-        <div class="flex items-center gap-[8px]">
-          <%= form.submit "Authorize", class: "btn" %>
-          <%= link_to "Cancel", root_path, class: "btn-secondary no-underline" %>
-        </div>
+        <%= link_to "Reject", cli_authorization_rejection_path, class: "btn-secondary no-underline flex-1 h-[42px] text-[13.5px] rounded-[9px]" %>
+        <%= form.button class: "btn flex-1 h-[42px] text-[13.5px] rounded-[9px]" do %>
+          <%= mi "check", size: 17 %>Authorize
+        <% end %>
       <% end %>
     <% end %>
   </div>

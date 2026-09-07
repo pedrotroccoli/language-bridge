@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   # exchanges a one-time code (see api/v1/cli/token) for a personal access token.
   get  "cli/authorize", to: "cli/authorizations#new",    as: :cli_authorize
   post "cli/authorize", to: "cli/authorizations#create", as: :cli_authorization
+  get  "cli/authorize/rejected", to: "cli/rejections#show", as: :cli_authorization_rejection
 
   resources :invitations, only: %i[ index new create destroy ] do
     member { post :resend }

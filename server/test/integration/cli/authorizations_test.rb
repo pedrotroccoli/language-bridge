@@ -45,6 +45,15 @@ class Cli::AuthorizationsTest < ActionDispatch::IntegrationTest
     assert_match(/[?&]state=xyz/, location)
   end
 
+  test "rejecting shows the no-access page without minting a code" do
+    sign_in_as(users(:admin))
+    assert_no_difference -> { CliAuthCode.count } do
+      get cli_authorization_rejection_path
+    end
+    assert_response :success
+    assert_includes response.body, "Request rejected"
+  end
+
   test "refuses to approve a non-loopback callback" do
     sign_in_as(users(:admin))
     assert_no_difference -> { CliAuthCode.count } do
