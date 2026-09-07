@@ -1,7 +1,7 @@
 <% content_for :title, "Authorize CLI" %>
 
 <div class="mx-auto w-full max-w-[520px] px-6 py-14">
-  <div class="bg-surface border border-line rounded-[14px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_12px_32px_-12px_rgba(15,23,42,.12)] overflow-hidden">
+  <div class="bg-surface border border-line rounded-[16px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_12px_32px_-12px_rgba(15,23,42,.12)] overflow-hidden">
 
     <% if @invalid %>
       <div class="px-7 py-7">
@@ -83,9 +83,9 @@
         </div>
 
         <div class="text-[12.5px] text-mut mt-4 pt-[14px] leading-[1.55] border-t border-line-3">Everything pushed from the CLI lands as an <b class="font-semibold text-ink">unpublished draft</b> and still goes through review before it reaches production.</div>
-        <div class="flex items-center gap-2 mt-[14px] px-[13px] py-[11px] bg-banner border border-warn-soft rounded-[9px] text-[12.5px] text-banner-ink">
+        <div class="flex items-center gap-[10px] mt-[14px] px-4 py-3 bg-banner-bg border border-banner-border rounded-[10px] text-[12.5px] text-banner-ink leading-[1.5]">
           <%= mi "schedule", size: 17, css: "flex-none" %>
-          <span>Only approve this request if you just ran <span class="font-mono">lb login</span> on this machine.</span>
+          <span>This request expires in <b class="font-semibold"><%= CliAuthCode::TTL.inspect %></b>. Only approve it if you just ran <span class="font-mono">lb login</span> on this machine.</span>
         </div>
       </div>
 
