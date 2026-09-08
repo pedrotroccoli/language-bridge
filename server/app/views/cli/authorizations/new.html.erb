@@ -47,7 +47,10 @@
         </div>
       </div>
 
-      <% capability_rows = {
+      <% # Consent wording per capability; anything the catalog gains before
+         # this page learns about it falls back to the shared short label
+         # rather than a blank row next to a checkmark.
+         capability_rows = {
            "read"        => "Read published translations",
            "read_drafts" => "Read unpublished drafts",
            "write"       => "Push translations as unpublished drafts",
@@ -59,15 +62,17 @@
           <% @scopes.each do |capability| %>
             <div class="flex items-center gap-[11px]">
               <%= mi "check", size: 17, weight: 500, css: "text-ok flex-none" %>
-              <div class="text-[13px] text-ink font-medium"><%= capability_rows[capability] %></div>
+              <div class="text-[13px] text-ink font-medium"><%= capability_rows.fetch(capability) { capability_label(capability) } %></div>
             </div>
           <% end %>
         </div>
 
         <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mt-5 mb-3">It will never be able to</div>
         <div class="flex flex-col gap-[11px]">
-          <% denied_rows = [ "Publish translations to production" ]
-             denied_rows << "Administer projects and settings" unless @scopes.include?("admin") %>
+          <% # Publishing has no API endpoint by design; the rest comes from
+             # the controller's @denied_scopes.
+             denied_rows = [ "Publish translations to production" ] +
+               @denied_scopes.map { |capability| capability_rows.fetch(capability) { capability_label(capability) } } %>
           <% denied_rows.each do |label| %>
             <div class="flex items-center gap-[11px]">
               <%= mi "block", size: 17, css: "text-faint-2 flex-none" %>
@@ -79,7 +84,7 @@
         <div class="text-[12.5px] text-mut mt-4 pt-[14px] leading-[1.55] border-t border-line-3">Everything pushed from the CLI lands as an <b class="font-semibold text-ink">unpublished draft</b> and still goes through review before it reaches production.</div>
         <div class="flex items-center gap-[10px] mt-[14px] px-4 py-3 bg-banner-bg border border-banner-border rounded-[10px] text-[12.5px] text-banner-ink leading-[1.5]">
           <%= mi "schedule", size: 17, css: "flex-none" %>
-          <span>This request expires in <b class="font-semibold"><%= CliAuthCode::TTL.inspect %></b>. Only approve it if you just ran <span class="font-mono">lb login</span> on this machine.</span>
+          <span>This request expires in <b class="font-semibold"><%= distance_of_time_in_words(CliAuthCode::TTL) %></b>. Only approve it if you just ran <span class="font-mono">lb login</span> on this machine.</span>
         </div>
       </div>
 
@@ -88,7 +93,7 @@
         <%= form.hidden_field :state, value: @state %>
         <%= form.hidden_field :name, value: @name %>
         <% @scopes.each do |scope| %><%= hidden_field_tag "scopes[]", scope %><% end %>
-        <%= link_to "Reject", cli_authorization_rejection_path, class: "btn-secondary no-underline flex-1 h-[42px] text-[13.5px] rounded-[9px]" %>
+        <%= link_to "Reject", cli_authorization_rejection_path(redirect_uri: @redirect_uri, state: @state), class: "btn-secondary no-underline flex-1 h-[42px] text-[13.5px] rounded-[9px]" %>
         <%= form.button class: "btn flex-1 h-[42px] text-[13.5px] rounded-[9px]" do %>
           <%= mi "check", size: 17 %>Authorize
         <% end %>
