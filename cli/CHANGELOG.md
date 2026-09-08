@@ -7,6 +7,15 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship to npm from tags `cli-v*`; every push to `development` publishes
 a prerelease under the `canary` dist-tag.
 
+## [0.1.2](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.1...cli-v0.1.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **cli:** mark the loopback promise handled before login awaits it ([ab449ed](https://github.com/pedrotroccoli/language-bridge/commit/ab449ede72f705afff07d54f6eb99c5a6be9a738))
+* **login:** close the review findings on the CLI authorization flow ([a0d1366](https://github.com/pedrotroccoli/language-bridge/commit/a0d1366799503e210963908b8b16f795fdb1ac7a))
+* **login:** rejecting reports back to the CLI immediately ([53a13bd](https://github.com/pedrotroccoli/language-bridge/commit/53a13bd260cdf35794c46cdc7ff07bfb4c08f0d9))
+
 ## [0.1.1](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.0...cli-v0.1.1) (2026-09-08)
 
 
