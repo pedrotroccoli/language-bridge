@@ -6,7 +6,7 @@ require "digest"
 # freshly-minted personal access token. Only the digest is stored, and the code
 # is single-use, so it never yields a token twice or after it expires.
 class CliAuthCode < ApplicationRecord
-  TTL = 5.minutes
+  TTL = 10.minutes
 
   belongs_to :user
 

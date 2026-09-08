@@ -1,0 +1,8 @@
+{
+  "url": "http://127.0.0.1:3000",
+  "project": "main-app",
+  "locale": "en",
+  "out": "src/@types/resources.d.ts",
+  "jsonDir": ".language-bridge/locales",
+  "params": true
+}

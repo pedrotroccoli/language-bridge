@@ -45,6 +45,21 @@ class Cli::AuthorizationsTest < ActionDispatch::IntegrationTest
     assert_match(/[?&]state=xyz/, location)
   end
 
+  test "shows the verification code the CLI derives from state" do
+    sign_in_as(users(:admin))
+    get cli_authorize_path(redirect_uri: LOOPBACK, state: "xyz", name: "laptop")
+    assert_includes response.body, Digest::SHA256.hexdigest("xyz").first(8).upcase.insert(4, "-")
+  end
+
+  test "rejecting shows the no-access page without minting a code" do
+    sign_in_as(users(:admin))
+    assert_no_difference -> { CliAuthCode.count } do
+      get cli_authorization_rejection_path
+    end
+    assert_response :success
+    assert_includes response.body, "Request rejected"
+  end
+
   test "refuses to approve a non-loopback callback" do
     sign_in_as(users(:admin))
     assert_no_difference -> { CliAuthCode.count } do
