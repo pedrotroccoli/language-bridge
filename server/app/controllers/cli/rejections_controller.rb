@@ -4,12 +4,10 @@
 # immediately instead of waiting out its timeout. Without a loopback to
 # notify, it falls back to a standalone confirmation page.
 class Cli::RejectionsController < ApplicationController
-  include Cli::Loopback
-
   def show
-    redirect_uri = params[:redirect_uri].to_s
-    if loopback?(redirect_uri)
-      redirect_to callback_url(redirect_uri, error: "access_denied", state: params[:state].to_s), allow_other_host: true
+    callback = Cli::Callback.new(params[:redirect_uri])
+    if callback.loopback?
+      redirect_to callback.url(error: "access_denied", state: params[:state].to_s), allow_other_host: true
     end
   end
 end

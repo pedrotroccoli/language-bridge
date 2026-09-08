@@ -69,11 +69,10 @@
 
         <div class="font-mono text-[10.5px] tracking-[0.07em] uppercase text-mut mt-5 mb-3">It will never be able to</div>
         <div class="flex flex-col gap-[11px]">
-          <% # Publishing has no API endpoint by design; everything else denied
-             # is derived from the catalog so this list stays exhaustive as
-             # capabilities are added.
+          <% # Publishing has no API endpoint by design; the rest comes from
+             # the controller's @denied_scopes.
              denied_rows = [ "Publish translations to production" ] +
-               (TokenScopes::CAPABILITIES - @scopes).map { |capability| capability_rows.fetch(capability) { capability_label(capability) } } %>
+               @denied_scopes.map { |capability| capability_rows.fetch(capability) { capability_label(capability) } } %>
           <% denied_rows.each do |label| %>
             <div class="flex items-center gap-[11px]">
               <%= mi "block", size: 17, css: "text-faint-2 flex-none" %>
