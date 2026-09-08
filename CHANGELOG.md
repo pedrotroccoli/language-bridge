@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.9](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.8...v0.0.9) (2026-09-08)
+
+
+### Bug Fixes
+
+* **login:** close the review findings on the CLI authorization flow ([a0d1366](https://github.com/pedrotroccoli/language-bridge/commit/a0d1366799503e210963908b8b16f795fdb1ac7a))
+* **login:** fail closed without state and never grant admin ([8a37c56](https://github.com/pedrotroccoli/language-bridge/commit/8a37c56fbed1a49d4276f06bdd10bce748d46479))
+* **login:** rejecting reports back to the CLI immediately ([53a13bd](https://github.com/pedrotroccoli/language-bridge/commit/53a13bd260cdf35794c46cdc7ff07bfb4c08f0d9))
+
 ## [0.0.8](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.7...v0.0.8) (2026-09-08)
 
 
