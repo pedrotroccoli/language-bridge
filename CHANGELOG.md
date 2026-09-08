@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.8](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.7...v0.0.8) (2026-09-08)
+
+
+### Features
+
+* **login:** CLI authorization screen from the Mono design ([43c7544](https://github.com/pedrotroccoli/language-bridge/commit/43c75444fc2c2227d14f9f040bcf0f38a6cc34f0))
+* **login:** CLI authorization screen from the Mono design ([5628f69](https://github.com/pedrotroccoli/language-bridge/commit/5628f69dd66ee17bd0017c4a26ab25149ce9cab6))
+* **login:** verification code binds the approval page to the terminal ([df4b56b](https://github.com/pedrotroccoli/language-bridge/commit/df4b56b7f807d9c21abd32f4e5cd979823a59e5a))
+
+
+### Bug Fixes
+
+* **login:** approval page polish and 10-minute code TTL ([546c63c](https://github.com/pedrotroccoli/language-bridge/commit/546c63c547bc0b213dce6211c8f3f834ff5d4b73))
+
 ## [0.0.7] - 2026-09-02
 
 First stable release from this repository, superseding the images previously
