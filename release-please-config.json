@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "separate-pull-requests": true,
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "component": "server",
+      "include-component-in-tag": false,
+      "extra-files": []
+    },
+    "cli": {
+      "release-type": "node",
+      "package-name": "@language-bridge/cli"
+    }
+  }
+}

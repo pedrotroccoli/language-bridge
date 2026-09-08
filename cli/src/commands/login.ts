@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { hostname } from "node:os";
 import { withTimeout } from "1o1-utils";
@@ -39,6 +39,8 @@ export async function login(server: ServerConfig, deviceName?: string): Promise<
   for (const scope of REQUESTED_SCOPES) authorizeUrl.searchParams.append("scopes[]", scope);
 
   console.error(`Opening your browser to authorize:\n  ${authorizeUrl}\n`);
+  console.error(`Verification code: ${verificationCode(state)}`);
+  console.error("The approval page must show this exact code — reject the request if it doesn't.\n");
   await openBrowser(authorizeUrl.toString());
 
   let code: string;
@@ -55,6 +57,15 @@ export async function login(server: ServerConfig, deviceName?: string): Promise<
   const { token, user } = await exchangeCode(server.url, code);
   await saveToken(server.url, { token, user: user?.email });
   return { url: server.url, user: user?.email };
+}
+
+// Human-checkable fingerprint of the request, derived from `state` the same
+// way on both sides (see Cli::AuthorizationsController#verification_code): the
+// terminal prints it and the approval page displays it, so the user can tell
+// the browser tab belongs to this `lb login` run and not one an attacker opened.
+function verificationCode(state: string): string {
+  const digest = createHash("sha256").update(state).digest("hex").slice(0, 8).toUpperCase();
+  return `${digest.slice(0, 4)}-${digest.slice(4)}`;
 }
 
 // Self-contained styled page shown in the browser after the callback — no

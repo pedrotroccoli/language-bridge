@@ -1,0 +1,16 @@
+<% content_for :title, "Request rejected" %>
+
+<div class="mx-auto w-full max-w-[520px] px-6 py-14">
+  <div class="bg-surface border border-line rounded-[16px] shadow-[0_1px_2px_rgba(15,23,42,.04),0_12px_32px_-12px_rgba(15,23,42,.12)] px-7 pt-[34px] pb-7 text-center">
+    <div class="w-[52px] h-[52px] rounded-full bg-surface-2 border border-line flex items-center justify-center mx-auto"><%= mi "block", size: 27, weight: 400, css: "text-ink-2" %></div>
+    <h1 class="mt-[18px] mb-0 text-[18px] font-semibold tracking-[-0.02em] text-ink">Request rejected</h1>
+    <p class="mt-[7px] mb-0 text-[13.5px] text-mut leading-[1.55]">No access was granted and the device was not signed in.<br>If this wasn't you, no further action is needed.</p>
+
+    <div class="text-left bg-ink rounded-[10px] px-4 py-[14px] mt-[22px] font-mono text-[12.5px] leading-[1.9] text-line">
+      <div><span class="text-ink-2">$</span> lb login</div>
+      <div class="text-danger">✗ Authorization rejected in browser</div>
+    </div>
+
+    <%= link_to "Back to projects", root_path, class: "btn-secondary no-underline h-10 px-[18px] mt-5 text-[13px] rounded-[9px]" %>
+  </div>
+</div>
