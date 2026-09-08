@@ -21,7 +21,7 @@ First stable release.
 
 ### Added
 
-- `lb init` — interactive project setup (`languagebridge.json`).
+- `lb init` — interactive project setup (`language-bridge.json`).
 - `lb login` / `lb logout` / `lb whoami` — browser-approved authentication;
   the token is stored globally, never in the project tree.
 - `lb pull` — export translations as per-namespace JSON files.
