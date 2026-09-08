@@ -7,7 +7,9 @@ import { openBrowser } from "../lib/browser.js";
 import type { ServerConfig } from "../lib/config.js";
 import { saveToken } from "../lib/credentials.js";
 
-const TIMEOUT_MS = 120_000;
+// Matches the server's CliAuthCode::TTL: the approval page tells the user the
+// request lasts 10 minutes, so the loopback must keep listening that long.
+const TIMEOUT_MS = 600_000;
 
 // Capabilities `lb login` requests — draft-writing, never admin. The server
 // clamps these to the user's role and shows them on the approval page.
@@ -63,20 +65,25 @@ export async function login(server: ServerConfig, deviceName?: string): Promise<
 // way on both sides (see Cli::AuthorizationsController#verification_code): the
 // terminal prints it and the approval page displays it, so the user can tell
 // the browser tab belongs to this `lb login` run and not one an attacker opened.
-function verificationCode(state: string): string {
+export function verificationCode(state: string): string {
   const digest = createHash("sha256").update(state).digest("hex").slice(0, 8).toUpperCase();
   return `${digest.slice(0, 4)}-${digest.slice(4)}`;
 }
 
 // Self-contained styled page shown in the browser after the callback — no
 // external assets, adapts to light/dark, and tries to close itself.
-function resultPage(ok: boolean): string {
-  const accent = ok ? "#16a34a" : "#dc2626";
-  const glyph = ok ? "&#10003;" : "&#33;";
-  const title = ok ? "You're all set" : "Login failed";
-  const message = ok
-    ? "Language Bridge CLI is authorized. Return to your terminal — you can close this tab."
-    : "Something went wrong (state mismatch). Close this tab and run <code>lb login</code> again.";
+type ResultVariant = "authorized" | "rejected" | "mismatch";
+
+function resultPage(variant: ResultVariant): string {
+  const accent = variant === "authorized" ? "#16a34a" : variant === "rejected" ? "#71717a" : "#dc2626";
+  const glyph = variant === "authorized" ? "&#10003;" : variant === "rejected" ? "&#10005;" : "&#33;";
+  const title = variant === "authorized" ? "You're all set" : variant === "rejected" ? "Request rejected" : "Login failed";
+  const message =
+    variant === "authorized"
+      ? "Language Bridge CLI is authorized. Return to your terminal — you can close this tab."
+      : variant === "rejected"
+        ? "No access was granted and the device was not signed in. If this wasn't you, no further action is needed."
+        : "Something went wrong (state mismatch). Close this tab and run <code>lb login</code> again.";
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -123,13 +130,22 @@ function startLoopback(expectedState: string): Promise<Loopback> {
 
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
+
+      // The approval page's Reject button bounces back here with an error so
+      // the terminal fails immediately instead of waiting out the timeout.
+      if (url.searchParams.get("error") === "access_denied" && state === expectedState) {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(resultPage("rejected"));
+        rejectCode(new Error("Authorization rejected in browser."));
+        return;
+      }
+
       if (!code || state !== expectedState) {
-        res.writeHead(400, { "content-type": "text/html; charset=utf-8" }).end(resultPage(false));
+        res.writeHead(400, { "content-type": "text/html; charset=utf-8" }).end(resultPage("mismatch"));
         rejectCode(new Error("State mismatch on login callback."));
         return;
       }
 
-      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(resultPage(true));
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(resultPage("authorized"));
       resolveCode(code);
     });
 

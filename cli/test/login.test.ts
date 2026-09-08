@@ -22,7 +22,8 @@ vi.mock("../src/lib/api.js", () => ({
   }),
 }));
 
-import { login } from "../src/commands/login.js";
+import { login, verificationCode } from "../src/commands/login.js";
+import { openBrowser } from "../src/lib/browser.js";
 import { loadToken } from "../src/lib/credentials.js";
 
 let wasTty: boolean | undefined;
@@ -61,5 +62,24 @@ describe("login", () => {
   it("fails fast without a TTY", async () => {
     process.stderr.isTTY = false as never;
     await expect(login({ url: "http://server.test" })).rejects.toThrow(/interactive terminal/);
+  });
+
+  it("fails immediately when the approval page rejects the request", async () => {
+    vi.mocked(openBrowser).mockImplementationOnce(async (authorizeUrl: string) => {
+      const url = new URL(authorizeUrl);
+      const redirect = url.searchParams.get("redirect_uri")!;
+      const state = url.searchParams.get("state")!;
+      await fetch(`${redirect}?error=access_denied&state=${state}`);
+    });
+
+    await expect(login({ url: "http://server.test" })).rejects.toThrow(/rejected in browser/);
+  });
+});
+
+describe("verificationCode", () => {
+  // Literal vector, mirrored in the server's authorizations test: pins the
+  // wire format so either side drifting fails a suite.
+  it("derives the code the approval page shows", () => {
+    expect(verificationCode("xyz")).toBe("3608-BCA1");
   });
 });
