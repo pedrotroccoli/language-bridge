@@ -7,14 +7,6 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship to npm from tags `cli-v*`; every push to `development` publishes
 a prerelease under the `canary` dist-tag.
 
-## [Unreleased]
-
-### Added
-
-- `lb login` prints a verification code that must match the one shown on the
-  browser approval page, so an authorization request can be tied to the
-  terminal that started it.
-
 ## [0.1.0] - 2026-09-02
 
 First stable release.
@@ -34,5 +26,4 @@ First stable release.
 - `lb ai-instructions` — usage instructions for AI coding agents.
 - `lb completion` — shell completions.
 
-[Unreleased]: https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.0...HEAD
 [0.1.0]: https://github.com/pedrotroccoli/language-bridge/releases/tag/cli-v0.1.0
