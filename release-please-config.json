@@ -8,7 +8,7 @@
       "release-type": "simple",
       "component": "server",
       "include-component-in-tag": false,
-      "extra-files": []
+      "exclude-paths": ["cli"]
     },
     "cli": {
       "release-type": "node",

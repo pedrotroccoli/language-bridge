@@ -1,0 +1,52 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "3430b583111f83a17d82a504812da7caaaa835dfa032c32e61f453322299a008",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/cli/rejections_controller.rb",
+      "line": 10,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(Cli::Callback.new(params[:redirect_uri]).url(:error => \"access_denied\", :state => params[:state].to_s), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Cli::RejectionsController",
+        "method": "show"
+      },
+      "user_input": "Cli::Callback.new(params[:redirect_uri]).url(:error => \"access_denied\", :state => params[:state].to_s)",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "redirect target is validated by Cli::Callback#loopback? (http + 127.0.0.1/localhost/::1 only) before redirecting; the lb login hand-off must leave the app origin to reach the CLI loopback"
+    },
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "9c9ea4672e3334ea4dc016a66ef716d0a46916325a8d6c596e64d67fc040de14",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/cli/authorizations_controller.rb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(Cli::Callback.new(params[:redirect_uri].to_s).url(:code => CliAuthCode.issue(:user => current_user, :name => ((params[:name].to_s.slice(0, 60) or \"cli\")), :scopes => requested_scopes), :state => params[:state].to_s), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Cli::AuthorizationsController",
+        "method": "create"
+      },
+      "user_input": "Cli::Callback.new(params[:redirect_uri].to_s).url(:code => CliAuthCode.issue(:user => current_user, :name => ((params[:name].to_s.slice(0, 60) or \"cli\")), :scopes => requested_scopes), :state => params[:state].to_s)",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "redirect target is validated by Cli::Callback#loopback? (http + 127.0.0.1/localhost/::1 only) before redirecting; the lb login hand-off must leave the app origin to reach the CLI loopback"
+    }
+  ],
+  "updated": "2026-09-08",
+  "brakeman_version": "8.0.6"
+}
