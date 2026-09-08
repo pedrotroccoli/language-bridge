@@ -120,6 +120,9 @@ function startLoopback(expectedState: string): Promise<Loopback> {
       resolveCode = res;
       rejectCode = rej;
     });
+    // The callback can land (and reject) before login() awaits this promise —
+    // mark the rejection handled so Node doesn't report it as unhandled.
+    waitForCode.catch(() => {});
 
     const httpServer = createServer((req, res) => {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
