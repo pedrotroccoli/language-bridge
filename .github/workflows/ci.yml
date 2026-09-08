@@ -70,7 +70,7 @@ jobs:
           working-directory: server
 
       - name: Prepare RuboCop cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         env:
           DEPENDENCIES_HASH: ${{ hashFiles('server/.ruby-version', 'server/**/.rubocop.yml', 'server/**/.rubocop_todo.yml', 'server/Gemfile.lock') }}
         with:
