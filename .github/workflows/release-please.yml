@@ -8,6 +8,8 @@ name: release-please
 # RELEASE_PLEASE_TOKEN must be a PAT (contents + pull-requests write): tags
 # created with the default GITHUB_TOKEN would not trigger the publish
 # workflows (GitHub suppresses workflow runs for events it creates itself).
+# No GITHUB_TOKEN fallback on purpose — a missing or expired PAT must fail
+# this job loudly, not cut a release whose image and package never ship.
 on:
   push:
     branches: [ main ]
@@ -23,4 +25,4 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
