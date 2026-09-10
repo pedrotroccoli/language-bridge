@@ -41,6 +41,7 @@ describe("parseHeaderList", () => {
 describe("resolveHeaders", () => {
   it("merges per-key with flag > env > config", async () => {
     const merged = await resolveHeaders({
+      url: "https://lb.test",
       flags: ["X-Flag: from-flag", "X-Shared: flag-wins"],
       env: "X-Env: from-env\nX-Shared: env-loses",
       file: { "X-File": "from-file", "X-Shared": "file-loses", "X-Env": "file-loses" },
@@ -54,16 +55,17 @@ describe("resolveHeaders", () => {
   });
 
   it("treats names case-insensitively, keeping the winner's casing", async () => {
-    const merged = await resolveHeaders({ flags: ["X-FOO: flag"], file: { "x-foo": "file" } });
+    const merged = await resolveHeaders({ url: "https://lb.test", flags: ["X-FOO: flag"], file: { "x-foo": "file" } });
     expect(merged).toEqual({ "X-FOO": "flag" });
   });
 
   it("returns an empty object when no source is set", async () => {
-    await expect(resolveHeaders({})).resolves.toEqual({});
+    await expect(resolveHeaders({ url: "https://lb.test" })).resolves.toEqual({});
   });
 });
 
 describe("resolveHeaders with command values", () => {
+  const URL = "https://lb.test";
   let dir: string;
 
   beforeEach(() => {
@@ -78,20 +80,21 @@ describe("resolveHeaders with command values", () => {
   });
 
   it("runs the command and uses its trimmed stdout as the value", async () => {
-    const merged = await resolveHeaders({ file: { "X-Token": { command: `node -e "console.log('  tok-123  ')"` } } });
+    const merged = await resolveHeaders({ url: URL, file: { "X-Token": { command: `node -e "console.log('  tok-123  ')"` } } });
     expect(merged).toEqual({ "X-Token": "tok-123" });
   });
 
   it("runs the command once per process, even across resolves", async () => {
     const marker = join(dir, "runs.log");
     const file = { "X-Once": { command: `node -e "require('fs').appendFileSync('${marker}', 'x')"; echo once` } };
-    await resolveHeaders({ file });
-    await resolveHeaders({ file });
+    await resolveHeaders({ url: URL, file });
+    await resolveHeaders({ url: URL, file });
     expect(readFileSync(marker, "utf8")).toBe("x");
   });
 
   it("never runs a command that a flag overrides", async () => {
     const merged = await resolveHeaders({
+      url: URL,
       flags: ["X-Token: from-flag"],
       file: { "x-token": { command: `node -e "process.exit(1)" # overridden` } },
     });
@@ -99,28 +102,28 @@ describe("resolveHeaders with command values", () => {
   });
 
   it("never runs a command behind a reserved name", async () => {
-    const merged = await resolveHeaders({ file: { Authorization: { command: `node -e "process.exit(1)" # reserved` } } });
+    const merged = await resolveHeaders({ url: URL, file: { Authorization: { command: `node -e "process.exit(1)" # reserved` } } });
     expect(merged).toEqual({});
   });
 
   it("surfaces a failing command with its stderr", async () => {
     const file = { "X-Fail": { command: `node -e "console.error('boom'); process.exit(2)"` } };
-    await expect(resolveHeaders({ file })).rejects.toThrow(HeaderError);
-    await expect(resolveHeaders({ file })).rejects.toThrow(/X-Fail.*boom/s);
+    await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(HeaderError);
+    await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(/X-Fail.*boom/s);
   });
 
   it("rejects a command that produces no output", async () => {
     const file = { "X-Empty": { command: `node -e "process.exit(0)"` } };
-    await expect(resolveHeaders({ file })).rejects.toThrow(/produced no output/);
+    await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(/produced no output/);
   });
 
   it("rejects a command that produces multiple lines", async () => {
     const file = { "X-Multi": { command: `node -e "console.log('a'); console.log('b')"` } };
-    await expect(resolveHeaders({ file })).rejects.toThrow(/single line/);
+    await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(/single line/);
   });
 
   it("rejects a config object that is not { command }", async () => {
-    await expect(resolveHeaders({ file: { "X-Bad": {} as never } })).rejects.toThrow(/expected a string or/);
+    await expect(resolveHeaders({ url: URL, file: { "X-Bad": {} as never } })).rejects.toThrow(/expected a string or/);
   });
 
   it("refuses an untrusted command when not interactive", async () => {
@@ -129,7 +132,7 @@ describe("resolveHeaders with command values", () => {
     process.stdin.isTTY = false;
     try {
       const file = { "X-Untrusted": { command: `node -e "console.log('nope')" # untrusted` } };
-      await expect(resolveHeaders({ file })).rejects.toThrow(/not trusted/);
+      await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(/not trusted/);
     } finally {
       process.stdin.isTTY = original;
     }
@@ -138,10 +141,30 @@ describe("resolveHeaders with command values", () => {
   it("runs a previously approved command without prompting", async () => {
     delete process.env.LB_TRUST_HEADER_COMMANDS;
     const command = `node -e "console.log('trusted-tok')"`;
-    const hash = createHash("sha256").update(command).digest("hex");
-    writeFileSync(process.env.LB_TRUSTED_FILE!, JSON.stringify({ [hash]: command }));
-    const merged = await resolveHeaders({ file: { "X-Trusted": { command } } });
+    const hash = createHash("sha256").update(`${URL}\n${command}`).digest("hex");
+    writeFileSync(process.env.LB_TRUSTED_FILE!, JSON.stringify({ [hash]: { url: URL, command } }));
+    const merged = await resolveHeaders({ url: URL, file: { "X-Trusted": { command } } });
     expect(merged).toEqual({ "X-Trusted": "trusted-tok" });
+  });
+
+  it("approval does not carry over to a different server", async () => {
+    delete process.env.LB_TRUST_HEADER_COMMANDS;
+    const original = process.stdin.isTTY;
+    process.stdin.isTTY = false;
+    try {
+      const command = `node -e "console.log('scoped-tok')"`;
+      const hash = createHash("sha256").update(`${URL}\n${command}`).digest("hex");
+      writeFileSync(process.env.LB_TRUSTED_FILE!, JSON.stringify({ [hash]: { url: URL, command } }));
+      // Same command, another server: the output would go somewhere new.
+      await expect(resolveHeaders({ url: "https://evil.example.com", file: { "X-Scoped": { command } } })).rejects.toThrow(/not trusted/);
+    } finally {
+      process.stdin.isTTY = original;
+    }
+  });
+
+  it("rejects a config header name with control characters", async () => {
+    const file = { "x[2Jevil": { command: `node -e "console.log('x')"` } };
+    await expect(resolveHeaders({ url: URL, file })).rejects.toThrow(/Invalid header name/);
   });
 });
 

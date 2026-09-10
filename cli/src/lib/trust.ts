@@ -2,8 +2,13 @@
 // so a `{ "command": ... }` header value would let any cloned project execute
 // an arbitrary command the first time someone runs `lb`. Before a command runs
 // it must be approved by a human once (or blanket-allowed via
-// LB_TRUST_HEADER_COMMANDS=1 in CI); approvals are remembered by hash in the
-// user's config directory, next to the stored credentials.
+// LB_TRUST_HEADER_COMMANDS=1 in CI); approvals are remembered in the user's
+// config directory, next to the stored credentials.
+//
+// Approval is scoped to the server URL, not just the command: the command's
+// output is sent to that URL, so a malicious repo reusing an already-trusted
+// command with its own `url` would otherwise exfiltrate the real token
+// without ever prompting.
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -11,17 +16,21 @@ import { createInterface } from "node:readline/promises";
 import { safely } from "1o1-utils";
 import { configDir } from "./credentials.js";
 
-// The command text is stored alongside its hash so the user can audit what
+// URL and command are stored alongside their hash so the user can audit what
 // they approved with a plain `cat`.
-type Store = Record<string, string>;
+interface Entry {
+  url: string;
+  command: string;
+}
+type Store = Record<string, Entry>;
 
 // Overridable via LB_TRUSTED_FILE so tests never touch the real user config.
 export function trustedPath(): string {
   return process.env.LB_TRUSTED_FILE ?? join(configDir(), "trusted.json");
 }
 
-function digest(command: string): string {
-  return createHash("sha256").update(command).digest("hex");
+function digest(url: string, command: string): string {
+  return createHash("sha256").update(`${url}\n${command}`).digest("hex");
 }
 
 // Missing or unreadable file just means "nothing trusted yet".
@@ -30,22 +39,24 @@ async function loadStore(): Promise<Store> {
   return store ?? {};
 }
 
-// Whether the command may run: blanket-allowed via env, previously approved,
-// or approved interactively right now (and remembered for next time).
-export async function ensureTrusted(name: string, command: string): Promise<boolean> {
+// Whether the command may run for this server: blanket-allowed via env,
+// previously approved, or approved interactively right now (and remembered).
+export async function ensureTrusted(name: string, command: string, url: string): Promise<boolean> {
   if (process.env.LB_TRUST_HEADER_COMMANDS === "1") return true;
 
   const store = await loadStore();
-  if (digest(command) in store) return true;
+  if (digest(url, command) in store) return true;
   if (!process.stdin.isTTY || !process.stderr.isTTY) return false;
 
-  console.error(`The config builds the "${name}" header by running:\n\n  ${command}\n`);
+  // JSON.stringify escapes control characters, so a config can't smuggle ANSI
+  // sequences into the terminal to disguise what is being approved.
+  console.error(`The config builds the "${name}" header for ${url} by running:\n\n  ${JSON.stringify(command)}\n`);
   const rl = createInterface({ input: process.stdin, output: process.stderr });
-  const answer = (await rl.question("Run it now and trust it from now on? [y/N] ")).trim().toLowerCase();
+  const answer = (await rl.question("Run it now and trust it for this server? [y/N] ")).trim().toLowerCase();
   rl.close();
   if (answer !== "y" && answer !== "yes") return false;
 
-  store[digest(command)] = command;
+  store[digest(url, command)] = { url, command };
   const file = trustedPath();
   await mkdir(dirname(file), { recursive: true, mode: 0o700 });
   await writeFile(file, `${JSON.stringify(store, null, 2)}\n`);

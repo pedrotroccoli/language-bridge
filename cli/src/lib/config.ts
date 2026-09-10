@@ -120,7 +120,7 @@ export async function resolveServer(options: CliOptions): Promise<ServerConfig> 
   const env = process.env;
   const url = firstDefined(options.url, env.LB_URL, file.url) ?? DEFAULT_URL;
   const token = firstDefined(options.token, env.LB_TOKEN) ?? (await loadToken(url));
-  const headers = await resolveHeaders({ flags: options.header, env: env.LB_HEADERS, file: file.headers });
+  const headers = await resolveHeaders({ flags: options.header, env: env.LB_HEADERS, file: file.headers, url });
   return { url, token, headers };
 }
 

@@ -8,7 +8,7 @@
 // in a helper (`cloudflared access token`), so nobody has to export a fresh
 // JWT before every command.
 import { exec } from "node:child_process";
-import { promisify } from "node:util";
+import { memo } from "1o1-utils";
 import { ensureTrusted } from "./trust.js";
 
 export class HeaderError extends Error {}
@@ -46,13 +46,15 @@ export interface HeaderSources {
   flags?: string[];
   env?: string;
   file?: Record<string, FileHeaderValue>;
+  // The server the headers will be sent to; command approval is scoped to it.
+  url: string;
 }
 
 // The merged custom headers, lowest precedence first so later layers win on a
 // case-insensitive key match (the winner's casing is kept). Merge first,
 // execute after: a command that a flag/env layer overrides — or one behind a
 // reserved name the CLI would discard anyway — must neither spawn nor prompt.
-export async function resolveHeaders({ flags, env, file }: HeaderSources): Promise<Record<string, string>> {
+export async function resolveHeaders({ flags, env, file, url }: HeaderSources): Promise<Record<string, string>> {
   const layers: Record<string, FileHeaderValue>[] = [
     file ?? {},
     env ? parseHeaderList(env) : {},
@@ -70,12 +72,18 @@ export async function resolveHeaders({ flags, env, file }: HeaderSources): Promi
 
   const headers: Record<string, string> = {};
   for (const [name, value] of Object.entries(merged)) {
+    // Flag/env names go through parseHeader; config names arrive raw, and one
+    // with control characters could smuggle ANSI sequences into the trust
+    // prompt — so everything is (re)validated here, shown escaped.
+    if (!/^[\w-]+$/.test(name)) {
+      throw new HeaderError(`Invalid header name ${JSON.stringify(name)} in config — letters, digits, "-" and "_" only.`);
+    }
     if (typeof value === "object" && value !== null) {
       if (typeof value.command !== "string" || value.command.trim() === "") {
         throw new HeaderError(`Invalid header "${name}" in config — expected a string or { "command": "..." }.`);
       }
       if (RESERVED.includes(name.toLowerCase())) continue;
-      headers[name] = await commandValue(name, value.command);
+      headers[name] = await commandValue(name, value.command, url);
     } else {
       headers[name] = String(value);
     }
@@ -83,34 +91,43 @@ export async function resolveHeaders({ flags, env, file }: HeaderSources): Promi
   return headers;
 }
 
-// One spawn per command per process: several resolves in one run (push chunks,
-// multi-project, login + whoami) reuse the value. Cross-process caching is the
-// helper's job — cloudflared already persists its token until expiry.
-const commandResults = new Map<string, Promise<string>>();
+// A hung helper must not hang lb forever (a command waiting on interactive
+// input, say) — stdin is closed and the child killed after this long.
+const COMMAND_TIMEOUT_MS = 60_000;
 
-function commandValue(name: string, command: string): Promise<string> {
-  let result = commandResults.get(command);
-  if (result === undefined) {
-    result = runCommand(name, command);
-    commandResults.set(command, result);
-  }
-  return result;
-}
+// One spawn per command per server per process: several resolves in one run
+// (push chunks, multi-project, login + whoami) reuse the value. Cross-process
+// caching is the helper's job — cloudflared already persists its token until
+// expiry.
+const commandValue = memo({
+  key: ([, command, url]: [string, string, string]) => `${url}\n${command}`,
+  fn: (name: string, command: string, url: string) => runCommand(name, command, url),
+});
 
-async function runCommand(name: string, command: string): Promise<string> {
-  if (!(await ensureTrusted(name, command))) {
+async function runCommand(name: string, command: string, url: string): Promise<string> {
+  if (!(await ensureTrusted(name, command, url))) {
     throw new HeaderError(
-      `Header "${name}": refusing to run \`${command}\` — not trusted. ` +
+      `Header "${name}": refusing to run \`${command}\` — not trusted for ${url}. ` +
         "Approve it by running any lb command interactively, or set LB_TRUST_HEADER_COMMANDS=1 (CI).",
     );
   }
 
   let stdout: string;
   try {
-    ({ stdout } = await promisify(exec)(command));
+    stdout = await new Promise<string>((resolve, reject) => {
+      // Plain exec callbacks don't attach stderr to the error (promisify's
+      // wrapper does) — carried over so the failure message can show it.
+      const child = exec(command, { timeout: COMMAND_TIMEOUT_MS }, (error, out, errOut) => {
+        if (error) reject(Object.assign(error, { stderr: errOut }));
+        else resolve(out);
+      });
+      child.stdin?.end();
+    });
   } catch (cause) {
-    const failure = cause as Error & { stderr?: string };
-    const detail = failure.stderr?.trim() || failure.message;
+    const failure = cause as Error & { stderr?: string; killed?: boolean };
+    const detail = failure.killed
+      ? `timed out after ${COMMAND_TIMEOUT_MS / 1000}s (is it waiting for input?)`
+      : failure.stderr?.trim() || failure.message;
     throw new HeaderError(`Header "${name}": command failed — ${detail}`);
   }
 

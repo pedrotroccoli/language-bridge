@@ -117,8 +117,10 @@ nobody exports a fresh JWT by hand:
 
 The command runs once per invocation (chunked pushes and multi-project runs
 reuse the value). Because the config file is committed to the repo, an unknown
-command asks for your approval the first time and is then remembered in
-`~/.config/language-bridge/trusted.json`; set `LB_TRUST_HEADER_COMMANDS=1` to
+command asks for your approval the first time and is then remembered — per
+command **and server URL**, so a cloned repo can never silently send an
+already-trusted helper's output to a different server — in
+`~/.config/language-bridge/trusted.json`. Set `LB_TRUST_HEADER_COMMANDS=1` to
 skip the prompt in CI.
 
 ### Multiple projects
