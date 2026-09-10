@@ -1,9 +1,9 @@
+require "digest"
+
 # Single-row global application settings (rate-limit defaults). Reached only
 # through `Setting.current`, which caches the row so request-path readers (e.g.
 # Rack::Attack) don't hit the database on every request. Saving busts the cache.
 class Setting < ApplicationRecord
-  CACHE_KEY = "app_setting".freeze
-
   validates :cli_token_limit, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 50 }
   validates :delivery_compression, inclusion: { in: DeliveryCompression::MODES }
   validates :delivery_base_url,
@@ -20,11 +20,20 @@ class Setting < ApplicationRecord
   end
 
   def self.current
-    Rails.cache.fetch(CACHE_KEY) { first || create! }
+    Rails.cache.fetch(cache_key) { first || create! }
   end
 
   def self.reset_cache
-    Rails.cache.delete(CACHE_KEY)
+    Rails.cache.delete(cache_key)
+  end
+
+  # The key embeds the column set: Solid Cache persists across deploys, so a
+  # row marshaled before a migration keeps deserializing with the old
+  # attribute set and raises MissingAttributeError on every read of a new
+  # column (broke `lb login` when cli_token_limit shipped). A schema change
+  # rotates the key, so stale entries are never read again.
+  def self.cache_key
+    "app_setting/#{Digest::MD5.hexdigest(column_names.sort.join(","))}"
   end
 
   # Edit `allowed_origins` (a string array) as free text in the Workspace form:

@@ -82,6 +82,18 @@ class Api::V1::ImportsTest < ActionDispatch::IntegrationTest
     assert_equal "Hello", @common.translation_keys.find_by(key: "welcome").translations.sole.value
   end
 
+  test "re-pushing identical values is a no-op: session and author survive, written is 0" do
+    post_import(locale: "en", namespaces: { "common" => { "welcome" => "Hi" } }, session: "feat/original")
+    translation = @common.translation_keys.find_by(key: "welcome").translations.sole
+
+    post_import(locale: "en", namespaces: { "common" => { "welcome" => "Hi" } }, session: "chore/unrelated")
+    assert_equal 0, response.parsed_body["written"]
+
+    translation.reload
+    assert_equal "feat/original", translation.session, "an unchanged value must not be restamped with a new session"
+    assert_equal users(:translator), translation.author
+  end
+
   test "editing an already-published key returns it to draft" do
     translations(:greeting_en).publish(by: users(:admin))
     post_import(locale: "en", namespaces: { "common" => { "greeting" => "Hey" } })

@@ -26,11 +26,24 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 - Edit the source locale (\`${source}\`) by default. Only touch another locale
   when the human explicitly asks you to translate into it.
 - After editing, run \`lb push\` — it stages your edits as **proposals**.
+- A push is a **partial upsert**: the JSON only needs the keys you are adding
+  or changing. Keys absent from a push are never deleted or touched.
 - NEVER publish. A human reviews each proposal and approves via the UI.
-- Run \`lb pull\` first so you never invent a key that already exists.
+- \`lb pull\` is never required before a push. Pushing an existing key just
+  updates its draft — it can't corrupt or delete anything.
+
+## File layout & push targeting
+- Files are FLAT: \`<json-dir>/<namespace>.json\` — the file name IS the
+  namespace. There are no per-locale folders.
+- One push targets exactly ONE locale:
+  - \`lb push\` → every namespace file, into the source locale (\`${source}\`)
+  - \`lb push --locale <code>\` → the same files' values, into that locale
+  - \`lb push --namespace <ns>\` → only \`<ns>.json\` (repeatable)
+  - combine both to send one namespace into one locale
+- A new namespace is just a new \`<name>.json\` file — push creates it.
 
 ## Key format
-- Nested JSON, one file per namespace (\`<namespace>.json\`).
+- Nested JSON inside each namespace file.
 - Dotted logical keys inside a namespace: \`home.title\`, \`nav.buttons.save\`.
 - Interpolation uses i18next \`{{name}}\` — keep placeholders identical across locales.
 - Plurals use \`key_one\` / \`key_other\` suffixes.
@@ -42,7 +55,19 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 
 ## Commands
 Run \`lb help\` (or \`lb help <command>\`) to discover commands.
-Typical flow: \`lb pull\` → edit source JSON → \`lb push\` → a human reviews via \`lb review\`.
+
+Three ways to push, fastest first:
+- **One key**: \`lb add <key> "<value>" [-n <namespace>]\` — stages the draft in a
+  single command, no files touched. Prefer this when the human asks for one or
+  two keys.
+- **A few keys**: write \`<json-dir>/<namespace>.json\` containing just those
+  keys → \`lb push\`. No pull needed — the push upserts only what the file
+  contains.
+- **Full round-trip** (editing existing values): \`lb pull\` → edit the source
+  JSON in place → \`lb push\`. Large namespaces are pushed in chunks
+  automatically.
+
+Either way, a human reviews via \`lb review\`.
 CI guard: \`lb check\` exits non-zero while any key exists only in the playground (unpublished).
 
 ## Never

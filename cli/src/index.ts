@@ -2,6 +2,7 @@
 import { createRequire } from "node:module";
 import { Command } from "commander";
 import { DEFAULT_INSTRUCTIONS_FILE, renderInstructions, writeInstructions } from "./commands/ai-instructions.js";
+import { add } from "./commands/add.js";
 import { generate } from "./commands/generate.js";
 import { init } from "./commands/init.js";
 import { login } from "./commands/login.js";
@@ -41,7 +42,7 @@ function withCommonOptions(command: Command): Command {
     .option("-t, --token <token>", "API bearer token (or env LB_TOKEN)")
     .option("-u, --url <url>", "server base URL (or env LB_URL)")
     .option("-p, --project <slug>", "project slug (or env LB_PROJECT)")
-    .option("-l, --locale <code>", "locale to pull (defaults to the project's source locale)")
+    .option("-l, --locale <code>", "locale to act on (defaults to the project's source locale)")
     .option("-n, --namespace <name>", "namespace to include (repeatable; default: all)", collect)
     .option("--include-drafts", "include unpublished values")
     .option("--json-dir <dir>", "directory for raw JSON (pull/generate)")
@@ -145,8 +146,20 @@ withCommonOptions(program.command("sync", { isDefault: true }))
   );
 
 withCommonOptions(program.command("push"))
-  .description("Push local source-locale JSON as proposals for human review")
+  .description("Push local JSON as proposals for human review (one locale per push)")
   .option("-s, --session <id>", "grouping label for the push (or env LB_SESSION; default: git branch)")
+  .addHelpText(
+    "after",
+    `
+Files are flat — <json-dir>/<namespace>.json; the file name is the namespace.
+There are no per-locale folders: one push targets exactly one locale.
+
+Examples:
+  lb push                          every namespace file → the source locale
+  lb push -l pt-BR                 same files, values land on locale pt-BR
+  lb push -n checkout              only <json-dir>/checkout.json
+  lb push -n checkout -l pt-BR     one namespace into one locale`,
+  )
   .action((options: CliOptions) =>
     run(async (config) => {
       const result = await push(config);
@@ -160,6 +173,41 @@ withCommonOptions(program.command("push"))
       }
     }, options),
   );
+
+withCommonOptions(program.command("add"))
+  .description("Add or update one key and push it as a proposal — no local files needed")
+  .argument("<key>", "dotted key, e.g. home.title")
+  .argument("<value>", "source text for the key")
+  .option("-s, --session <id>", "grouping label for the push (or env LB_SESSION; default: git branch)")
+  .addHelpText(
+    "after",
+    `
+The fastest path from "add this key" to a reviewable draft — nothing is
+written locally. Namespace is inferred when the project has exactly one;
+otherwise pass -n.
+
+Examples:
+  lb add home.title "Welcome"                     one-namespace project
+  lb add -n marketing cta.buy "Buy now"           explicit namespace
+  lb add -n common greeting "Olá" -l pt-BR        another locale`,
+  )
+  .action(async (key: string, value: string, options: CliOptions) => {
+    if (options.verbose) enableDebug();
+    try {
+      const configs = await resolveConfigs(options);
+      // One key goes to ONE project — never fan out across a monorepo config.
+      if (configs.length > 1) {
+        throw new ConfigError(`\`lb add\` targets one project, but ${configs.length} are configured — pass --project (or set LB_PROJECT).`);
+      }
+      const config = configs[0]!;
+      const result = await add(config, key, value);
+      const scope = result.session ? ` (session ${result.session})` : "";
+      console.error(`${config.project}: staged ${key} in ${result.namespace}/${result.locale}${scope} — review with \`lb review\``);
+    } catch (error) {
+      process.exitCode = error instanceof ConfigError ? 2 : 1;
+      console.error(`lb: ${message(error)}`);
+    }
+  });
 
 withCommonOptions(program.command("review"))
   .description("Open the review page (editor filtered to this push session) in your browser")

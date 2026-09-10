@@ -63,16 +63,18 @@ module Api
         end
 
         # Create/update each draft translation, creating keys and namespaces as
-        # needed. Returns how many were written.
+        # needed. Returns how many actually changed — an entry whose value
+        # matches the stored one is a no-op (see TranslationKey#set_translation),
+        # so re-pushing a pulled file reports 0 written.
         def write_drafts(entries, locale, author, session)
           namespaces = {}
           keys = {}
-          entries.each do |entry|
+          entries.count do |entry|
             namespace = namespaces[entry[:namespace]] ||= @project.namespaces.find_or_create_by!(name: entry[:namespace])
             key = keys[[ namespace.id, entry[:key] ]] ||= namespace.translation_keys.find_or_create_by!(key: entry[:key]) { |record| record.project = @project }
-            key.set_translation(locale: locale, value: entry[:value], author: author, session: session.presence)
+            translation = key.set_translation(locale: locale, value: entry[:value], author: author, session: session.presence)
+            translation.previously_new_record? || translation.saved_changes.any?
           end
-          entries.size
         end
     end
   end
