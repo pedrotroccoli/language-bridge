@@ -26,8 +26,11 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 - Edit the source locale (\`${source}\`) by default. Only touch another locale
   when the human explicitly asks you to translate into it.
 - After editing, run \`lb push\` — it stages your edits as **proposals**.
+- A push is a **partial upsert**: the JSON only needs the keys you are adding
+  or changing. Keys absent from a push are never deleted or touched.
 - NEVER publish. A human reviews each proposal and approves via the UI.
-- Run \`lb pull\` first so you never invent a key that already exists.
+- Check existing keys before inventing one (\`lb pull\`, or read the local
+  JSON if it's already there) — but pulling is NOT a prerequisite to push.
 
 ## Key format
 - Nested JSON, one file per namespace (\`<namespace>.json\`).
@@ -42,7 +45,15 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 
 ## Commands
 Run \`lb help\` (or \`lb help <command>\`) to discover commands.
-Typical flow: \`lb pull\` → edit source JSON → \`lb push\` → a human reviews via \`lb review\`.
+
+Two ways to push:
+- **Quick add** (a few new keys): write \`<json-dir>/<namespace>.json\` containing
+  just those keys → \`lb push\`. No pull needed — the push upserts only what the
+  file contains.
+- **Full round-trip** (editing existing values): \`lb pull\` → edit the source
+  JSON in place → \`lb push\`.
+
+Either way, a human reviews via \`lb review\`.
 CI guard: \`lb check\` exits non-zero while any key exists only in the playground (unpublished).
 
 ## Never
