@@ -12,7 +12,7 @@ interface Entry {
 }
 type Store = Record<string, Entry>;
 
-function configDir(): string {
+export function configDir(): string {
   if (process.platform === "win32") {
     return join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "language-bridge");
   }

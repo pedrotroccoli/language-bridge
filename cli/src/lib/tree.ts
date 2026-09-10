@@ -43,13 +43,3 @@ function setPath(tree: TranslationTree, parts: string[], value: string): void {
   const child = typeof node === "object" && node !== null ? node : (tree[head] = {});
   setPath(child as TranslationTree, rest, value);
 }
-
-// Split entries into request-sized slices (the server caps one import at
-// MAX_KEYS entries), preserving order.
-export function chunkEntries(entries: Entry[], size: number): Entry[][] {
-  const chunks: Entry[][] = [];
-  for (let index = 0; index < entries.length; index += size) {
-    chunks.push(entries.slice(index, index + size));
-  }
-  return chunks;
-}
