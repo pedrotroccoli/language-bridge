@@ -88,12 +88,16 @@
         </div>
       </div>
 
-      <%= form_with url: cli_authorization_path, method: :post, class: "flex gap-[10px] px-7 pt-[22px] pb-[26px]" do |form| %>
+      <%# turbo: false — both outcomes redirect to the CLI's loopback
+          (http://127.0.0.1:<port>), a cross-origin target Turbo's fetch can't
+          follow: the submit would silently stall on this page. A full-page
+          navigation follows the redirect natively. %>
+      <%= form_with url: cli_authorization_path, method: :post, data: { turbo: false }, class: "flex gap-[10px] px-7 pt-[22px] pb-[26px]" do |form| %>
         <%= form.hidden_field :redirect_uri, value: @redirect_uri %>
         <%= form.hidden_field :state, value: @state %>
         <%= form.hidden_field :name, value: @name %>
         <% @scopes.each do |scope| %><%= hidden_field_tag "scopes[]", scope %><% end %>
-        <%= link_to "Reject", cli_authorization_rejection_path(redirect_uri: @redirect_uri, state: @state), class: "btn-secondary no-underline flex-1 h-[42px] text-[13.5px] rounded-[9px]" %>
+        <%= link_to "Reject", cli_authorization_rejection_path(redirect_uri: @redirect_uri, state: @state), data: { turbo: false }, class: "btn-secondary no-underline flex-1 h-[42px] text-[13.5px] rounded-[9px]" %>
         <%= form.button class: "btn flex-1 h-[42px] text-[13.5px] rounded-[9px]" do %>
           <%= mi "check", size: 17 %>Authorize
         <% end %>
