@@ -12,7 +12,10 @@ class Cli::AuthorizationsTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:admin))
     get cli_authorize_path(redirect_uri: LOOPBACK, state: "s", name: "laptop")
     assert_response :success
-    assert_select "form"
+    # Both actions redirect to the cross-origin loopback, which Turbo's fetch
+    # can't follow — the approve form and reject link must opt out of Turbo.
+    assert_select "form[data-turbo=false]"
+    assert_select "a[data-turbo=false]", text: "Reject"
   end
 
   test "shows the requested capabilities and mints a code carrying them" do
