@@ -29,6 +29,45 @@ async function jsonDirWith(files: Record<string, unknown>): Promise<string> {
 
 afterEach(() => vi.unstubAllGlobals());
 
+describe("push chunking", () => {
+  function bigTree(count: number): Record<string, string> {
+    return Object.fromEntries(Array.from({ length: count }, (_, index) => [`key_${index}`, "v"]));
+  }
+
+  it("slices a >2000-entry push into sequential requests, merging counts and paths", async () => {
+    let call = 0;
+    const fetchMock = vi.fn(async () => {
+      call += 1;
+      return new Response(
+        JSON.stringify({ status: "ok", locale: "en", session: "s", written: call === 1 ? 2000 : 1, playground_paths: [`p${call}`], preview_paths: ["shared"] }),
+        { status: 200 },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const jsonDir = await jsonDirWith({ common: bigTree(2001) });
+    const result = await push(config({ jsonDir, locale: "en", session: "s" }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.written).toBe(2001);
+    expect(result.playground_paths).toEqual(["p1", "p2"]);
+    expect(result.preview_paths).toEqual(["shared"]);
+  });
+
+  it("says what already landed when a later chunk fails", async () => {
+    let call = 0;
+    const fetchMock = vi.fn(async () => {
+      call += 1;
+      if (call === 2) return new Response("boom", { status: 500, statusText: "Internal Server Error" });
+      return new Response(JSON.stringify({ status: "ok", locale: "en", session: "s", written: 2000 }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const jsonDir = await jsonDirWith({ common: bigTree(2001) });
+    await expect(push(config({ jsonDir, locale: "en", session: "s" }))).rejects.toThrow(/part 2\/2 — 2000 draft\(s\).*re-running the same push is safe/);
+  });
+});
+
 describe("push", () => {
   it("POSTs the local namespaces to the import endpoint with bearer auth", async () => {
     const fetchMock = vi.fn(

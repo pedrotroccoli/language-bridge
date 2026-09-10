@@ -28,6 +28,10 @@ class TranslationKey < ApplicationRecord
   # it (nil for ordinary editor edits).
   def set_translation(locale:, value:, author: Current.user, session: nil)
     translations.find_or_initialize_by(locale: locale).tap do |translation|
+      # An identical value is a no-op: re-pushing a whole pulled file must not
+      # stamp a new session/author on rows the push didn't actually change.
+      next if translation.persisted? && translation.value == value
+
       translation.update!(value: value, author: author, session: session)
     end
   end
