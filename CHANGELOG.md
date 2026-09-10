@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.11](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.10...v0.0.11) (2026-09-10)
+
+
+### Bug Fixes
+
+* **login:** approve and reject opt out of turbo ([f3fddcc](https://github.com/pedrotroccoli/language-bridge/commit/f3fddcc76bac39a0cb33d5df5079c1bdca124ec2))
+* **login:** approve and reject opt out of turbo ([f3f2497](https://github.com/pedrotroccoli/language-bridge/commit/f3f24976a20645faa7cd8e0d6fb039efee2878f5))
+
 ## [0.0.10](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.9...v0.0.10) (2026-09-10)
 
 
