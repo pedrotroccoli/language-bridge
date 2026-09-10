@@ -18,11 +18,19 @@ describe("parseHeader", () => {
   it("allows an empty value", () => {
     expect(parseHeader("X-Empty:")).toEqual(["X-Empty", ""]);
   });
+
+  it("rejects a name with invalid characters instead of failing later in fetch", () => {
+    expect(() => parseHeader("X Foo: bar")).toThrow(HeaderError);
+  });
 });
 
 describe("parseHeaderList", () => {
-  it("accepts newline- and comma-separated pairs, skipping blanks", () => {
-    expect(parseHeaderList("A: 1\nB: 2,C: 3\n\n")).toEqual({ A: "1", B: "2", C: "3" });
+  it("splits comma-separated pairs when there are no newlines", () => {
+    expect(parseHeaderList("A: 1,B: 2")).toEqual({ A: "1", B: "2" });
+  });
+
+  it("with newlines present, commas stay part of the value (cookies)", () => {
+    expect(parseHeaderList("Cookie: a=1, b=2\nX-Foo: bar\n")).toEqual({ Cookie: "a=1, b=2", "X-Foo": "bar" });
   });
 });
 

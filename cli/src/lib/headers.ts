@@ -6,20 +6,25 @@
 export class HeaderError extends Error {}
 
 // One curl-style "Name: Value" pair, split on the first colon only (values —
-// JWTs, URLs — routinely contain colons of their own).
+// JWTs, URLs — routinely contain colons of their own). The name is validated
+// here so a typo fails with this message instead of fetch's distant
+// "invalid header name" TypeError.
 export function parseHeader(pair: string): [string, string] {
   const colon = pair.indexOf(":");
   const name = colon === -1 ? "" : pair.slice(0, colon).trim();
-  if (colon === -1 || name === "") {
+  if (colon === -1 || !/^[\w-]+$/.test(name)) {
     throw new HeaderError(`Invalid header "${pair}" — expected "Name: Value".`);
   }
   return [name, pair.slice(colon + 1).trim()];
 }
 
-// LB_HEADERS holds several pairs, newline- or comma-separated.
+// LB_HEADERS holds several pairs, newline- or comma-separated. Commas only
+// act as separators when there are no newlines, so values containing commas
+// (cookies) stay intact under newline separation.
 export function parseHeaderList(raw: string): Record<string, string> {
   const headers: Record<string, string> = {};
-  for (const part of raw.split(/\r?\n|,/)) {
+  const parts = /\r?\n/.test(raw) ? raw.split(/\r?\n/) : raw.split(",");
+  for (const part of parts) {
     if (part.trim() === "") continue;
     const [name, value] = parseHeader(part);
     headers[name] = value;
@@ -51,6 +56,16 @@ export function resolveHeaders({ flags, env, file }: HeaderSources): Record<stri
     }
   }
   return merged;
+}
+
+// Headers the CLI owns. Filtered from the custom set case-insensitively —
+// otherwise a lowercase `authorization` would survive the object spread as a
+// distinct key, and the fetch spec fills Headers from a record with `append`,
+// combining both values into one broken header.
+const RESERVED = ["authorization", "accept", "content-type"];
+
+export function withoutReserved(headers: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(headers).filter(([name]) => !RESERVED.includes(name.toLowerCase())));
 }
 
 // Header values regularly hold secrets (service tokens, JWTs) — verbose output

@@ -3,7 +3,7 @@
 //   POST /api/v1/projects/:project/import   { locale, namespaces }
 import type { ResolvedConfig } from "./config.js";
 import { debug } from "./debug.js";
-import { redactHeaders } from "./headers.js";
+import { redactHeaders, withoutReserved } from "./headers.js";
 import type { ExchangeResponse, ExportResponse, ImportResponse, Namespaces, WhoamiResponse } from "./types.js";
 
 export async function fetchExport(config: ResolvedConfig): Promise<ExportResponse> {
@@ -32,7 +32,7 @@ export async function pushProposals(config: ResolvedConfig, locale: string, sess
 // can never clobber Authorization/Accept/Content-Type), plus a friendly
 // network error.
 async function send(config: ResolvedConfig, url: URL, init: RequestInit): Promise<Response> {
-  const custom = config.headers ?? {};
+  const custom = withoutReserved(config.headers ?? {});
   debug(`${init.method ?? "GET"} ${url}`);
   if (Object.keys(custom).length > 0) debug(`custom headers: ${redactHeaders(custom)}`);
   try {
@@ -56,7 +56,12 @@ export async function readJson<T>(response: Response, label: string): Promise<T>
   const text = await response.text().catch(() => "");
 
   if (contentType.includes("text/html") || text.trimStart().startsWith("<")) {
-    throw new Error(`${label}: server returned HTML, not JSON — the endpoint may be behind an auth proxy (Cloudflare Access). Pass the required headers via -H or LB_HEADERS.`);
+    // An OK/unauthorized HTML answer is the proxy's login page; HTML on a
+    // server error (500) is the app's own error page — don't blame the proxy.
+    const proxyHint = response.ok || response.status === 401 || response.status === 403
+      ? " — the endpoint may be behind an auth proxy (Cloudflare Access). Pass the required headers via -H or LB_HEADERS."
+      : "";
+    throw new Error(`${label}: server returned HTML, not JSON (status ${response.status})${proxyHint}`);
   }
   if (!response.ok) {
     const message = text.trim() ? ` — ${text.trim()}` : "";
@@ -75,7 +80,7 @@ export async function exchangeCode(url: string, code: string, headers: Record<st
   try {
     response = await fetch(endpoint, {
       method: "POST",
-      headers: { ...headers, "Content-Type": "application/json", Accept: "application/json" },
+      headers: { ...withoutReserved(headers), "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ code }),
     });
   } catch (cause) {
@@ -91,7 +96,7 @@ export async function fetchUser(url: string, token: string, headers: Record<stri
   let response: Response;
   try {
     response = await fetch(endpoint, {
-      headers: { ...headers, Authorization: `Bearer ${token}`, Accept: "application/json" },
+      headers: { ...withoutReserved(headers), Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
   } catch (cause) {
     throw new Error(`Could not reach ${url}: ${(cause as Error).message}`);
