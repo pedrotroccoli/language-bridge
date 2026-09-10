@@ -45,6 +45,7 @@ function withCommonOptions(command: Command): Command {
     .option("-n, --namespace <name>", "namespace to include (repeatable; default: all)", collect)
     .option("--include-drafts", "include unpublished values")
     .option("--json-dir <dir>", "directory for raw JSON (pull/generate)")
+    .option("-H, --header <name:value>", "extra HTTP header for every request, curl-style (repeatable; or env LB_HEADERS; or `headers` in the config)", collect)
     .option("--verbose", "log requests and responses (also LB_DEBUG=1 or DEBUG=lb)");
 }
 
@@ -91,6 +92,7 @@ program
   .description("Scaffold a language-bridge.json config in the current directory")
   .option("-u, --url <url>", "server base URL (or env LB_URL)")
   .option("-t, --token <token>", "API bearer token (or env LB_TOKEN)")
+  .option("-H, --header <name:value>", "extra HTTP header for every request, curl-style (repeatable; or env LB_HEADERS)", collect)
   .option("-f, --force", "overwrite an existing config")
   .action((options: CliOptions & { force?: boolean }) =>
     runServer(async (server) => {

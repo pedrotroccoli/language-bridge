@@ -83,6 +83,7 @@ For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API t
 | `--token` | `LB_TOKEN` | stored login | Bearer token (`lb_pat_…` PAT or a project API token). Falls back to the token saved by `lb login`. |
 | `--project` | `LB_PROJECT` | — | Project slug. Required (except `login`/`logout`/`whoami`). |
 | `--url` | `LB_URL` | `http://localhost:3000` | Server base URL. |
+| `-H, --header` | `LB_HEADERS` | — | Extra `Name: Value` header on every request (auth proxies). Repeatable; also a `headers` object in the config. Flag > env > config per key. |
 | `--locale` | — | project source locale | Locale to generate from. Keys are identical across locales, so the source locale is enough. |
 | `--namespace` | — | all | Repeatable; restrict to specific namespaces. |
 | `--out` | — | `src/@types/resources.d.ts` | Output `.d.ts` (generate/sync). |

@@ -5,5 +5,5 @@ import type { WhoamiResponse } from "../lib/types.js";
 // Show who the active token belongs to and which projects it can reach.
 export async function whoami(server: ServerConfig): Promise<WhoamiResponse> {
   if (!server.token) throw new Error("Not logged in. Run `lb login`.");
-  return fetchUser(server.url, server.token);
+  return fetchUser(server.url, server.token, server.headers);
 }
