@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.10](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.9...v0.0.10) (2026-09-10)
+
+
+### Features
+
+* faster agent-to-draft path — lb add, chunked pushes, honest no-ops ([a75c840](https://github.com/pedrotroccoli/language-bridge/commit/a75c840fb60483e9156dc1a25d99e2d0cb1fed58))
+
+
+### Bug Fixes
+
+* **api:** identical pushed values are true no-ops ([0d3fba3](https://github.com/pedrotroccoli/language-bridge/commit/0d3fba30afcbd987305ebe68541e45a0a6f4b343))
+* **editor:** namespace switcher keeps session, status, search and locale filters ([5f9348d](https://github.com/pedrotroccoli/language-bridge/commit/5f9348d2b21e2aa55355e740f21d5d92334751da))
+* **settings:** schema-versioned cache key for the Setting singleton ([ff8ccc8](https://github.com/pedrotroccoli/language-bridge/commit/ff8ccc89148625a81dc1cc9a6db08f49689dfe40))
+* **settings:** schema-versioned cache key for the Setting singleton ([5290895](https://github.com/pedrotroccoli/language-bridge/commit/529089563639ba2edb21b8a7bfaf811d1fb771ad))
+
 ## [0.0.9](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.8...v0.0.9) (2026-09-08)
 
 
