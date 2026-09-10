@@ -35,6 +35,6 @@ export async function init(server: ServerConfig, force = false): Promise<InitRes
 // server is unreachable (init still scaffolds, just with a placeholder).
 async function discoverProjects(server: ServerConfig): Promise<string[]> {
   if (!server.token) return [];
-  const [, response] = await safely(fetchUser)(server.url, server.token);
+  const [, response] = await safely(fetchUser)(server.url, server.token, server.headers);
   return response?.projects ?? [];
 }
