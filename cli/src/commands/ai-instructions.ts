@@ -29,8 +29,8 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 - A push is a **partial upsert**: the JSON only needs the keys you are adding
   or changing. Keys absent from a push are never deleted or touched.
 - NEVER publish. A human reviews each proposal and approves via the UI.
-- Check existing keys before inventing one (\`lb pull\`, or read the local
-  JSON if it's already there) — but pulling is NOT a prerequisite to push.
+- \`lb pull\` is never required before a push. Pushing an existing key just
+  updates its draft — it can't corrupt or delete anything.
 
 ## Key format
 - Nested JSON, one file per namespace (\`<namespace>.json\`).
