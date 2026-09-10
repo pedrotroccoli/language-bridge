@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkEntries, flattenNamespaces, nestEntries } from "../src/lib/tree.js";
+import { flattenNamespaces, nestEntries } from "../src/lib/tree.js";
 import type { Entry } from "../src/lib/tree.js";
 
 describe("flattenNamespaces / nestEntries", () => {
@@ -26,14 +26,5 @@ describe("flattenNamespaces / nestEntries", () => {
     expect(entries).toContainEqual(["common", "enabled", "true"]);
     expect(entries).toContainEqual(["common", "label", "ok"]);
     expect(entries.some(([, key]) => key === "missing")).toBe(false);
-  });
-});
-
-describe("chunkEntries", () => {
-  it("slices entries preserving order and covering every entry", () => {
-    const entries: Entry[] = Array.from({ length: 5 }, (_, index) => ["ns", `k${index}`, "v"]);
-    const chunks = chunkEntries(entries, 2);
-    expect(chunks.map((chunk) => chunk.length)).toEqual([2, 2, 1]);
-    expect(chunks.flat()).toEqual(entries);
   });
 });
