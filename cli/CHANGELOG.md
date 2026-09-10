@@ -7,6 +7,19 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship to npm from tags `cli-v*`; every push to `development` publishes
 a prerelease under the `canary` dist-tag.
 
+## [0.1.5](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.4...cli-v0.1.5) (2026-09-10)
+
+
+### Features
+
+* **headers:** command-valued headers — auth-proxy tokens resolve themselves ([361f2c1](https://github.com/pedrotroccoli/language-bridge/commit/361f2c162560caf8e72d9338c0b69a2c055d15a8))
+* **headers:** config header values can run a command ([b05f56b](https://github.com/pedrotroccoli/language-bridge/commit/b05f56bdfef847d55858ae72d30688ff236ad6b1))
+
+
+### Bug Fixes
+
+* **headers:** scope command trust per server and harden the prompt ([a086fc3](https://github.com/pedrotroccoli/language-bridge/commit/a086fc312113ddf9115803b255782926c8d995d5))
+
 ## [0.1.4](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.3...cli-v0.1.4) (2026-09-10)
 
 
