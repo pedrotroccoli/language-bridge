@@ -7,6 +7,20 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship to npm from tags `cli-v*`; every push to `development` publishes
 a prerelease under the `canary` dist-tag.
 
+## [0.1.4](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.3...cli-v0.1.4) (2026-09-10)
+
+
+### Features
+
+* **cli:** lb add — one-shot key push, and chunked large pushes ([9ea082f](https://github.com/pedrotroccoli/language-bridge/commit/9ea082ff9c16a42f6e7b8cba7cf077b9b1329f70))
+* faster agent-to-draft path — lb add, chunked pushes, honest no-ops ([a75c840](https://github.com/pedrotroccoli/language-bridge/commit/a75c840fb60483e9156dc1a25d99e2d0cb1fed58))
+
+
+### Bug Fixes
+
+* **cli:** chunked flatten treats non-object nodes as leaves ([4e007ce](https://github.com/pedrotroccoli/language-bridge/commit/4e007ce452b7a9d418635759a56962fe563e28af))
+* **cli:** review fixes on add and chunked pushes ([784e931](https://github.com/pedrotroccoli/language-bridge/commit/784e931ac993f4c7d8f1a70ebdaee000e16bb774))
+
 ## [0.1.3](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.2...cli-v0.1.3) (2026-09-10)
 
 
