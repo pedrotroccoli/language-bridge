@@ -76,6 +76,29 @@ user may hold (default 3) in Workspace settings.
 
 For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API token).
 
+#### Behind an auth proxy (Cloudflare Access)
+
+If the server sits behind an auth proxy that expects its own headers on every
+request, inject them with `-H` (curl-style, repeatable), the `LB_HEADERS` env var
+(newline- or comma-separated pairs), or a `headers` object in the config file.
+Merged per-key with flag > env > config; the CLI's own headers (`Authorization`,
+`Content-Type`) always win.
+
+```sh
+# User JWT (local dev) — cloudflared caches the token in ~/.cloudflared
+cloudflared access login https://language-bridge.internal.vturb.com
+TOKEN=$(cloudflared access token -app=https://language-bridge.internal.vturb.com)
+lb sync --project vturb-frontend -H "cf-access-token: $TOKEN"
+
+# Service token (CI / headless)
+lb sync --project vturb-frontend \
+  -H "CF-Access-Client-Id: $CF_ID" \
+  -H "CF-Access-Client-Secret: $CF_SECRET"
+```
+
+If you see `server returned HTML, not JSON`, the proxy intercepted the request —
+the headers are missing or wrong.
+
 ### Options
 
 | Flag | Env | Default | Notes |
@@ -83,6 +106,7 @@ For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API t
 | `--token` | `LB_TOKEN` | stored login | Bearer token (`lb_pat_…` PAT or a project API token). Falls back to the token saved by `lb login`. |
 | `--project` | `LB_PROJECT` | — | Project slug. Required (except `login`/`logout`/`whoami`). |
 | `--url` | `LB_URL` | `http://localhost:3000` | Server base URL. |
+| `-H, --header` | `LB_HEADERS` | — | Extra `Name: Value` header on every request (auth proxies — see above). Repeatable; also a `headers` object in the config. Flag > env > config per key. |
 | `--locale` | — | project source locale | Locale to generate from. Keys are identical across locales, so the source locale is enough. |
 | `--namespace` | — | all | Repeatable; restrict to specific namespaces. |
 | `--out` | — | `src/@types/resources.d.ts` | Output `.d.ts` (generate/sync). |

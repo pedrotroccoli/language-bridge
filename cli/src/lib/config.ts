@@ -4,6 +4,7 @@
 import { memo } from "1o1-utils";
 import { cosmiconfig } from "cosmiconfig";
 import { loadToken } from "./credentials.js";
+import { resolveHeaders } from "./headers.js";
 
 const DEFAULT_URL = "http://localhost:3000";
 const DEFAULT_OUT = "src/@types/resources.d.ts";
@@ -23,6 +24,7 @@ export interface CliOptions {
   write?: string | boolean;
   session?: string;
   name?: string;
+  header?: string[];
   verbose?: boolean;
   json?: boolean;
 }
@@ -30,6 +32,7 @@ export interface CliOptions {
 export interface ResolvedConfig {
   token: string;
   url: string;
+  headers: Record<string, string>;
   project: string;
   locale?: string;
   namespaces?: string[];
@@ -61,6 +64,7 @@ interface FileConfig {
   url?: string;
   project?: string;
   projects?: FileProjectConfig[];
+  headers?: Record<string, string>;
   locale?: string;
   namespaces?: string[];
   out?: string;
@@ -108,6 +112,7 @@ class ConfigError extends Error {}
 export interface ServerConfig {
   url: string;
   token?: string;
+  headers?: Record<string, string>;
 }
 
 export async function resolveServer(options: CliOptions): Promise<ServerConfig> {
@@ -115,7 +120,8 @@ export async function resolveServer(options: CliOptions): Promise<ServerConfig> 
   const env = process.env;
   const url = firstDefined(options.url, env.LB_URL, file.url) ?? DEFAULT_URL;
   const token = firstDefined(options.token, env.LB_TOKEN) ?? (await loadToken(url));
-  return { url, token };
+  const headers = resolveHeaders({ flags: options.header, env: env.LB_HEADERS, file: file.headers });
+  return { url, token, headers };
 }
 
 // Flags that describe a single project's output; ambiguous across many.
@@ -138,7 +144,7 @@ export async function resolveConfig(options: CliOptions): Promise<ResolvedConfig
 export async function resolveConfigs(options: CliOptions): Promise<ResolvedConfig[]> {
   const file = await loadFile();
   const env = process.env;
-  const { url, token } = await resolveServer(options);
+  const { url, token, headers } = await resolveServer(options);
 
   if (!token) throw new ConfigError("Missing token. Run `lb login`, pass --token, or set LB_TOKEN.");
 
@@ -151,7 +157,7 @@ export async function resolveConfigs(options: CliOptions): Promise<ResolvedConfi
     if (offending) throw new ConfigError(`${offending[1]} is ambiguous across ${entries.length} projects — set it per-project in the config.`);
   }
 
-  return entries.map((entry) => buildConfig({ entry, file, options, env, url, token, multi }));
+  return entries.map((entry) => buildConfig({ entry, file, options, env, url, token, headers: headers ?? {}, multi }));
 }
 
 // The project entries to act on, applying an optional slug selector.
@@ -176,10 +182,11 @@ interface BuildInput {
   env: NodeJS.ProcessEnv;
   url: string;
   token: string;
+  headers: Record<string, string>;
   multi: boolean;
 }
 
-function buildConfig({ entry, file, options, env, url, token, multi }: BuildInput): ResolvedConfig {
+function buildConfig({ entry, file, options, env, url, token, headers, multi }: BuildInput): ResolvedConfig {
   const slug = entry.project;
   const namespaces = firstDefined(options.namespace, entry.namespaces, file.namespaces);
   const defaultOut = multi ? `src/@types/${slug}.d.ts` : DEFAULT_OUT;
@@ -188,6 +195,7 @@ function buildConfig({ entry, file, options, env, url, token, multi }: BuildInpu
   return {
     token,
     url,
+    headers,
     project: slug,
     locale: firstDefined(options.locale, entry.locale, file.locale),
     namespaces: namespaces && namespaces.length > 0 ? namespaces : undefined,

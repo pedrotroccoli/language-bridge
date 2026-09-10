@@ -56,7 +56,7 @@ export async function login(server: ServerConfig, deviceName?: string): Promise<
     loopback.close();
   }
 
-  const { token, user } = await exchangeCode(server.url, code);
+  const { token, user } = await exchangeCode(server.url, code, server.headers);
   await saveToken(server.url, { token, user: user?.email });
   return { url: server.url, user: user?.email };
 }
