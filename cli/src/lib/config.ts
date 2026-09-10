@@ -4,7 +4,7 @@
 import { memo } from "1o1-utils";
 import { cosmiconfig } from "cosmiconfig";
 import { loadToken } from "./credentials.js";
-import { resolveHeaders } from "./headers.js";
+import { type FileHeaderValue, resolveHeaders } from "./headers.js";
 
 const DEFAULT_URL = "http://localhost:3000";
 const DEFAULT_OUT = "src/@types/resources.d.ts";
@@ -64,7 +64,7 @@ interface FileConfig {
   url?: string;
   project?: string;
   projects?: FileProjectConfig[];
-  headers?: Record<string, string>;
+  headers?: Record<string, FileHeaderValue>;
   locale?: string;
   namespaces?: string[];
   out?: string;
@@ -120,7 +120,7 @@ export async function resolveServer(options: CliOptions): Promise<ServerConfig> 
   const env = process.env;
   const url = firstDefined(options.url, env.LB_URL, file.url) ?? DEFAULT_URL;
   const token = firstDefined(options.token, env.LB_TOKEN) ?? (await loadToken(url));
-  const headers = resolveHeaders({ flags: options.header, env: env.LB_HEADERS, file: file.headers });
+  const headers = await resolveHeaders({ flags: options.header, env: env.LB_HEADERS, file: file.headers, url });
   return { url, token, headers };
 }
 

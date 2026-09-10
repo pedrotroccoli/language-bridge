@@ -1,8 +1,9 @@
+import { chunk } from "1o1-utils";
 import { fetchExport, pushProposals } from "../lib/api.js";
 import type { ResolvedConfig } from "../lib/config.js";
 import { gitBranch } from "../lib/git.js";
 import { readJsonDir, selectNamespaces } from "../lib/locales.js";
-import { chunkEntries, flattenNamespaces, nestEntries } from "../lib/tree.js";
+import { flattenNamespaces, nestEntries } from "../lib/tree.js";
 import type { ImportResponse, Namespaces } from "../lib/types.js";
 
 // The server caps one import request at 2000 entries (MAX_KEYS in
@@ -27,14 +28,14 @@ async function pushChunked(config: ResolvedConfig, locale: string, session: stri
   const entries = flattenNamespaces(namespaces);
   if (entries.length <= CHUNK_SIZE) return pushProposals(config, locale, session, namespaces);
 
-  const chunks = chunkEntries(entries, CHUNK_SIZE);
+  const chunks = chunk({ array: entries, size: CHUNK_SIZE });
   const previewPaths = new Set<string>();
   const playgroundPaths = new Set<string>();
   let result: ImportResponse | undefined;
   let written = 0;
-  for (const [index, chunk] of chunks.entries()) {
+  for (const [index, slice] of chunks.entries()) {
     try {
-      result = await pushProposals(config, locale, session, nestEntries(chunk));
+      result = await pushProposals(config, locale, session, nestEntries(slice));
     } catch (cause) {
       // Earlier chunks are already staged as drafts; pushes are idempotent,
       // so retrying the whole thing is safe — say so instead of implying
