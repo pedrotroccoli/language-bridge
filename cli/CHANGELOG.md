@@ -7,6 +7,19 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship to npm from tags `cli-v*`; every push to `development` publishes
 a prerelease under the `canary` dist-tag.
 
+## [0.1.3](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.2...cli-v0.1.3) (2026-09-10)
+
+
+### Features
+
+* **cli:** custom headers for servers behind an auth proxy ([8bd4e59](https://github.com/pedrotroccoli/language-bridge/commit/8bd4e59ccf78a786b47400de995663ef6c6458ac))
+* **cli:** custom headers for servers behind an auth proxy ([b19900a](https://github.com/pedrotroccoli/language-bridge/commit/b19900ab07f50bd7b0d0c731ce5d064224b72260))
+
+
+### Bug Fixes
+
+* **cli:** harden custom-header handling from review ([e02bf08](https://github.com/pedrotroccoli/language-bridge/commit/e02bf0847a2518064d3a468e1e2bfc3580f8f8f8))
+
 ## [0.1.2](https://github.com/pedrotroccoli/language-bridge/compare/cli-v0.1.1...cli-v0.1.2) (2026-09-08)
 
 
