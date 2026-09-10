@@ -18,6 +18,15 @@ describe("flattenNamespaces / nestEntries", () => {
   it("nests a single dotted entry", () => {
     expect(nestEntries([["common", "a.b.c", "v"]])).toEqual({ common: { a: { b: { c: "v" } } } });
   });
+
+  it("coerces non-string leaves and skips null instead of crashing", () => {
+    const tree = { count: 3, enabled: true, missing: null, label: "ok" } as never;
+    const entries = flattenNamespaces({ common: tree });
+    expect(entries).toContainEqual(["common", "count", "3"]);
+    expect(entries).toContainEqual(["common", "enabled", "true"]);
+    expect(entries).toContainEqual(["common", "label", "ok"]);
+    expect(entries.some(([, key]) => key === "missing")).toBe(false);
+  });
 });
 
 describe("chunkEntries", () => {

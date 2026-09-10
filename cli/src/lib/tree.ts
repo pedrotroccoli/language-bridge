@@ -14,10 +14,12 @@ export function flattenNamespaces(namespaces: Namespaces): Entry[] {
 
 function collect(tree: TranslationTree, path: string[], emit: (key: string, value: string) => void): void {
   for (const [part, node] of Object.entries(tree)) {
-    if (typeof node === "string") {
-      emit([...path, part].join("."), node);
-    } else {
+    if (typeof node === "object" && node !== null) {
       collect(node, [...path, part], emit);
+    } else if (node !== null && node !== undefined) {
+      // JSON files aren't guaranteed string leaves (numbers, booleans) —
+      // coerce like the server would, and skip null like it skips blanks.
+      emit([...path, part].join("."), String(node));
     }
   }
 }
