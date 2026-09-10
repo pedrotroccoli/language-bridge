@@ -56,12 +56,16 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 ## Commands
 Run \`lb help\` (or \`lb help <command>\`) to discover commands.
 
-Two ways to push:
-- **Quick add** (a few new keys): write \`<json-dir>/<namespace>.json\` containing
-  just those keys → \`lb push\`. No pull needed — the push upserts only what the
-  file contains.
+Three ways to push, fastest first:
+- **One key**: \`lb add <key> "<value>" [-n <namespace>]\` — stages the draft in a
+  single command, no files touched. Prefer this when the human asks for one or
+  two keys.
+- **A few keys**: write \`<json-dir>/<namespace>.json\` containing just those
+  keys → \`lb push\`. No pull needed — the push upserts only what the file
+  contains.
 - **Full round-trip** (editing existing values): \`lb pull\` → edit the source
-  JSON in place → \`lb push\`.
+  JSON in place → \`lb push\`. Large namespaces are pushed in chunks
+  automatically.
 
 Either way, a human reviews via \`lb review\`.
 CI guard: \`lb check\` exits non-zero while any key exists only in the playground (unpublished).

@@ -2,6 +2,7 @@
 import { createRequire } from "node:module";
 import { Command } from "commander";
 import { DEFAULT_INSTRUCTIONS_FILE, renderInstructions, writeInstructions } from "./commands/ai-instructions.js";
+import { add } from "./commands/add.js";
 import { generate } from "./commands/generate.js";
 import { init } from "./commands/init.js";
 import { login } from "./commands/login.js";
@@ -170,6 +171,31 @@ Examples:
       for (const path of result.playground_paths ?? []) {
         console.error(`  playground: ${path}`);
       }
+    }, options),
+  );
+
+withCommonOptions(program.command("add"))
+  .description("Add or update one key and push it as a proposal — no local files needed")
+  .argument("<key>", "dotted key, e.g. home.title")
+  .argument("<value>", "source text for the key")
+  .option("-s, --session <id>", "grouping label for the push (or env LB_SESSION; default: git branch)")
+  .addHelpText(
+    "after",
+    `
+The fastest path from "add this key" to a reviewable draft — nothing is
+written locally. Namespace is inferred when the project has exactly one;
+otherwise pass -n.
+
+Examples:
+  lb add home.title "Welcome"                     one-namespace project
+  lb add -n marketing cta.buy "Buy now"           explicit namespace
+  lb add -n common greeting "Olá" -l pt-BR        another locale`,
+  )
+  .action((key: string, value: string, options: CliOptions) =>
+    run(async (config) => {
+      const result = await add(config, key, value);
+      const scope = result.session ? ` (session ${result.session})` : "";
+      console.error(`${config.project}: staged ${key} in ${result.namespace}/${result.locale}${scope} — review with \`lb review\``);
     }, options),
   );
 
