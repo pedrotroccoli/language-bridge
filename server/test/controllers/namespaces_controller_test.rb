@@ -367,4 +367,15 @@ class NamespacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "button", text: /New namespace/
     assert_select "dialog.modal"
   end
+
+  test "namespace switcher links keep the session and status filters" do
+    sign_in_as(users(:admin))
+    project = projects(:main_app)
+    other = project.namespaces.where.not(id: namespaces(:main_app_common).id).first!
+
+    get project_namespace_path(project, namespaces(:main_app_common), session: "feat/x", status: "drafts")
+
+    assert_response :success
+    assert_select "a[href=?]", project_namespace_path(project, other, session: "feat/x", status: "drafts")
+  end
 end

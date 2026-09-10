@@ -168,7 +168,10 @@
             <div class="eyebrow px-2 mb-[10px]">Namespaces</div>
             <% @namespaces.each do |ns| %>
               <% current = ns.id == @namespace.id %>
-              <%= link_to project_namespace_path(@project, ns),
+              <%# Switching namespaces keeps the active lens — session, status,
+                  search and locale columns — so a reviewer walking a CLI push
+                  (`lb review`) doesn't lose the filter on every hop. %>
+              <%= link_to project_namespace_path(@project, ns, session: @session, status: @status, q: @query.presence, locales: params[:locales]),
                     class: "flex items-center justify-between px-2 py-2 rounded-[7px] text-[13px] no-underline #{current ? "bg-accent-soft border-l-[3px] border-accent text-ink font-semibold pl-[9px]" : "text-ink-2 hover:bg-surface-2"}" do %>
                 <span class="flex items-center gap-2 min-w-0">
                   <%= mi "folder", size: 16, css: (current ? "text-accent" : "text-faint-2") %>
