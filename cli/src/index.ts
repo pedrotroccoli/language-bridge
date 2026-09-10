@@ -41,7 +41,7 @@ function withCommonOptions(command: Command): Command {
     .option("-t, --token <token>", "API bearer token (or env LB_TOKEN)")
     .option("-u, --url <url>", "server base URL (or env LB_URL)")
     .option("-p, --project <slug>", "project slug (or env LB_PROJECT)")
-    .option("-l, --locale <code>", "locale to pull (defaults to the project's source locale)")
+    .option("-l, --locale <code>", "locale to act on (defaults to the project's source locale)")
     .option("-n, --namespace <name>", "namespace to include (repeatable; default: all)", collect)
     .option("--include-drafts", "include unpublished values")
     .option("--json-dir <dir>", "directory for raw JSON (pull/generate)")
@@ -145,8 +145,20 @@ withCommonOptions(program.command("sync", { isDefault: true }))
   );
 
 withCommonOptions(program.command("push"))
-  .description("Push local source-locale JSON as proposals for human review")
+  .description("Push local JSON as proposals for human review (one locale per push)")
   .option("-s, --session <id>", "grouping label for the push (or env LB_SESSION; default: git branch)")
+  .addHelpText(
+    "after",
+    `
+Files are flat — <json-dir>/<namespace>.json; the file name is the namespace.
+There are no per-locale folders: one push targets exactly one locale.
+
+Examples:
+  lb push                          every namespace file → the source locale
+  lb push -l pt-BR                 same files, values land on locale pt-BR
+  lb push -n checkout              only <json-dir>/checkout.json
+  lb push -n checkout -l pt-BR     one namespace into one locale`,
+  )
   .action((options: CliOptions) =>
     run(async (config) => {
       const result = await push(config);

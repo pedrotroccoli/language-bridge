@@ -32,8 +32,18 @@ Managed by \`lb ai-instructions\`. Project: **${config.project}**.
 - \`lb pull\` is never required before a push. Pushing an existing key just
   updates its draft — it can't corrupt or delete anything.
 
+## File layout & push targeting
+- Files are FLAT: \`<json-dir>/<namespace>.json\` — the file name IS the
+  namespace. There are no per-locale folders.
+- One push targets exactly ONE locale:
+  - \`lb push\` → every namespace file, into the source locale (\`${source}\`)
+  - \`lb push --locale <code>\` → the same files' values, into that locale
+  - \`lb push --namespace <ns>\` → only \`<ns>.json\` (repeatable)
+  - combine both to send one namespace into one locale
+- A new namespace is just a new \`<name>.json\` file — push creates it.
+
 ## Key format
-- Nested JSON, one file per namespace (\`<namespace>.json\`).
+- Nested JSON inside each namespace file.
 - Dotted logical keys inside a namespace: \`home.title\`, \`nav.buttons.save\`.
 - Interpolation uses i18next \`{{name}}\` — keep placeholders identical across locales.
 - Plurals use \`key_one\` / \`key_other\` suffixes.
