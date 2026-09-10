@@ -27,17 +27,31 @@ async function pushChunked(config: ResolvedConfig, locale: string, session: stri
   const entries = flattenNamespaces(namespaces);
   if (entries.length <= CHUNK_SIZE) return pushProposals(config, locale, session, namespaces);
 
+  const chunks = chunkEntries(entries, CHUNK_SIZE);
+  const previewPaths = new Set<string>();
+  const playgroundPaths = new Set<string>();
   let result: ImportResponse | undefined;
   let written = 0;
-  for (const chunk of chunkEntries(entries, CHUNK_SIZE)) {
-    result = await pushProposals(config, locale, session, nestEntries(chunk));
+  for (const [index, chunk] of chunks.entries()) {
+    try {
+      result = await pushProposals(config, locale, session, nestEntries(chunk));
+    } catch (cause) {
+      // Earlier chunks are already staged as drafts; pushes are idempotent,
+      // so retrying the whole thing is safe — say so instead of implying
+      // nothing landed.
+      throw new Error(
+        `Push failed on part ${index + 1}/${chunks.length} — ${written} draft(s) from earlier parts are already staged; re-running the same push is safe. ${(cause as Error).message}`,
+      );
+    }
     written += result.written;
+    for (const path of result.preview_paths ?? []) previewPaths.add(path);
+    for (const path of result.playground_paths ?? []) playgroundPaths.add(path);
   }
-  return { ...result!, written };
+  return { ...result!, written, preview_paths: [...previewPaths], playground_paths: [...playgroundPaths] };
 }
 
 // Default push target when --locale is unset: the project's source locale.
-export async function sourceLocale(config: ResolvedConfig): Promise<string> {
+async function sourceLocale(config: ResolvedConfig): Promise<string> {
   const { source_locale } = await fetchExport({ ...config, locale: undefined });
   if (!source_locale) throw new Error("Project has no source locale; pass --locale.");
   return source_locale;

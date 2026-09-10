@@ -191,13 +191,23 @@ Examples:
   lb add -n marketing cta.buy "Buy now"           explicit namespace
   lb add -n common greeting "Olá" -l pt-BR        another locale`,
   )
-  .action((key: string, value: string, options: CliOptions) =>
-    run(async (config) => {
+  .action(async (key: string, value: string, options: CliOptions) => {
+    if (options.verbose) enableDebug();
+    try {
+      const configs = await resolveConfigs(options);
+      // One key goes to ONE project — never fan out across a monorepo config.
+      if (configs.length > 1) {
+        throw new ConfigError(`\`lb add\` targets one project, but ${configs.length} are configured — pass --project (or set LB_PROJECT).`);
+      }
+      const config = configs[0]!;
       const result = await add(config, key, value);
       const scope = result.session ? ` (session ${result.session})` : "";
       console.error(`${config.project}: staged ${key} in ${result.namespace}/${result.locale}${scope} — review with \`lb review\``);
-    }, options),
-  );
+    } catch (error) {
+      process.exitCode = error instanceof ConfigError ? 2 : 1;
+      console.error(`lb: ${message(error)}`);
+    }
+  });
 
 withCommonOptions(program.command("review"))
   .description("Open the review page (editor filtered to this push session) in your browser")
