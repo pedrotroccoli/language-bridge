@@ -83,7 +83,7 @@ For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API t
 | `--token` | `LB_TOKEN` | stored login | Bearer token (`lb_pat_…` PAT or a project API token). Falls back to the token saved by `lb login`. |
 | `--project` | `LB_PROJECT` | — | Project slug. Required (except `login`/`logout`/`whoami`). |
 | `--url` | `LB_URL` | `http://localhost:3000` | Server base URL. |
-| `-H, --header` | `LB_HEADERS` | — | Extra `Name: Value` header on every request (auth proxies). Repeatable; also a `headers` object in the config. Flag > env > config per key. |
+| `-H, --header` | `LB_HEADERS` | — | Extra `Name: Value` header on every request (auth proxies). Repeatable; also a `headers` object in the config, where a value may be `{ "command": "..." }` (see below). Flag > env > config per key. |
 | `--locale` | — | project source locale | Locale to generate from. Keys are identical across locales, so the source locale is enough. |
 | `--namespace` | — | all | Repeatable; restrict to specific namespaces. |
 | `--out` | — | `src/@types/resources.d.ts` | Output `.d.ts` (generate/sync). |
@@ -100,6 +100,26 @@ key in `package.json`:
 ```json
 { "url": "https://lb.example.com", "project": "my-app", "out": "src/@types/resources.d.ts" }
 ```
+
+### Header commands
+
+A `headers` value in the config can also be a command — its stdout becomes the
+header on every run, so expiring tokens (auth proxies) resolve themselves and
+nobody exports a fresh JWT by hand:
+
+```json
+{
+  "headers": {
+    "cf-access-token": { "command": "cloudflared access token -app=https://lb.example.com" }
+  }
+}
+```
+
+The command runs once per invocation (chunked pushes and multi-project runs
+reuse the value). Because the config file is committed to the repo, an unknown
+command asks for your approval the first time and is then remembered in
+`~/.config/language-bridge/trusted.json`; set `LB_TRUST_HEADER_COMMANDS=1` to
+skip the prompt in CI.
 
 ### Multiple projects
 
