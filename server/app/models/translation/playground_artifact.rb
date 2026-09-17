@@ -71,12 +71,13 @@ class Translation::PlaygroundArtifact
 
     private
       # Active Storage's #upload takes no per-object Cache-Control, so re-put the
-      # object with a short one via a self-copy. Best-effort, S3 only; a failure
-      # just leaves the bucket/CDN default.
+      # object with a short one via a self-copy. Best-effort, S3 only (unwrapping
+      # a mirror to its primary); a failure just leaves the bucket/CDN default.
       def stamp_short_cache(service, key)
-        return unless service.class.name == "ActiveStorage::Service::S3Service"
+        service = service.primary if service.respond_to?(:primary)
+        return unless service.is_a?(ActiveStorage::Service::S3Service)
 
-        object = service.send(:bucket).object(key)
+        object = service.bucket.object(key)
         object.copy_from(object, content_type: "application/json", cache_control: "public, max-age=15", metadata_directive: "REPLACE")
       rescue => e
         Rails.logger.warn("[playground] could not set Cache-Control on #{key}: #{e.class}: #{e.message}")
