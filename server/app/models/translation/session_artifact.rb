@@ -14,6 +14,9 @@ class Translation::SessionArtifact
       key = storage_key(project, namespace, locale, session)
 
       project.storage_service.upload(key, StringIO.new(bundle.to_json), content_type: "application/json")
+      # Read straight from the bucket/CDN, so keep the cache tiny — long enough
+      # to shave repeat reads, short enough that an updated preview shows up.
+      stamp_short_cache(project.storage_service, key)
       key
     end
 
@@ -40,6 +43,19 @@ class Translation::SessionArtifact
     end
 
     private
+      # Active Storage's #upload takes no per-object Cache-Control, so re-put the
+      # object with a short one via a self-copy. Best-effort, S3 only (unwrapping
+      # a mirror to its primary); a failure just leaves the bucket/CDN default.
+      def stamp_short_cache(service, key)
+        service = service.primary if service.respond_to?(:primary)
+        return unless service.is_a?(ActiveStorage::Service::S3Service)
+
+        object = service.bucket.object(key)
+        object.copy_from(object, content_type: "application/json", cache_control: "public, max-age=15", metadata_directive: "REPLACE")
+      rescue => e
+        Rails.logger.warn("[session] could not set Cache-Control on #{key}: #{e.class}: #{e.message}")
+      end
+
       # Sessions are user input (git branch, chat id); keep only path-safe
       # characters and drop dot-only segments so the object key can never
       # traverse out of the storage root (the Disk service joins keys into
