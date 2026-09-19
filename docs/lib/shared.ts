@@ -1,8 +1,11 @@
 import { createGetUrl } from 'fumadocs-core/source';
 
 export const appName = 'Language Bridge';
+export const appDescription =
+  'Open-source, self-hosted translation management for i18next. Store keys, let translators fill in values, and serve CDN-cached JSON — on your own infrastructure.';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
+export const siteImageRoute = '/og/image.png';
 export const docsContentRoute = '/llms.mdx/docs';
 
 // fill this with your actual GitHub info, for example:
