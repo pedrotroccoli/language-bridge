@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.12](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.11...v0.0.12) (2026-09-18)
+
+
+### Bug Fixes
+
+* **playground:** detect s3 via is_a and unwrap mirror service ([a90d1c2](https://github.com/pedrotroccoli/language-bridge/commit/a90d1c25880e55e26e3ab05572e0d8d128cf6ab7))
+* **playground:** stamp short cache-control on bucket objects ([1e1ada1](https://github.com/pedrotroccoli/language-bridge/commit/1e1ada102b4a4f78835913fa1d826c30e51c902f))
+* **playground:** stamp short cache-control on bucket objects ([77e9cf0](https://github.com/pedrotroccoli/language-bridge/commit/77e9cf0b4e6129a1a7c9017f6b4c06bf15ec2480))
+
 ## [0.0.11](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.10...v0.0.11) (2026-09-10)
 
 
