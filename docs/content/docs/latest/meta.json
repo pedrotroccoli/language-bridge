@@ -1,4 +1,4 @@
 {
-  "title": "latest",
-  "pages": ["index", "server", "cli"]
+  "title": "Latest",
+  "pages": ["server", "cli"]
 }

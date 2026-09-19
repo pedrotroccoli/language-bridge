@@ -24,7 +24,9 @@ export function VersionSelect() {
         value={current}
         onChange={(e) => {
           const segment = e.target.value;
-          const rest = pathname.replace(/^\/docs\/[^/]+/, '') || '';
+          // Keep the same page in the new version; from the root intro
+          // (outside any version) land on that version's App section.
+          const rest = match ? pathname.slice(match[0].length) : '/server';
           router.push(`/docs/${segment}${rest}`);
         }}
         className="w-full appearance-none rounded-lg border bg-fd-secondary/50 py-1.5 pl-2.5 pr-7 text-sm font-medium text-fd-secondary-foreground hover:bg-fd-accent focus-visible:outline-none"
