@@ -10,7 +10,7 @@ export interface SyncResult {
 }
 
 // The primary command: pull -> generate types in one shot. Temp JSON is only
-// written when --keep-json is set (mirrors locize's `loc:d && loc:i && rm`).
+// written when --keep-json is set.
 export async function sync(config: ResolvedConfig): Promise<SyncResult> {
   const { response, namespaces } = await pull(config, false);
   const dts = emit(namespaces, { params: config.params, locale: response.locale });
