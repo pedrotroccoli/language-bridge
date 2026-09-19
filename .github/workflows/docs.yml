@@ -6,6 +6,9 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
+      # Inputs of the docs codegen (version label, ai-instructions example).
+      - '.release-please-manifest.json'
+      - 'cli/src/lib/instructions-template.ts'
   workflow_dispatch:
 
 permissions:
@@ -13,9 +16,10 @@ permissions:
   pages: write
   id-token: write
 
+# Never cancel an in-flight Pages deployment; queue behind it instead.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
