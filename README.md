@@ -1,20 +1,28 @@
 # Language Bridge
 
-Open-source translation management system — a self-hosted, drop-in replacement
-for Locize. This is a monorepo:
+Open-source, self-hosted translation management for i18next. Store keys, let
+translators fill in values, and serve CDN-cached JSON with no frontend redeploy —
+on your own infrastructure, no per-seat pricing. This is a monorepo:
 
 | Path       | What                                                                        |
 |------------|-----------------------------------------------------------------------------|
-| `server/`  | The Rails app: stores keys/translations, serves i18next JSON, web UI + API. |
-| `cli/`     | `@language-bridge/cli` — pulls translations from a server and generates TypeScript types (the role locize-cli + `i18next-resources-for-ts` play for Locize). |
+| `server/`  | The app: stores keys/translations, serves i18next JSON, web UI + API. |
+| `cli/`     | `@language-bridge/cli` — pulls translations from a server and generates typed i18next resources (`resources.d.ts`). |
 
 Deployment lives at the root: `config/deploy.yml` + `.kamal/` (Kamal), the
 `docker-compose*.yml` stacks, and `k8s/`.
 
+## Documentation
+
+Full docs: **https://pedrotroccoli.github.io/language-bridge/docs**
+
+The docs site lives in [`docs/`](docs/) and is deployed to GitHub Pages on every
+push to `main`.
+
 ## Quick start
 
 ```sh
-just server-dev   # run the Rails app (server/) on :3000
+just server-dev   # run the app (server/) on :3000
 just cli-build    # build the CLI
 just cli-test     # test the CLI
 ```
