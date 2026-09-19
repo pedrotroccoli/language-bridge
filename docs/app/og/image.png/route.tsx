@@ -1,5 +1,5 @@
 import { generateOGImage } from 'fumadocs-ui/og';
-import { appDescription, appName } from '@/lib/shared';
+import { appDescription, appName, ogTheme } from '@/lib/shared';
 
 // Default og:image for routes without their own (home, 404). The `.png` route
 // segment matters: GitHub Pages picks Content-Type from the file extension.
@@ -13,5 +13,6 @@ export function GET() {
     site: appName,
     width: 1200,
     height: 630,
+    ...ogTheme,
   });
 }

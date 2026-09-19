@@ -1,7 +1,7 @@
 import { source } from '@/lib/source';
 import { notFound } from 'next/navigation';
 import { generateOGImage } from 'fumadocs-ui/og';
-import { appName, getPageImageUrl } from '@/lib/shared';
+import { appName, getPageImageUrl, ogTheme } from '@/lib/shared';
 
 export const revalidate = false;
 
@@ -14,6 +14,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
     title: page.data.title,
     description: page.data.description,
     site: appName,
+    ...ogTheme,
   });
 }
 

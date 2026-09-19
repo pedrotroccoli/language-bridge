@@ -6,6 +6,12 @@ export const appDescription =
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const siteImageRoute = '/og/image.png';
+
+// Brand accent for generated OG images (matches --color-fd-primary in global.css).
+export const ogTheme = {
+  primaryColor: 'rgba(255, 118, 0, 0.35)',
+  primaryTextColor: '#ff861f',
+};
 export const docsContentRoute = '/llms.mdx/docs';
 
 // fill this with your actual GitHub info, for example:
