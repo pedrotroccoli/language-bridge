@@ -16,11 +16,11 @@ const aiInstructionsExample = buildInstructions({
 
 // Latest app version from the repo's release-please manifest ("." = server/app).
 const manifest = JSON.parse(
-  await readFile(join(import.meta.dir, '..', '..', '.release-please-manifest.json'), 'utf8'),
+  await readFile(join(import.meta.dirname, '..', '..', '.release-please-manifest.json'), 'utf8'),
 ) as Record<string, string>;
 const latestVersion = manifest['.'] ?? '0.0.0';
 
-const outFile = join(import.meta.dir, '..', 'lib', 'generated', 'cli-snippets.ts');
+const outFile = join(import.meta.dirname, '..', 'lib', 'generated', 'cli-snippets.ts');
 await mkdir(dirname(outFile), { recursive: true });
 await writeFile(
   outFile,
