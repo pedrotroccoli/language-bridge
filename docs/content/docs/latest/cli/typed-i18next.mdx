@@ -1,0 +1,33 @@
+---
+title: Typed i18next
+description: Wire the generated types into i18next for checked keys and params.
+---
+
+The generated file augments i18next automatically once it is part of your
+TypeScript program (import its types anywhere, e.g. in the setup below). Keys work
+through i18next's own `t`:
+
+```ts
+import i18next from "i18next";
+i18next.t("common:common.welcome"); // autocompleted, checked
+```
+
+For **typed interpolation params**, wrap `t` with the shipped helper:
+
+```ts
+import i18next from "i18next";
+import { createTypedT } from "@language-bridge/cli/runtime";
+import type { TranslationParams } from "./@types/resources";
+
+export const tt = createTypedT<TranslationParams>(i18next.t);
+
+tt("common:common.welcome", { name: "Ada" }); // params required + typed
+tt("auth:auth.signin");                        // no params -> no second arg
+```
+
+Plural keys (`item_one` / `item_other`) collapse to the base key `item` with a
+required numeric `count`.
+
+Generate the file with [`lb sync`](/docs/latest/cli/sync) (or
+[`lb generate`](/docs/latest/cli/generate)); the default output is
+`src/@types/resources.d.ts` (`--out` to change).

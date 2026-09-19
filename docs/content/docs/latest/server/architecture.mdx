@@ -1,0 +1,125 @@
+---
+title: Architecture
+description: System overview and how to run the server with Docker.
+---
+
+> **Status:** Implemented. Server-rendered application (not API-only).
+
+## System Overview
+
+![System Architecture](/system-architecture.png)
+
+## Running with Docker
+
+The whole app ships as a single image. It needs a Postgres database; the easiest
+setup is Docker Compose, which runs Postgres, migrates once, then serves the web
+app. The latest version is `0.0.11`.
+
+### Docker Compose (recommended)
+
+Create a `docker-compose.yml`:
+
+```yaml
+x-app: &app
+  image: ghcr.io/pedrotroccoli/language-bridge:0.0.11
+  env_file: .env
+  environment:
+    RAILS_ENV: production
+    DB_HOST: db
+    DB_PORT: "5432"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: back
+      POSTGRES_PASSWORD: ${BACK_DATABASE_PASSWORD:?set BACK_DATABASE_PASSWORD in .env}
+      POSTGRES_DB: back_production
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U back -d back_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: creates the 4 Solid databases (primary/cache/queue/cable) and migrates.
+  migrate:
+    <<: *app
+    command: ["./bin/rails", "db:prepare"]
+    environment:
+      RAILS_ENV: production
+      DB_HOST: db
+      DB_PORT: "5432"
+      RUN_DB_PREPARE: "false"
+    restart: "no"
+
+  web:
+    <<: *app
+    command: ["./bin/thrust", "./bin/rails", "server"]
+    environment:
+      RAILS_ENV: production
+      DB_HOST: db
+      DB_PORT: "5432"
+      RUN_DB_PREPARE: "false"
+      SOLID_QUEUE_IN_PUMA: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - app-storage:/rails/storage
+
+volumes:
+  pg-data:
+  app-storage:
+```
+
+Fill a `.env` (at least `SECRET_KEY_BASE`, `AR_ENCRYPTION_*`,
+`BACK_DATABASE_PASSWORD`), then bring the stack up:
+
+```bash
+docker compose up -d
+```
+
+The app serves on `http://localhost:8080` (health check at `/up`).
+
+### Plain `docker run`
+
+With your own Postgres already running, run the image directly and point it at
+the database:
+
+```bash
+docker run -d --name language-bridge \
+  -p 8080:80 \
+  --env-file .env \
+  -e RAILS_ENV=production \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e SOLID_QUEUE_IN_PUMA=true \
+  ghcr.io/pedrotroccoli/language-bridge:0.0.11 \
+  ./bin/thrust ./bin/rails server
+```
+
+Run `db:prepare` once before the first boot to create the Solid databases and
+apply migrations:
+
+```bash
+docker run --rm \
+  --env-file .env \
+  -e RAILS_ENV=production \
+  -e DB_HOST=your-postgres-host -e DB_PORT=5432 \
+  -e RUN_DB_PREPARE=false \
+  ghcr.io/pedrotroccoli/language-bridge:0.0.11 \
+  ./bin/rails db:prepare
+```
+
+To move an existing instance to a newer version, see [Upgrading](/docs/latest/server/upgrading).

@@ -1,0 +1,22 @@
+---
+title: completion
+description: Print a shell completion script (bash or zsh).
+---
+
+Prints a shell completion script to stdout. Source it from your shell profile.
+
+```sh
+# bash — add to ~/.bashrc
+eval "$(lb completion bash)"
+
+# zsh — add to ~/.zshrc
+eval "$(lb completion zsh)"
+```
+
+## Arguments
+
+| Argument | Notes |
+|----------|-------|
+| `<shell>` | One of: `bash`, `zsh`. |
+
+An unsupported shell exits non-zero with a hint.

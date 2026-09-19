@@ -1,0 +1,36 @@
+---
+title: pull
+description: Fetch translations and write raw JSON to the json-dir.
+---
+
+Fetches translations and writes raw JSON to `--json-dir` (default
+`.language-bridge/locales`), one file per namespace. The raw half of
+[`sync`](/docs/latest/cli/sync).
+
+```sh
+lb pull --project my-app
+lb pull --project my-app --json-dir .language-bridge/locales
+```
+
+## Example output
+
+One file per namespace, named `<namespace>.json`, holding that namespace's
+translation tree (nested keys stay nested):
+
+```json title=".language-bridge/locales/common.json"
+{
+  "welcome": "Welcome",
+  "greeting": "Hi {{name}}",
+  "home": {
+    "title": "Welcome home"
+  }
+}
+```
+
+## Options
+
+Accepts the [common options](/docs/latest/cli/configuration#common-options) — notably
+`--json-dir`, `--locale`, `--namespace`, and `--include-drafts`.
+
+Follow with [`lb generate`](/docs/latest/cli/generate) to turn the JSON into a typed
+`.d.ts`.

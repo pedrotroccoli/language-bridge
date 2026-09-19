@@ -1,0 +1,21 @@
+---
+title: whoami
+description: Show the user and projects the current token can reach.
+---
+
+Shows the user and the projects the current token can reach — handy to confirm a
+token works before a push.
+
+```sh
+lb whoami
+lb whoami --json   # machine-readable
+```
+
+## Options
+
+| Flag | Notes |
+|------|-------|
+| `--json` | Print the result as JSON on stdout. |
+
+Needs only a token (via [`lb login`](/docs/latest/cli/login) or `LB_TOKEN`), not a
+project.

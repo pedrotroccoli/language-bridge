@@ -1,0 +1,21 @@
+---
+title: review
+description: Open the review page (editor filtered to this push session) in your browser.
+---
+
+Opens the review page in your browser — the editor filtered to a push session, so
+you land straight on the drafts you just staged.
+
+```sh
+lb review                        # current git branch as the session
+lb review --session my-feature   # a specific session
+```
+
+## Options
+
+| Flag | Env | Default | Notes |
+|------|-----|---------|-------|
+| `-s, --session <id>` | `LB_SESSION` | git branch | Session to review. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options). Pairs with
+[`push`](/docs/latest/cli/push) and [`add`](/docs/latest/cli/add), which stage the proposals.

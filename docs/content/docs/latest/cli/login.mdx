@@ -1,0 +1,29 @@
+---
+title: login
+description: Authorize this machine in your browser and store a token.
+---
+
+Authorizes this machine and stores a token for the server.
+
+```sh
+lb login --url https://lb.example.com
+lb login --name "ada-laptop"   # custom device/token name
+```
+
+`lb login` runs a loopback flow: it starts a temporary server on `127.0.0.1`,
+opens the platform's authorize page, and — after you approve — receives a
+one-time code that it exchanges for a personal access token. Each login mints a
+**named** token (defaults to your hostname; `--name` to override), so every
+machine has its own revocable token. A workspace admin caps how many tokens a
+user may hold (default 3) in Workspace settings.
+
+For CI, skip `lb login` and pass `LB_TOKEN` instead.
+
+## Options
+
+| Flag | Notes |
+|------|-------|
+| `--name <name>` | Token/device name shown on the platform (default: hostname). |
+
+See also [`logout`](/docs/latest/cli/logout), [`whoami`](/docs/latest/cli/whoami), and where the
+token is stored in [Configuration](/docs/latest/cli/configuration).

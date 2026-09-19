@@ -1,0 +1,67 @@
+---
+title: init
+description: Scaffold a language-bridge.json config in the current directory.
+---
+
+Creates a `language-bridge.json` in the current directory, prefilled with your
+project(s) when the token can reach them.
+
+```sh
+lb init --url https://lb.example.com
+```
+
+Next: [`lb validate-config`](/docs/latest/cli/validate-config) to check it, then
+[`lb sync`](/docs/latest/cli/sync) to generate types.
+
+## What it generates
+
+`init` always writes a `language-bridge.json` with a `url` and a `projects` list.
+
+When a stored login (or `--token`) can reach the server, the **real accessible
+project slugs are prefilled**:
+
+```json title="language-bridge.json"
+{
+  "url": "https://lb.example.com",
+  "projects": [
+    { "project": "main-app" },
+    { "project": "marketing" }
+  ]
+}
+```
+
+When logged out or the server is unreachable, it still scaffolds — with a
+**placeholder slug** showing the shape to fill in:
+
+```json title="language-bridge.json"
+{
+  "url": "https://lb.example.com",
+  "projects": [
+    { "project": "your-project-slug" }
+  ]
+}
+```
+
+From here you can flatten a single project to the top level, or add `out`,
+`locale`, `namespaces`, and more per entry — see
+[Configuration](/docs/latest/cli/configuration):
+
+```json title="language-bridge.json"
+{
+  "url": "https://lb.example.com",
+  "project": "main-app",
+  "out": "src/@types/resources.d.ts"
+}
+```
+
+## Options
+
+| Flag | Env | Notes |
+|------|-----|-------|
+| `-u, --url <url>` | `LB_URL` | Server base URL. |
+| `-t, --token <token>` | `LB_TOKEN` | Bearer token (falls back to the stored login). |
+| `-H, --header <name:value>` | `LB_HEADERS` | Extra HTTP header (repeatable). |
+| `-f, --force` | — | Overwrite an existing config. |
+
+Re-running without `--force` when a config already exists is a no-op (it tells
+you to pass `--force`).

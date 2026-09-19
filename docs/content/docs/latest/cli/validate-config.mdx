@@ -1,0 +1,23 @@
+---
+title: validate-config
+description: Validate the local config end-to-end before a push.
+---
+
+Checks the config end-to-end: the token works, every configured project exists
+and is reachable, and each configured `locale`/`namespaces` actually exists on the
+server. Prints `✓`/`✗` per project and exits non-zero on any failure — handy in
+CI before a push. Aliased as `lb validate` and `lb valid`.
+
+```sh
+lb validate-config
+lb validate            # alias
+lb validate-config --json
+```
+
+## Options
+
+| Flag | Notes |
+|------|-------|
+| `--json` | Print results as JSON on stdout. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options).

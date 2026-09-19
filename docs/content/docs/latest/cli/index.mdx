@@ -1,0 +1,61 @@
+---
+title: Introduction
+description: Pull translations from a server and generate typed i18next resources.
+---
+
+`@language-bridge/cli` pulls translations from a [Language Bridge](/docs) server
+and generates typed i18next resources — fetching translations and emitting typed
+`i18next` resources in one first-party tool.
+
+Two layers of typing:
+
+- **Keys** — a `Resources` interface that augments i18next's `CustomTypeOptions`,
+  so `t('ns:key')` is autocompleted and unknown keys are compile errors.
+- **Interpolation params** — a `TranslationParams` map (parsed from the value
+  placeholders) plus a `createTypedT` wrapper, so `t('key', { … })` params are
+  typed. This is beyond what i18next can infer from strings.
+
+## Install
+
+```sh
+npm i -D @language-bridge/cli
+```
+
+## Quick start
+
+```sh
+# authorize this machine in your browser once (stores a token)
+lb login --url https://lb.example.com
+
+# pull the source locale + generate types in one step (default command)
+lb sync --project my-app
+```
+
+For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API
+token). See [Configuration](/docs/latest/cli/configuration).
+
+## Commands
+
+| Command | What |
+|---------|------|
+| [`init`](/docs/latest/cli/init) | Scaffold a `language-bridge.json` config. |
+| [`login`](/docs/latest/cli/login) | Authorize this machine and store a token. |
+| [`logout`](/docs/latest/cli/logout) | Remove the stored token for a server. |
+| [`whoami`](/docs/latest/cli/whoami) | Show the user + projects a token can reach. |
+| [`sync`](/docs/latest/cli/sync) | Pull + generate types (default command). |
+| [`pull`](/docs/latest/cli/pull) | Fetch translations to raw JSON. |
+| [`generate`](/docs/latest/cli/generate) | Generate the `.d.ts` from pulled JSON. |
+| [`push`](/docs/latest/cli/push) | Push local JSON as reviewable proposals. |
+| [`add`](/docs/latest/cli/add) | Add/update one key and push it — no local files. |
+| [`review`](/docs/latest/cli/review) | Open the review page in your browser. |
+| [`check`](/docs/latest/cli/check) | CI guard against shipping unpublished keys. |
+| [`ai-instructions`](/docs/latest/cli/ai-instructions) | Print AI-agent rules for a project. |
+| [`validate-config`](/docs/latest/cli/validate-config) | Validate the local config end-to-end. |
+| [`completion`](/docs/latest/cli/completion) | Print a shell completion script. |
+
+Then wire the generated types into i18next — see
+[Typed i18next](/docs/latest/cli/typed-i18next).
+
+## License
+
+MIT

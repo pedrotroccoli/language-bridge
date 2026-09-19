@@ -1,0 +1,25 @@
+---
+title: Overview
+description: Stores keys/translations, serves i18next JSON, web UI + API.
+---
+
+The **server** is the application at the heart of Language Bridge. It stores
+translation keys and values, receives missing keys pushed by i18next's
+`saveMissing`, gives translators a web UI to fill in values, and serves the
+translations as CDN-cacheable i18next JSON from a public endpoint — no frontend
+redeploy needed.
+
+## Setup
+
+The app ships as a single Docker image and runs with Docker Compose (or a plain
+`docker run`). See [Architecture → Running with Docker](/docs/latest/server/architecture#running-with-docker)
+for the full setup.
+
+## In this section
+
+- [Architecture](/docs/latest/server/architecture) — system overview and Docker setup.
+- [CDN setup](/docs/latest/server/cdn-setup) — put the delivery endpoint behind a CDN.
+- [Delivery path templates](/docs/latest/server/delivery-paths) — serve artifacts from
+  your own bucket.
+- [Cloud backups](/docs/latest/server/backup) — automatic translation snapshots.
+- [Upgrading](/docs/latest/server/upgrading) — move a running instance to a new version.

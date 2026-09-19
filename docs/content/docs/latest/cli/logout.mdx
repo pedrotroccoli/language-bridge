@@ -1,0 +1,13 @@
+---
+title: logout
+description: Remove the stored token for a server.
+---
+
+Forgets the stored token for a server.
+
+```sh
+lb logout --url https://lb.example.com
+```
+
+Reports whether a token was removed or none was stored. Only affects the token
+saved by [`lb login`](/docs/latest/cli/login) for that server URL.
