@@ -1,0 +1,99 @@
+---
+title: Upgrading
+description: Move a running Docker instance to a newer app version.
+---
+
+How to move a running instance to a newer app version. The whole app ships as one
+image; upgrading is rebuild + recreate, and schema changes apply themselves.
+
+## The one command
+
+<Tabs items={['Published image', 'From source']}>
+<Tab value="Published image">
+Using the `docker-compose.yml` from [Running with Docker](/docs/latest/server/architecture#running-with-docker):
+the image tag is pinned, so bump it to the new version, then recreate:
+
+```yaml title="docker-compose.yml"
+x-app: &app
+  image: ghcr.io/pedrotroccoli/language-bridge:<new-version>
+```
+
+```bash
+docker compose pull
+docker compose up -d
+```
+</Tab>
+<Tab value="From source">
+From a checkout of the repo, `docker-compose.local.yml` builds the image locally:
+
+```bash
+docker compose -f docker-compose.local.yml up --build -d
+```
+</Tab>
+</Tabs>
+
+Either recreates the containers with new code + new `db/migrate/*`. The `pg-data`
+volume is **not** touched, so all data survives.
+
+<Callout type="error" title="Never add -v">
+`docker compose down -v` deletes the `pg-data` volume — a full data wipe. A
+normal upgrade never removes volumes.
+</Callout>
+
+## What happens on boot
+
+<Steps>
+<Step>
+### `db` starts
+
+Healthcheck passes; existing data intact.
+</Step>
+<Step>
+### `migrate` runs once and exits
+
+Runs `./bin/rails db:prepare`:
+
+- fresh database → creates the 4 Solid databases (primary/cache/queue/cable)
+  and loads `schema.rb`;
+- existing database → runs only the **pending** migrations.
+
+`db:prepare` is idempotent, so re-running an already-migrated stack is a no-op.
+</Step>
+<Step>
+### `web` serves
+
+Waits for `migrate` to finish successfully
+(`depends_on: service_completed_successfully`), then serves.
+</Step>
+</Steps>
+
+Only the `migrate` service migrates. `web` runs with `RUN_DB_PREPARE=false`, so
+scaling or restarting web never triggers a concurrent migration — no races.
+
+## Guarantees & limits
+
+- **Forward migrations just work.** Commit each migration with its `schema.rb`
+  and it applies on the next recreate.
+- **A failed migration blocks the release.** If `migrate` exits non-zero, `web`
+  will not start — the app stays down rather than booting against a half-migrated
+  schema. **Test migrations before publishing the image.**
+- **Not zero-downtime.** Recreating containers causes a short window where the app
+  is unavailable. Acceptable for single-node; for true zero-downtime use the
+  Kubernetes path (migrate Job + rolling `web`).
+- **Backward-incompatible migrations can error during that window.** If a
+  migration drops/renames a column the old code still reads, requests hit by the
+  brief overlap fail. To avoid it, use the **expand/contract** pattern:
+  1. Deploy A — add the new column/table; keep the old one; backfill.
+  2. Deploy B — remove the old column once no code references it.
+  Only needed if the downtime window matters to you.
+- **Postgres major upgrades are manual.** Bumping `postgres:18` → a newer major
+  does **not** auto-migrate the data directory; it needs `pg_upgrade`. App
+  migrations do not cover this. Stay on one major unless you plan the upgrade.
+
+## Rollback
+
+Roll the image tag back and recreate. This only undoes **code**; it does not undo
+migrations that already ran. Reversible migrations can be stepped back with
+`docker compose run --rm migrate ./bin/rails db:rollback`
+before deploying the older image. Prefer forward-only, additive migrations so
+rollback is just a code swap.

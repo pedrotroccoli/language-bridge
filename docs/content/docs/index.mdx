@@ -1,0 +1,86 @@
+---
+title: Introduction
+description: Open-source, self-hosted translation management for i18next.
+---
+
+import Image from 'next/image';
+import { Server, Terminal } from 'lucide-react';
+import logoHero from '@/public/logo-hero.png';
+
+{/* [&>*]:m-0 cancels the prose margins on h1/p/img so only the flex gap applies. */}
+<div className="flex flex-col items-center text-center gap-3 py-4 [&>*]:m-0">
+  <Image src={logoHero} alt="Language Bridge" width={260} height={260} priority className="rounded-full" />
+  <h1 className="text-3xl font-bold tracking-tight">Language Bridge</h1>
+  <p className="max-w-xl text-lg text-fd-muted-foreground">
+    Open-source, self-hosted translation management for i18next. Store keys, let
+    translators fill in values, and serve CDN-cached JSON with no frontend
+    redeploy — on your own infrastructure, no per-seat pricing.
+  </p>
+</div>
+
+## Why
+
+Translation management should be simple: store keys, let translators fill in
+values, serve JSON to your frontend. Language Bridge does exactly that —
+self-hosted, open-source, and designed for speed. Your keys and translations live
+in your own database and storage, with no per-seat pricing and no vendor lock-in.
+
+## What it does
+
+<Steps>
+<Step>
+### Receives missing keys
+
+i18next's `saveMissing` sends new keys automatically as your app runs.
+</Step>
+<Step>
+### Translator interface
+
+Non-technical translators fill in values through a web UI.
+</Step>
+<Step>
+### Serves translations
+
+Public JSON endpoint with CDN caching, no frontend redeploy needed.
+</Step>
+</Steps>
+
+## The pieces
+
+This is a monorepo with two components:
+
+<Cards>
+  <Card icon={<Server />} title="App" href="/docs/latest/server" description="Stores keys/translations, serves i18next JSON, web UI + API." />
+  <Card icon={<Terminal />} title="CLI" href="/docs/latest/cli" description="@language-bridge/cli — pulls translations and generates typed i18next resources." />
+</Cards>
+
+## Alternatives to
+
+Language Bridge is a self-hosted, open-source alternative to hosted
+translation-management platforms:
+
+- Lokalise
+- Phrase
+- Crowdin
+- Locize
+- Tolgee
+
+You get the same core workflow — missing-key capture, a translator UI, and
+CDN-served JSON — without per-seat pricing or vendor lock-in. Everything runs on
+your own infrastructure.
+
+## Generating types in a consumer app
+
+<InstallTabs pkg="@language-bridge/cli" dev />
+
+```sh
+LB_TOKEN=lb_pat_… lb sync --project my-app --url https://your-server
+```
+
+This pulls the source locale and writes a typed `resources.d.ts` that augments
+i18next so `t('ns:key')` is autocompleted and interpolation params are typed.
+See the [CLI docs](/docs/latest/cli).
+
+## License
+
+MIT

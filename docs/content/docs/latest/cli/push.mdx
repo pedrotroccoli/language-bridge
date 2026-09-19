@@ -1,0 +1,37 @@
+---
+title: push
+description: Push local JSON as proposals for human review (one locale per push).
+---
+
+Uploads the local source-locale JSON as **proposals**: staged values a human
+reviews on the platform (Proposals tab) before anything is applied or published.
+An automated push can never clobber a live string. Proposals target one locale
+per push.
+
+Files are flat — `<json-dir>/<namespace>.json`; the file name is the namespace.
+There are no per-locale folders: one push targets exactly one locale.
+
+```sh
+lb push                          # every namespace file → the source locale
+lb push -l pt-BR                 # same files, values land on locale pt-BR
+lb push -n checkout              # only <json-dir>/checkout.json
+lb push -n checkout -l pt-BR     # one namespace into one locale
+```
+
+## Sessions
+
+Each push carries a **session** (defaults to the current git branch, override
+with `--session` / `LB_SESSION`). Proposals are grouped by session on the
+platform, so two branches or AI chats can propose the *same* key without
+overwriting each other — re-pushing the same session updates its own proposals in
+place.
+
+## Options
+
+| Flag | Env | Default | Notes |
+|------|-----|---------|-------|
+| `-s, --session <id>` | `LB_SESSION` | git branch | Grouping label for the push. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options). Review the
+result with [`lb review`](/docs/latest/cli/review); for a single key without local
+files, use [`lb add`](/docs/latest/cli/add).

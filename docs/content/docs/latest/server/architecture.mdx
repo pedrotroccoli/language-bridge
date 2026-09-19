@@ -1,0 +1,51 @@
+---
+title: Architecture
+description: System overview and how to run the server with Docker.
+---
+
+import { latestVersion } from '@/lib/generated/cli-snippets';
+import {
+  DockerComposeExample,
+  DockerDbPrepareExample,
+  DockerRunExample,
+  image,
+} from '@/components/docker-examples';
+
+## System Overview
+
+![System Architecture](/system-architecture.png)
+
+## Running with Docker
+
+The whole app ships as a single image. It needs a Postgres database; the easiest
+setup is Docker Compose, which runs Postgres, migrates once, then serves the web
+app. The latest version is <code>{latestVersion}</code> (<code>{image}</code>).
+
+### Docker Compose (recommended)
+
+Create a `docker-compose.yml`:
+
+<DockerComposeExample />
+
+Fill a `.env` (at least `SECRET_KEY_BASE`, `AR_ENCRYPTION_*`,
+`BACK_DATABASE_PASSWORD`), then bring the stack up:
+
+```bash
+docker compose up -d
+```
+
+The app serves on `http://localhost:8080` (health check at `/up`).
+
+### Plain `docker run`
+
+With your own Postgres already running, run the image directly and point it at
+the database:
+
+<DockerRunExample />
+
+Run `db:prepare` once before the first boot to create the Solid databases and
+apply migrations:
+
+<DockerDbPrepareExample />
+
+To move an existing instance to a newer version, see [Upgrading](/docs/latest/server/upgrading).

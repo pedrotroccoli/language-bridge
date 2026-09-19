@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* UOL Edtech brand palette (uoledtech.com.br) — orange brand as the accent,
+   violet as a secondary highlight. Neutral grays kept for body readability. */
+:root {
+  --color-fd-primary: #ff7600; /* orange 06-brand */
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-ring: #ff7600;
+  --color-fd-info: #7b5af7; /* violet 07 */
+}
+
+.dark {
+  --color-fd-primary: #ff861f; /* orange 05 — brighter on dark */
+  --color-fd-primary-foreground: #1a0a00;
+  --color-fd-ring: #ff861f;
+  --color-fd-info: #9277f8; /* violet 06-brand */
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

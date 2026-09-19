@@ -1,0 +1,27 @@
+---
+title: completion
+description: Print a shell completion script (bash or zsh).
+---
+
+Prints a shell completion script to stdout. Source it from your shell profile.
+
+<Tabs items={['bash', 'zsh']}>
+<Tab value="bash">
+```sh title="~/.bashrc"
+eval "$(lb completion bash)"
+```
+</Tab>
+<Tab value="zsh">
+```sh title="~/.zshrc"
+eval "$(lb completion zsh)"
+```
+</Tab>
+</Tabs>
+
+## Arguments
+
+| Argument | Notes |
+|----------|-------|
+| `<shell>` | One of: `bash`, `zsh`. |
+
+An unsupported shell exits non-zero with a hint.

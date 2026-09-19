@@ -1,0 +1,32 @@
+---
+title: add
+description: Add or update one key and push it as a proposal — no local files needed.
+---
+
+The fastest path from "add this key" to a reviewable draft — nothing is written
+locally. Namespace is inferred when the project has exactly one; otherwise pass
+`-n`.
+
+```sh
+lb add home.title "Welcome"                     # one-namespace project
+lb add -n marketing cta.buy "Buy now"           # explicit namespace
+lb add -n common greeting "Olá" -l pt-BR        # another locale
+```
+
+## Arguments
+
+| Argument | Notes |
+|----------|-------|
+| `<key>` | Dotted key, e.g. `home.title`. |
+| `<value>` | Source text for the key. |
+
+## Options
+
+| Flag | Env | Default | Notes |
+|------|-----|---------|-------|
+| `-s, --session <id>` | `LB_SESSION` | git branch | Grouping label for the push. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options). Targets **one**
+project — with several configured, pass `--project` (or set `LB_PROJECT`). Like
+[`push`](/docs/latest/cli/push), it stages a proposal; review with
+[`lb review`](/docs/latest/cli/review).

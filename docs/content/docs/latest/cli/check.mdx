@@ -1,0 +1,49 @@
+---
+title: check
+description: A CI guard that fails when keys exist only in the playground.
+---
+
+Fails (exit 1) when keys exist only in the playground — a CI guard against
+shipping unpublished keys. On success it reports that every key is published; on
+failure it lists the unpublished keys.
+
+```sh
+lb check --project my-app
+lb check --project my-app --json   # machine-readable, for CI
+```
+
+## Example output
+
+Passing — every key is published:
+
+```ansi
+✓ my-app: every key is published
+```
+
+Failing (exit 1) — unpublished keys are listed:
+
+```ansi
+✗ my-app: 2 key(s) exist only in the playground:
+    checkout.cta.buy
+    common.greeting
+  Publish them (`lb review`, then approve in the editor) before deploying.
+```
+
+With `--json`:
+
+```json
+{
+  "ok": false,
+  "unpublished": ["checkout.cta.buy", "common.greeting"]
+}
+```
+
+## Options
+
+| Flag | Notes |
+|------|-------|
+| `--json` | Print results as JSON on stdout. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options). Publish the
+offending keys ([`lb review`](/docs/latest/cli/review), then approve in the editor)
+before deploying.

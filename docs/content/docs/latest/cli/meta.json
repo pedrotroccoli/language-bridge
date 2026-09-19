@@ -1,0 +1,28 @@
+{
+  "title": "CLI",
+  "icon": "Terminal",
+  "root": true,
+  "pages": [
+    "index",
+    "configuration",
+    "typed-i18next",
+    "---Setup---",
+    "init",
+    "login",
+    "logout",
+    "whoami",
+    "---Types---",
+    "sync",
+    "pull",
+    "generate",
+    "---Authoring---",
+    "push",
+    "add",
+    "review",
+    "check",
+    "ai-instructions",
+    "---Utilities---",
+    "validate-config",
+    "completion"
+  ]
+}

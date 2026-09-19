@@ -1,0 +1,28 @@
+---
+title: Introduction
+description: Stores keys/translations, serves i18next JSON, web UI + API.
+---
+
+import { ArrowUpCircle, DatabaseBackup, Globe, Layers, Route } from 'lucide-react';
+
+The **app** is the application at the heart of Language Bridge. It stores
+translation keys and values, receives missing keys pushed by i18next's
+`saveMissing`, gives translators a web UI to fill in values, and serves the
+translations as CDN-cacheable i18next JSON from a public endpoint — no frontend
+redeploy needed.
+
+## Setup
+
+The app ships as a single Docker image and runs with Docker Compose (or a plain
+`docker run`). See [Architecture → Running with Docker](/docs/latest/server/architecture#running-with-docker)
+for the full setup.
+
+## In this section
+
+<Cards>
+  <Card icon={<Layers />} title="Architecture" href="/docs/latest/server/architecture" description="System overview and Docker setup." />
+  <Card icon={<Globe />} title="CDN setup" href="/docs/latest/server/cdn-setup" description="Put the delivery endpoint behind a CDN." />
+  <Card icon={<Route />} title="Delivery path templates" href="/docs/latest/server/delivery-paths" description="Serve artifacts from your own bucket." />
+  <Card icon={<DatabaseBackup />} title="Cloud backups" href="/docs/latest/server/backup" description="Automatic translation snapshots." />
+  <Card icon={<ArrowUpCircle />} title="Upgrading" href="/docs/latest/server/upgrading" description="Move a running instance to a new version." />
+</Cards>

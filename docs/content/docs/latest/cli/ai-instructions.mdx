@@ -1,0 +1,42 @@
+---
+title: ai-instructions
+description: Print AI-agent rules for a project (or write them to a file).
+---
+
+import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
+import { aiInstructionsExample } from '@/lib/generated/cli-snippets';
+
+Prints project-specific rules (which locale to edit, how to push, what never to
+do) an AI agent can follow.
+
+```sh
+lb ai-instructions --project my-app            # print to stdout
+lb ai-instructions --project my-app --write    # splice into AGENTS.md
+lb ai-instructions --project my-app --write CLAUDE.md
+```
+
+`--write` splices them into the target file (default `AGENTS.md`) between
+`<!-- lb:start -->` / `<!-- lb:end -->` markers — idempotent, so re-running
+updates the block in place.
+
+## Options
+
+| Flag | Default | Notes |
+|------|---------|-------|
+| `-w, --write [file]` | `AGENTS.md` | Write to a file instead of stdout, wrapped in lb markers. |
+
+Plus the [common options](/docs/latest/cli/configuration#common-options).
+
+## What it prints
+
+The block is enriched with the project's **real** namespaces and locales pulled
+from the server. For project `my-app` (source `en`; locales `en`, `pt-BR`, `es`;
+namespaces `checkout`, `common`) it renders:
+
+<DynamicCodeBlock lang="md" code={aiInstructionsExample} />
+
+This example is generated from the CLI's own template
+(`cli/src/lib/instructions-template.ts`) at build time, so it never drifts from
+what `lb ai-instructions` actually prints. With `--write`, this same block is
+spliced into the target file between `<!-- lb:start -->` / `<!-- lb:end -->`
+markers.

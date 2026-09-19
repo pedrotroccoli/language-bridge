@@ -1,0 +1,13 @@
+{
+  "title": "App",
+  "icon": "Server",
+  "root": true,
+  "pages": [
+    "index",
+    "architecture",
+    "cdn-setup",
+    "delivery-paths",
+    "backup",
+    "upgrading"
+  ]
+}
