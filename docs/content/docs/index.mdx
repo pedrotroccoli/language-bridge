@@ -5,6 +5,7 @@ description: Open-source, self-hosted translation management for i18next.
 
 import Image from 'next/image';
 import logoHero from '@/public/logo-hero.png';
+import { InstallTabs } from '@/components/install-tabs';
 
 <div className="flex flex-col items-center text-center gap-4 py-8">
   <Image src={logoHero} alt="Language Bridge" width={260} height={260} priority className="rounded-full" />
@@ -58,8 +59,9 @@ your own infrastructure.
 
 ## Generating types in a consumer app
 
+<InstallTabs pkg="@language-bridge/cli" dev />
+
 ```sh
-npm i -D @language-bridge/cli
 LB_TOKEN=lb_pat_… lb sync --project my-app --url https://your-server
 ```
 
