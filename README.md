@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/public/logo-hero.png" alt="Language Bridge" width="160" />
+</p>
+
 # Language Bridge
 
 Open-source, self-hosted translation management for i18next. Store keys, let
