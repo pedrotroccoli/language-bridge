@@ -17,6 +17,15 @@ lb pull --project my-app --json-dir .language-bridge/locales
 One file per namespace, named `<namespace>.json`, holding that namespace's
 translation tree (nested keys stay nested):
 
+<Files>
+  <Folder name=".language-bridge" defaultOpen>
+    <Folder name="locales" defaultOpen>
+      <File name="common.json" />
+      <File name="checkout.json" />
+    </Folder>
+  </Folder>
+</Files>
+
 ```json title=".language-bridge/locales/common.json"
 {
   "welcome": "Welcome",

@@ -5,13 +5,18 @@ description: Print a shell completion script (bash or zsh).
 
 Prints a shell completion script to stdout. Source it from your shell profile.
 
-```sh
-# bash — add to ~/.bashrc
+<Tabs items={['bash', 'zsh']}>
+<Tab value="bash">
+```sh title="~/.bashrc"
 eval "$(lb completion bash)"
-
-# zsh — add to ~/.zshrc
+```
+</Tab>
+<Tab value="zsh">
+```sh title="~/.zshrc"
 eval "$(lb completion zsh)"
 ```
+</Tab>
+</Tabs>
 
 ## Arguments
 

@@ -4,10 +4,11 @@ description: Open-source, self-hosted translation management for i18next.
 ---
 
 import Image from 'next/image';
+import { Server, Terminal } from 'lucide-react';
 import logoHero from '@/public/logo-hero.png';
-import { InstallTabs } from '@/components/install-tabs';
 
-<div className="flex flex-col items-center text-center gap-4 py-8">
+{/* [&>*]:m-0 cancels the prose margins on h1/p/img so only the flex gap applies. */}
+<div className="flex flex-col items-center text-center gap-3 py-4 [&>*]:m-0">
   <Image src={logoHero} alt="Language Bridge" width={260} height={260} priority className="rounded-full" />
   <h1 className="text-3xl font-bold tracking-tight">Language Bridge</h1>
   <p className="max-w-xl text-lg text-fd-muted-foreground">
@@ -26,20 +27,31 @@ in your own database and storage, with no per-seat pricing and no vendor lock-in
 
 ## What it does
 
-1. **Receives missing keys** — i18next's `saveMissing` sends new keys
-   automatically as your app runs.
-2. **Translator interface** — non-technical translators fill in values through a
-   web UI.
-3. **Serves translations** — public JSON endpoint with CDN caching, no frontend
-   redeploy needed.
+<Steps>
+<Step>
+### Receives missing keys
+
+i18next's `saveMissing` sends new keys automatically as your app runs.
+</Step>
+<Step>
+### Translator interface
+
+Non-technical translators fill in values through a web UI.
+</Step>
+<Step>
+### Serves translations
+
+Public JSON endpoint with CDN caching, no frontend redeploy needed.
+</Step>
+</Steps>
 
 ## The pieces
 
 This is a monorepo with two components:
 
 <Cards>
-  <Card title="App" href="/docs/latest/server" description="Stores keys/translations, serves i18next JSON, web UI + API." />
-  <Card title="CLI" href="/docs/latest/cli" description="@language-bridge/cli — pulls translations and generates typed i18next resources." />
+  <Card icon={<Server />} title="App" href="/docs/latest/server" description="Stores keys/translations, serves i18next JSON, web UI + API." />
+  <Card icon={<Terminal />} title="CLI" href="/docs/latest/cli" description="@language-bridge/cli — pulls translations and generates typed i18next resources." />
 </Cards>
 
 ## Alternatives to

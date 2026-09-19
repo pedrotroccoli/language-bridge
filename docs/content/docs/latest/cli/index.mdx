@@ -3,8 +3,6 @@ title: Introduction
 description: Pull translations from a server and generate typed i18next resources.
 ---
 
-import { InstallTabs } from '@/components/install-tabs';
-
 `@language-bridge/cli` pulls translations from a [Language Bridge](/docs) server
 and generates typed i18next resources — fetching translations and emitting typed
 `i18next` resources in one first-party tool.
@@ -31,8 +29,10 @@ lb login --url https://lb.example.com
 lb sync --project my-app
 ```
 
-For CI, skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API
-token). See [Configuration](/docs/latest/cli/configuration).
+<Callout title="CI">
+Skip `lb login` and pass `LB_TOKEN` (a `lb_pat_…` PAT or project API token).
+See [Configuration](/docs/latest/cli/configuration).
+</Callout>
 
 ## Commands
 

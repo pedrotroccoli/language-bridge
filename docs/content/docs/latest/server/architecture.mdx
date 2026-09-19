@@ -3,8 +3,6 @@ title: Architecture
 description: System overview and how to run the server with Docker.
 ---
 
-> **Status:** Implemented. Server-rendered application (not API-only).
-
 ## System Overview
 
 ![System Architecture](/system-architecture.png)
@@ -19,7 +17,7 @@ app. The latest version is `0.0.11`.
 
 Create a `docker-compose.yml`:
 
-```yaml
+```yaml title="docker-compose.yml"
 x-app: &app
   image: ghcr.io/pedrotroccoli/language-bridge:0.0.11
   env_file: .env

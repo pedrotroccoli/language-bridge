@@ -1,9 +1,11 @@
 ---
-title: Overview
+title: Introduction
 description: Stores keys/translations, serves i18next JSON, web UI + API.
 ---
 
-The **server** is the application at the heart of Language Bridge. It stores
+import { ArrowUpCircle, DatabaseBackup, Globe, Layers, Route } from 'lucide-react';
+
+The **app** is the application at the heart of Language Bridge. It stores
 translation keys and values, receives missing keys pushed by i18next's
 `saveMissing`, gives translators a web UI to fill in values, and serves the
 translations as CDN-cacheable i18next JSON from a public endpoint — no frontend
@@ -17,9 +19,10 @@ for the full setup.
 
 ## In this section
 
-- [Architecture](/docs/latest/server/architecture) — system overview and Docker setup.
-- [CDN setup](/docs/latest/server/cdn-setup) — put the delivery endpoint behind a CDN.
-- [Delivery path templates](/docs/latest/server/delivery-paths) — serve artifacts from
-  your own bucket.
-- [Cloud backups](/docs/latest/server/backup) — automatic translation snapshots.
-- [Upgrading](/docs/latest/server/upgrading) — move a running instance to a new version.
+<Cards>
+  <Card icon={<Layers />} title="Architecture" href="/docs/latest/server/architecture" description="System overview and Docker setup." />
+  <Card icon={<Globe />} title="CDN setup" href="/docs/latest/server/cdn-setup" description="Put the delivery endpoint behind a CDN." />
+  <Card icon={<Route />} title="Delivery path templates" href="/docs/latest/server/delivery-paths" description="Serve artifacts from your own bucket." />
+  <Card icon={<DatabaseBackup />} title="Cloud backups" href="/docs/latest/server/backup" description="Automatic translation snapshots." />
+  <Card icon={<ArrowUpCircle />} title="Upgrading" href="/docs/latest/server/upgrading" description="Move a running instance to a new version." />
+</Cards>

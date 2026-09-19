@@ -47,8 +47,10 @@ snapshot blob and prunes older backups beyond the retention limit
 (`BACKUP_KEEP`, default 30). Point Active Storage at a cloud bucket to get
 off-box, durable backups automatically.
 
-> Recurring jobs run wherever the Solid Queue supervisor runs (e.g. Puma with
-> `SOLID_QUEUE_IN_PUMA=1`, or a dedicated worker).
+<Callout>
+Recurring jobs run wherever the Solid Queue supervisor runs (e.g. Puma with
+`SOLID_QUEUE_IN_PUMA=1`, or a dedicated worker).
+</Callout>
 
 ## Manual backup, download, restore
 

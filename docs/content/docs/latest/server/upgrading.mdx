@@ -8,36 +8,58 @@ image; upgrading is rebuild + recreate, and schema changes apply themselves.
 
 ## The one command
 
-Production (`docker-compose.prod.yml`, published image) — pull the new tag and
-recreate:
+<Tabs items={['Production', 'Local / test']}>
+<Tab value="Production">
+Published image (`docker-compose.prod.yml`) — pull the new tag and recreate:
 
 ```bash
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
-
-Local / test (`docker-compose.local.yml`, builds from source):
+</Tab>
+<Tab value="Local / test">
+Builds from source (`docker-compose.local.yml`):
 
 ```bash
 docker compose -f docker-compose.local.yml up --build -d
 ```
+</Tab>
+</Tabs>
 
 Either recreates the containers with new code + new `db/migrate/*`. The `pg-data`
 volume is **not** touched, so all data survives.
 
-> **Never** add `-v`. `docker compose down -v` deletes the `pg-data` volume — a
-> full data wipe. A normal upgrade never removes volumes.
+<Callout type="error" title="Never add -v">
+`docker compose down -v` deletes the `pg-data` volume — a full data wipe. A
+normal upgrade never removes volumes.
+</Callout>
 
 ## What happens on boot
 
-1. **db** starts, healthcheck passes (existing data intact).
-2. **migrate** runs `./bin/rails db:prepare` once and exits:
-   - fresh database → creates the 4 Solid databases (primary/cache/queue/cable)
-     and loads `schema.rb`;
-   - existing database → runs only the **pending** migrations.
-   `db:prepare` is idempotent, so re-running an already-migrated stack is a no-op.
-3. **web** waits for `migrate` to finish successfully
-   (`depends_on: service_completed_successfully`), then serves.
+<Steps>
+<Step>
+### `db` starts
+
+Healthcheck passes; existing data intact.
+</Step>
+<Step>
+### `migrate` runs once and exits
+
+Runs `./bin/rails db:prepare`:
+
+- fresh database → creates the 4 Solid databases (primary/cache/queue/cable)
+  and loads `schema.rb`;
+- existing database → runs only the **pending** migrations.
+
+`db:prepare` is idempotent, so re-running an already-migrated stack is a no-op.
+</Step>
+<Step>
+### `web` serves
+
+Waits for `migrate` to finish successfully
+(`depends_on: service_completed_successfully`), then serves.
+</Step>
+</Steps>
 
 Only the `migrate` service migrates. `web` runs with `RUN_DB_PREPARE=false`, so
 scaling or restarting web never triggers a concurrent migration — no races.
