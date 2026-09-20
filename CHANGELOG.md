@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases ship as `ghcr.io/pedrotroccoli/language-bridge` (tags `v*`).
 The CLI has its own changelog in [`cli/CHANGELOG.md`](cli/CHANGELOG.md).
 
+## [0.0.13](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.12...v0.0.13) (2026-09-20)
+
+
+### Features
+
+* **docs:** add og:url, canonical and image dimensions for link previews ([f67eb7d](https://github.com/pedrotroccoli/language-bridge/commit/f67eb7dff2ac2662a5fc088469561cc36424f9fc))
+* **docs:** add og:url, canonical and image dimensions for link previews ([ed5f73f](https://github.com/pedrotroccoli/language-bridge/commit/ed5f73f282686e3cab530f5e4ed5e19a0c32a006))
+* **docs:** add site-wide description, open graph and twitter metadata ([9b42378](https://github.com/pedrotroccoli/language-bridge/commit/9b4237861b0cc908b04789da88771b2956345d6b))
+* **docs:** add site-wide meta tags and branded og images ([e71d1ed](https://github.com/pedrotroccoli/language-bridge/commit/e71d1ed0ddcce541e30f0d0cb0d59cfac9eba60c))
+* **docs:** render og images with the logo and a tighter layout ([9210fd2](https://github.com/pedrotroccoli/language-bridge/commit/9210fd2072d559929d8dc8040f9de9da13611219))
+* **docs:** render og images with the logo and a tighter layout ([c180056](https://github.com/pedrotroccoli/language-bridge/commit/c1800562e752e037baa5111a08489409854a28fe))
+* **docs:** use figtree and inter in generated og images ([5bf3245](https://github.com/pedrotroccoli/language-bridge/commit/5bf324543ec742cbec3d550222023c68c96da50b))
+* **docs:** use figtree and inter in generated og images ([8c349e4](https://github.com/pedrotroccoli/language-bridge/commit/8c349e473b37eb227b0dee439049f6248afa8d31))
+
 ## [0.0.12](https://github.com/pedrotroccoli/language-bridge/compare/v0.0.11...v0.0.12) (2026-09-18)
 
 
