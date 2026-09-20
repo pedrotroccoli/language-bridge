@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Provider } from '@/components/provider';
-import { appDescription, appName, siteImageRoute } from '@/lib/shared';
+import { appDescription, appName, ogImageSize, siteImageRoute } from '@/lib/shared';
 import './global.css';
 
 const inter = Inter({
   subsets: ['latin'],
 });
+
+const siteImage = { url: siteImageRoute, ...ogImageSize };
 
 // Site-wide defaults. Docs pages override title/description/og:image per page
 // via generateMetadata; everything else (home, 404) inherits these.
@@ -21,18 +23,21 @@ export const metadata: Metadata = {
       ? 'https://pedrotroccoli.github.io/language-bridge'
       : 'http://localhost:3000',
   ),
+  // LinkedIn requires og:url and reads the image dimensions; keep both explicit.
+  alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
+    url: '/',
     siteName: appName,
     title: appName,
     description: appDescription,
-    images: siteImageRoute,
+    images: [siteImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: appName,
     description: appDescription,
-    images: siteImageRoute,
+    images: [siteImage],
   },
 };
 
