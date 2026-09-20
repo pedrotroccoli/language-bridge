@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
-import { appName } from './shared';
+import { appName, ogImageSize } from './shared';
 
 // Shared 1200x630 social image: logo on the left, title + description on the
 // right, brand-orange rule at the bottom. Used by /og/image.png (site default)
 // and /og/docs/... (per docs page).
-const SIZE = { width: 1200, height: 630 };
+const SIZE = { width: ogImageSize.width, height: ogImageSize.height };
 const ORANGE = '#ff7600';
 
 let logoDataUrl: string | undefined;

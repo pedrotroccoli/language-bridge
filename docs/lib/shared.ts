@@ -6,6 +6,8 @@ export const appDescription =
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const siteImageRoute = '/og/image.png';
+// Dimensions of every generated OG image (see lib/og-image.tsx).
+export const ogImageSize = { width: 1200, height: 630, type: 'image/png' } as const;
 
 export const docsContentRoute = '/llms.mdx/docs';
 
