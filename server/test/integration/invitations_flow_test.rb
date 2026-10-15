@@ -15,6 +15,43 @@ class InvitationsFlowTest < ActionDispatch::IntegrationTest
     assert_redirected_to invitations_path
   end
 
+  test "inviting an email with a pending invite resends instead of erroring" do
+    sign_in_as(users(:admin))
+    existing = invitations(:pending)
+
+    assert_no_difference "Invitation.count" do
+      perform_enqueued_jobs do
+        assert_emails 1 do
+          assert_changes -> { existing.reload.expires_at } do
+            post invitations_path, params: { invitation: { email: existing.email, role: "translator" } }
+          end
+        end
+      end
+    end
+
+    assert_redirected_to invitations_path
+    assert_match(/re-sent/, flash[:notice])
+  end
+
+  test "inviting an email with an expired (hidden) invite resends instead of erroring" do
+    sign_in_as(users(:admin))
+    expired = invitations(:expired)
+
+    assert_no_difference "Invitation.count" do
+      perform_enqueued_jobs do
+        assert_emails 1 do
+          assert_changes -> { expired.reload.expires_at } do
+            post invitations_path, params: { invitation: { email: expired.email, role: "viewer" } }
+          end
+        end
+      end
+    end
+
+    assert_redirected_to invitations_path
+    assert_match(/re-sent/, flash[:notice])
+    assert expired.reload.claimable?
+  end
+
   test "non-admin cannot create invitation" do
     sign_in_as(users(:translator))
     post invitations_path, params: { invitation: { email: "x@example.com", role: "translator" } }

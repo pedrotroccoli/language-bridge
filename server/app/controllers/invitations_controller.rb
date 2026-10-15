@@ -17,12 +17,25 @@ class InvitationsController < ApplicationController
   def create
     @invitation = Invitation.new(invitation_params.merge(inviter: current_user))
 
+    # Any unaccepted invite (pending OR expired) holds the partial unique index
+    # `index_invitations_on_email ... WHERE accepted_at IS NULL`. Re-inviting it
+    # resends and refreshes the expiry instead of crashing on a duplicate insert.
+    if (existing = Invitation.unaccepted.find_by(email: @invitation.email))
+      existing.resend!
+      InvitationMailer.with(invitation: existing).invite.deliver_later
+      redirect_to invitations_path, notice: "Invitation re-sent to #{existing.email}." and return
+    end
+
     if @invitation.save
       InvitationMailer.with(invitation: @invitation).invite.deliver_later
       redirect_to invitations_path, notice: "Invitation sent to #{@invitation.email}."
     else
       render :new, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique
+    # Race: a pending invite for this email was created between the check and save.
+    @invitation.errors.add(:email, "already has a pending invitation")
+    render :new, status: :unprocessable_entity
   end
 
   def destroy

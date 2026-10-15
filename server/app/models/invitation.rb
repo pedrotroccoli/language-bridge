@@ -7,13 +7,17 @@ class Invitation < ApplicationRecord
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
-  validates :email, presence: true
+  validates :email, presence: true,
+    uniqueness: { conditions: -> { where(accepted_at: nil) }, message: "already has a pending invitation" }
   validates :role, inclusion: { in: User::ROLES }
   validate :email_not_taken_by_user, on: :create
 
   before_validation { self.expires_at ||= EXPIRES_IN.from_now }
 
-  scope :pending, -> { where(accepted_at: nil).where("expires_at > ?", Time.current) }
+  # Holds the partial unique index on email (WHERE accepted_at IS NULL) —
+  # includes expired-but-unclaimed invites, which `pending` excludes.
+  scope :unaccepted, -> { where(accepted_at: nil) }
+  scope :pending, -> { unaccepted.where("expires_at > ?", Time.current) }
   scope :accepted, -> { where.not(accepted_at: nil) }
   # Shown in the list: still-claimable invites plus everyone who's accepted.
   # Hides only the stale (expired, never accepted) ones.
