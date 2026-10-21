@@ -18,6 +18,20 @@ class InvitationTest < ActiveSupport::TestCase
     assert_includes invitation.errors[:email], "is already registered"
   end
 
+  test "rejects a second pending invitation for the same email" do
+    existing = invitations(:pending)
+    dup = Invitation.new(email: existing.email, role: "translator", inviter: users(:admin))
+    assert_not dup.valid?
+    assert_includes dup.errors[:email], "already has a pending invitation"
+  end
+
+  test "allows inviting an email whose earlier invitation was accepted" do
+    accepted = invitations(:pending)
+    accepted.update!(accepted_at: Time.current)
+    reinvite = Invitation.new(email: accepted.email, role: "translator", inviter: users(:admin))
+    assert reinvite.valid?
+  end
+
   test "role must be in allowed list" do
     invitation = Invitation.new(email: "x@example.com", role: "owner", inviter: users(:admin))
     assert_not invitation.valid?
